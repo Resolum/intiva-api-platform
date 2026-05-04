@@ -26,7 +26,8 @@ For the development of this API, the following technologies were used:
 - Java 21: The programming language used for the development of the API.
 - Spring Boot: A framework for building Java applications, used to create the API.
 - Spring Data: A framework for data access, used to interact with the MongoDB database.
-- MongoDB: A NoSQL database used for data persistence.
+- PostgreSQL: A relational database management system, used for storing data in the application.
+- Redis: An in-memory data structure store, used for caching and improving performance of the application.
 - Spring Security: A framework for securing Java applications, used for authentication and authorization.
 - JWT (JSON Web Tokens): A standard for securely transmitting information between parties, used for authentication and authorization.
 - Swagger: A tool for documenting and testing RESTful APIs, used to create API documentation and provide an interface for testing the API.
