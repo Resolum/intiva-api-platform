@@ -51,6 +51,10 @@ public class UserCommandServiceImpl implements UserCommandService {
             throw new IllegalArgumentException("User with email " + command.email() + " already exists.");
         }
 
+        if(!isPasswordValid(command.password())) {
+            throw new IllegalArgumentException("Password does not meet security requirements.");
+        }
+
         try {
             var email = command.email();
             var hashedPassword = hashingService.encode(command.password());
@@ -64,5 +68,21 @@ public class UserCommandServiceImpl implements UserCommandService {
             LOGGER.error("Error occurred while signing up user with email {}: {}", command.email(), e.getMessage());
             return Optional.empty();
         }
+    }
+
+    /**
+     * Validates the password against security requirements such as length, presence of uppercase and lowercase letters, digits, and special characters.
+     *
+     * @param password The password to validate.
+     * @return true if the password meets all security requirements, false otherwise.
+     */
+    private boolean isPasswordValid(String password) {
+        boolean hasUppercase = password.chars().anyMatch(Character::isUpperCase);
+        boolean hasLowercase = password.chars().anyMatch(Character::isLowerCase);
+        boolean hasDigit = password.chars().anyMatch(Character::isDigit);
+        boolean hasSpecialChar = password.chars().anyMatch(ch -> "!@#$%^&*()_+-=[]{}|;':\",.<>/?".indexOf(ch) >= 0);
+        boolean isValidLength = password.length() >= 8;
+
+        return hasUppercase && hasLowercase && hasDigit && hasSpecialChar && isValidLength;
     }
 }

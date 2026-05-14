@@ -26,4 +26,12 @@ public record PasswordHash(String value) {
     public PasswordHash update(String newHash) {
         return new PasswordHash(newHash);
     }
+
+    /**
+     * Retrieves the password hash value.
+     * @return the password hash value
+     */
+    public String getValue() {
+        return value;
+    }
 }
