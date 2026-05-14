@@ -5,14 +5,14 @@ import jakarta.persistence.Embeddable;
 /**
  * Value object representing a password hash.
  *
- * @param value the hashed password value
+ * @param passwordHash the hashed password value
  */
 @Embeddable
-public record PasswordHash(String value) {
+public record PasswordHash(String passwordHash) {
 
     // Constructor to validate the password hash
     public PasswordHash {
-        if (value == null || value.isBlank()) {
+        if (passwordHash == null || passwordHash.isBlank()) {
             throw new IllegalArgumentException("Password hash cannot be null or blank");
         }
     }
@@ -32,6 +32,6 @@ public record PasswordHash(String value) {
      * @return the password hash value
      */
     public String getValue() {
-        return value;
+        return passwordHash;
     }
 }

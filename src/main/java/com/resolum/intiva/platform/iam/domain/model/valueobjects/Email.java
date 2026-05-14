@@ -4,17 +4,17 @@ import jakarta.persistence.Embeddable;
 
 /**
  * Value object representing an email address.
- * @param value the email address string
+ * @param email the email address string
  */
 @Embeddable
-public record Email(String value) {
+public record Email(String email) {
 
     // Constructor to validate the email format
     public Email {
-        if (value == null || value.isBlank()) {
+        if (email == null || email.isBlank()) {
             throw new IllegalArgumentException("Email cannot be null or blank");
         }
-        if (!isEmailFormatValid(value)) {
+        if (!isEmailFormatValid(email)) {
             throw new IllegalArgumentException("Invalid email format");
         }
     }
@@ -34,6 +34,6 @@ public record Email(String value) {
      * @return the email string
      */
     public String getValue() {
-        return value;
+        return email;
     }
 }
