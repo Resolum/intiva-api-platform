@@ -1,5 +1,6 @@
 package com.resolum.intiva.platform.finances.domain.model.aggregates;
 
+import com.resolum.intiva.platform.finances.domain.model.commands.RegisterTransactionCommand;
 import com.resolum.intiva.platform.finances.domain.model.valueobjects.TransactionTypes;
 import com.resolum.intiva.platform.shared.domain.entities.TransactionEntry;
 import com.resolum.intiva.platform.shared.domain.valueobjects.*;
@@ -12,7 +13,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 
 /**
  * Transaction represents a financial transaction in the system, which can be either an income or an expense. It extends the TransactionEntry class, inheriting common properties such as amount, description, ownerId, financialAccountId, and actorUserId.
@@ -51,6 +51,14 @@ public class Transaction extends TransactionEntry {
 
         this.transactionType = transactionType;
         this.categoryId = categoryId;
+    }
+
+    /**
+     * Convenience constructor that creates a Transaction instance from a RegisterTransactionCommand. This constructor extracts the necessary information from the command object and initializes the Transaction instance accordingly.
+     * @param command The RegisterTransactionCommand containing the data required to create a new Transaction instance. It must not be null and must contain valid data for all mandatory fields.
+     */
+    public Transaction(RegisterTransactionCommand command) {
+        this(command.amount(), command.description(), command.ownerId(), command.financialAccountId(), command.actorUserId(), command.transactionType(), command.categoryId());
     }
 
     /**
