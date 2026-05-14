@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import javax.crypto.SecretKey;
@@ -21,6 +22,7 @@ import java.util.function.Function;
  * This class is responsible for generating and validating JWT tokens.
  * It implements the BearerTokenService interface.
  */
+@Service
 public class TokenServiceImpl implements BearerTokenService {
 
     // Logger for the class

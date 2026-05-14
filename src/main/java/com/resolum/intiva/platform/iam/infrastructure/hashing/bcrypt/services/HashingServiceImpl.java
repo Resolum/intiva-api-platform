@@ -2,10 +2,12 @@ package com.resolum.intiva.platform.iam.infrastructure.hashing.bcrypt.services;
 
 import com.resolum.intiva.platform.iam.infrastructure.hashing.bcrypt.BCryptHashingService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
 
 /**
  * Implementation of the BCryptHashingService interface using Spring Security's BCryptPasswordEncoder.
  */
+@Service
 public class HashingServiceImpl implements BCryptHashingService {
 
     // BCryptPasswordEncoder is a thread-safe class, so we can safely use a single instance for the entire application
