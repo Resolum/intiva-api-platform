@@ -2,12 +2,15 @@ package com.resolum.intiva.platform.shared.domain.aggregates;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import org.springframework.cglib.core.Local;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.domain.AbstractAggregateRoot;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 /**
  * Abstract class for auditable aggregates.
@@ -24,15 +27,24 @@ import java.time.LocalDateTime;
 public class AuditableAbstractAggregate<T extends AbstractAggregateRoot<T>> extends AbstractAggregateRoot<T> {
 
     @Id
-    @Getter
     @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
-    private String id;
+    private Long id;
 
     @CreatedDate
-    @Column(updatable = false, nullable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "created_at", updatable = false, nullable = false)
+    private Instant createdAt;
 
     @LastModifiedDate
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = Instant.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = Instant.now();
+    }
 }
