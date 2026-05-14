@@ -5,5 +5,5 @@ package com.resolum.intiva.platform.iam.interfaces.rest.resources.responses;
  * @param id the user's id
  * @param email the user's email
  */
-public record UserResource(String id, String email) {
+public record UserResource(Long id, String email) {
 }

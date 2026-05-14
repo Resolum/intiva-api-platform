@@ -26,19 +26,17 @@ public class User extends AuditableAbstractAggregate<User> {
     /**
      * The email address of the user, which serves as a unique identifier for authentication and communication purposes. This field is mandatory and must be a valid Email value object.
      */
-    @NotBlank
-    @Size(max = 64)
-    @Column(unique = true)
     @Valid
     @Embedded
+    @AttributeOverride(name = "email", column = @Column(length = 64, nullable = false, unique = true))
     private Email email;
 
     /**
      * The hashed password of the user, which is used for authentication purposes. This field is mandatory and must be a valid PasswordHash value object.
      */
-    @NotBlank
     @Valid
     @Embedded
+    @AttributeOverride(name = "passwordHash", column = @Column(length = 255, nullable = false))
     private PasswordHash passwordHash;
 
     // Constructors, getters, setters, and other methods
