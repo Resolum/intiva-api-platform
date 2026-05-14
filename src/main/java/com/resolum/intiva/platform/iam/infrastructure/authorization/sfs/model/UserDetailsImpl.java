@@ -62,11 +62,10 @@ public class UserDetailsImpl implements UserDetails {
      * @return The UserDetailsImpl object.
      */
     public static UserDetailsImpl build(User user) {
-        var authority = new SimpleGrantedAuthority(user.getRole().getName());
         return new UserDetailsImpl(
                 user.getEmail().value(),
                 user.getPasswordHash().value(),
-                List.of(authority)
+                List.of()
         );
     }
 }
