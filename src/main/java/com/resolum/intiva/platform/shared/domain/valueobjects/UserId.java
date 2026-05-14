@@ -8,11 +8,11 @@ import jakarta.persistence.Embeddable;
  * @param userId the unique identifier value for the user, must not be null or blank
  */
 @Embeddable
-public record UserId(String userId) {
+public record UserId(Long userId) {
 
     // Constructor to validate the user ID
     public UserId {
-        if (userId == null || userId.isBlank()) {
+        if (userId == null) {
             throw new IllegalArgumentException("User ID cannot be null or blank");
         }
     }
@@ -21,7 +21,7 @@ public record UserId(String userId) {
      * Returns the unique identifier value for the user.
      * @return the user ID value
      */
-    public String getValue() {
+    public Long getValue() {
         return userId;
     }
 }
