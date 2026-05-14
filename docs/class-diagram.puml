@@ -69,7 +69,7 @@ record PlanLimits {
 
 enum BillingCycle {
     MONTHLY
-    ANUAL
+    ANNUAL
 }
 
 class Subscription {
@@ -116,7 +116,7 @@ class FinancialAccount {
     -initialAmount: BigDecimal
     -currentAmount: BigDecimal
     -institution: Institutions
-    -onwerId: UserId
+    -ownerId: UserId
     +deactivate(): void
     +spend(Money amount): void
     +changeName(string name): void
@@ -142,16 +142,18 @@ enum CurrencyCodes {
     EUR
 }
 
-class Transaction {
-    -id: TransactionId
-    -ownerType: OwnerTypes
-    -transactionType: TransactionTypes
+class TransactionEntry {
+    -id: Long
     -amount: Money
-    -description: string
-    -registeredAt: DateTime
-    -walletId: WalletId
+    -description: String
+    -ownerId: String
     -actorUserId: UserId
-    -ownerId: string
+    -financialAccountId: FinancialAccountId
+}
+
+class Transaction {
+    -transactionType: TransactionTypes
+    -registeredAt: DateTime
     -categoryId: CategoryId
     +editAmountRecorded(Money amount): void
     +editDescription(string description): void
@@ -320,9 +322,6 @@ enum SavingGoalStatus {
 }
 
 class GoalContribution {
-    -id: GoalContributionId
-    -amountContributed: Money
-    -contributorId: UserId
     -contributedAt: DateTime
     -savingGoalId: SavingGoalId
 }
@@ -355,6 +354,7 @@ Money "1" ..> "1" CurrencyCodes : uses
 
 Category "1" ..> "1" OwnerTypes : has
 
+TransactionEntry <|-- Transaction : is a
 Transaction "1" ..> "1" OwnerTypes : has
 Transaction "1" o-- "1" Category : uses
 Transaction "1" ..> "1" TransactionTypes : has
@@ -376,6 +376,7 @@ Family "1" ..> "1" FamilyResourcesUsage : has
 SavingGoal "1" o-- "1" Category : has
 SavingGoal "1" ..> "1" SavingGoalStatus : has
 
+TransactionEntry <|-- GoalContribution : is a
 GoalContribution "1" o-- "1" SavingGoal : contributes
 
 Invitation "1" ..> "1" InvitationStatus : has
