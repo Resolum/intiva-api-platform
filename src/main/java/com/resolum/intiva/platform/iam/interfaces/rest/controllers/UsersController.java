@@ -92,7 +92,7 @@ public class UsersController {
                     example = "6959b139b6c5058d7b5c2280",
                     required = true
             )
-            @PathVariable String userId
+            @PathVariable Long userId
     ) {
         var id = new UserId(userId);
         var getUserByIdQuery = new GetUserByIdQuery(id);
