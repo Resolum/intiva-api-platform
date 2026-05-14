@@ -1,4 +1,4 @@
-package com.resolum.intiva.platform.finances.domain.model.valueobjects;
+package com.resolum.intiva.platform.shared.domain.valueobjects;
 
 import jakarta.persistence.Embeddable;
 
@@ -7,10 +7,10 @@ import jakarta.persistence.Embeddable;
  * @param transactionId the unique identifier for a transaction
  */
 @Embeddable
-public record TransactionId(String transactionId) {
+public record TransactionEntryId(String transactionId) {
 
     // Constructor validation to ensure transaction ID is not null or blank
-    public TransactionId {
+    public TransactionEntryId {
         if (transactionId == null || transactionId.isBlank()) {
             throw new IllegalArgumentException("Transaction ID cannot be null or blank");
         }
