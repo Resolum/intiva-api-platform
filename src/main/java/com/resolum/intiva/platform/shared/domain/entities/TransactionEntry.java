@@ -7,6 +7,7 @@ import com.resolum.intiva.platform.shared.domain.valueobjects.UserId;
 import jakarta.persistence.*;
 import jakarta.validation.Valid;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
@@ -18,6 +19,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  */
 @Getter
 @EntityListeners(AuditingEntityListener.class)
+@NoArgsConstructor
 @MappedSuperclass
 public class TransactionEntry extends AuditableAbstractAggregate<TransactionEntry> {
 
@@ -27,19 +29,19 @@ public class TransactionEntry extends AuditableAbstractAggregate<TransactionEntr
     @Embedded
     @Valid
     @AttributeOverride(name = "amount", column = @Column(length = 64, nullable = false))
-    private Money amount;
+    protected Money amount;
 
     /**
      * A brief description of the transaction, providing context and details about the nature of the transaction. This field is mandatory and has a maximum length of 250 characters.
      */
     @AttributeOverride(name = "description", column = @Column(length = 250, nullable = false))
-    private String description;
+    protected String description;
 
     /**
      * The identifier of the owner of the transaction, which could be a user or an entity responsible for the transaction. This field is mandatory and must not be null.
      */
     @AttributeOverride(name = "owner_id", column = @Column(nullable = false))
-    private String ownerId;
+    protected String ownerId;
 
     /**
      * The identifier of the financial account associated with the transaction, represented as a FinancialAccountId value object. This field is mandatory and must be valid.
@@ -47,7 +49,7 @@ public class TransactionEntry extends AuditableAbstractAggregate<TransactionEntr
     @Embedded
     @Valid
     @AttributeOverride(name = "financial_account_id", column = @Column(nullable = false))
-    private FinancialAccountId financialAccountId;
+    protected FinancialAccountId financialAccountId;
 
     /**
      * The identifier of the user who performed the transaction, represented as a UserId value object. This field is mandatory and must be valid.
@@ -55,7 +57,7 @@ public class TransactionEntry extends AuditableAbstractAggregate<TransactionEntr
     @Embedded
     @Valid
     @AttributeOverride(name = "actor_user_id", column = @Column(nullable = false))
-    private UserId actorUserId;
+    protected UserId actorUserId;
 
     // Constructors, getters, setters, and other methods
     public TransactionEntry(Money amount, String description, String ownerId, FinancialAccountId financialAccountId, UserId actorUserId) {

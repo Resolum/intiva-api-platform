@@ -13,7 +13,7 @@ public record Money(BigDecimal amount, CurrencyCodes currencyCode) {
 
     // Constructor validation to ensure that amount and currency code are not null
     public Money {
-        if (amount == null || currencyCode == null) {
+        if (amount == null || currencyCode == null || amount.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("Amount and currency code cannot be null");
         }
     }
