@@ -3,10 +3,12 @@ package com.resolum.intiva.platform.iam.application.internal.commandhandlers;
 import com.resolum.intiva.platform.iam.application.internal.outboundservices.HashingService;
 import com.resolum.intiva.platform.iam.application.internal.outboundservices.TokenService;
 import com.resolum.intiva.platform.iam.domain.model.aggregates.User;
+import com.resolum.intiva.platform.iam.domain.model.commands.SignInCommand;
 import com.resolum.intiva.platform.iam.domain.model.commands.SignUpCommand;
 import com.resolum.intiva.platform.iam.domain.model.valueobjects.PasswordHash;
 import com.resolum.intiva.platform.iam.domain.services.UserCommandService;
 import com.resolum.intiva.platform.iam.infrastructure.persistence.jpa.repositories.UserRepository;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -68,6 +70,22 @@ public class UserCommandServiceImpl implements UserCommandService {
             LOGGER.error("Error occurred while signing up user with email {}: {}", command.email(), e.getMessage());
             return Optional.empty();
         }
+    }
+
+    /**
+     * Handles the sign-in command to authenticate a user.
+     * @param command The sign-in command containing user authentication details.
+     * @return a pair of the authenticated user and a JWT token if successful, or empty if authentication failed.
+     */
+    @Override
+    public Optional<ImmutablePair<User, String>> handle(SignInCommand command) {
+        var user = userRepository.findUserByEmail(command.email());
+        if (user.isEmpty())
+            throw new RuntimeException("User not found");
+        if (!hashingService.matches(command.password().getValue(), user.get().getPasswordHash().getValue()))
+            throw new RuntimeException("Invalid password");
+        var token = tokenService.generateToken(user.get().getEmail().email());
+        return Optional.of(ImmutablePair.of(user.get(), token));
     }
 
     /**
