@@ -2,6 +2,7 @@ package com.resolum.intiva.platform.finances.interfaces.rest.resources.responses
 
 /**
  * TransactionResource is a record that represents the data structure of a financial transaction as it is exposed through the REST API. It contains fields that correspond to the properties of a Transaction entity, including the amount, currency code, description, owner ID, financial account ID, actor user ID, transaction type, category ID, and the date and time when the transaction was registered.
+ * @param id The unique identifier of the transaction, represented as a long value. This field is mandatory and must correspond to an existing transaction in the system.
  * @param amount The amount of the transaction, represented as a string to maintain precision and avoid issues with floating-point representation. It should be a valid decimal number in string format.
  * @param currencyCode The ISO 4217 currency code associated with the transaction, such as "USD" for US dollars or "EUR" for euros. This field is mandatory and must be a valid currency code.
  * @param description A brief description of the transaction, providing context and details about the nature of the transaction. This field is mandatory and cannot be null or blank.
@@ -13,12 +14,13 @@ package com.resolum.intiva.platform.finances.interfaces.rest.resources.responses
  * @param registeredAt The date and time when the transaction was registered, represented as a string in ISO 8601 format. This field is mandatory and must be a valid date-time string, such as "2024-06-01T12:00:00Z".
  */
 public record TransactionResource(
+        Long id,
         String amount,
         String currencyCode,
         String description,
         String ownerId,
         Long financialAccountId,
-        String actorUserId,
+        Long actorUserId,
         String transactionType,
         Long categoryId,
         String registeredAt

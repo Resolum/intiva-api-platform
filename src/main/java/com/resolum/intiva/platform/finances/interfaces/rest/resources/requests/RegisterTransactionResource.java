@@ -17,7 +17,7 @@ public record RegisterTransactionResource(
         String description,
         String ownerId,
         Long financialAccountId,
-        String actorUserId,
+        Long actorUserId,
         String transactionType,
         Long categoryId
 ) {
