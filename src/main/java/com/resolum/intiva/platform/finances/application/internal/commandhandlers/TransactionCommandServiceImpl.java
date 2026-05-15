@@ -5,7 +5,7 @@ import com.resolum.intiva.platform.finances.domain.model.commands.RegisterTransa
 import com.resolum.intiva.platform.finances.domain.model.commands.UpdateTransactionAmountCommand;
 import com.resolum.intiva.platform.finances.domain.model.commands.UpdateTransactionDescriptionCommand;
 import com.resolum.intiva.platform.finances.domain.services.TransactionCommandService;
-import com.resolum.intiva.platform.finances.interfaces.persistence.jpa.repositories.TransactionRepository;
+import com.resolum.intiva.platform.finances.infrastructure.persistence.jpa.repositories.TransactionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
