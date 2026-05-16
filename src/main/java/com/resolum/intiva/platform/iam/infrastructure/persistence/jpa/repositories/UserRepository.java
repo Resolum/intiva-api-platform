@@ -12,7 +12,7 @@ import java.util.Optional;
  * This interface extends JpaRepository, providing CRUD operations and custom query methods for User entities.
  */
 @Repository
-public interface UserRepository extends JpaRepository<User, String> {
+public interface UserRepository extends JpaRepository<User, Long> {
 
     /**
      * Finds a user by their email address.
