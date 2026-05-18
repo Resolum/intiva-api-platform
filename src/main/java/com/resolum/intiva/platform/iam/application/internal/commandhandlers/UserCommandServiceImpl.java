@@ -2,6 +2,7 @@ package com.resolum.intiva.platform.iam.application.internal.commandhandlers;
 
 import com.resolum.intiva.platform.iam.application.internal.outboundservices.HashingService;
 import com.resolum.intiva.platform.iam.application.internal.outboundservices.TokenService;
+import com.resolum.intiva.platform.iam.domain.exceptions.UserWithEmailAlreadyExits;
 import com.resolum.intiva.platform.iam.domain.model.aggregates.User;
 import com.resolum.intiva.platform.iam.domain.model.commands.SignInCommand;
 import com.resolum.intiva.platform.iam.domain.model.commands.SignUpCommand;
@@ -50,7 +51,7 @@ public class UserCommandServiceImpl implements UserCommandService {
     @Override
     public Optional<User> handle(SignUpCommand command) {
         if(userRepository.existsUserByEmail(command.email())) {
-            throw new IllegalArgumentException("User with email " + command.email() + " already exists.");
+            throw new UserWithEmailAlreadyExits(command.email().getValue());
         }
 
         if(!isPasswordValid(command.password())) {
