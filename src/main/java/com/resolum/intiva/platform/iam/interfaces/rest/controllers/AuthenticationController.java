@@ -9,6 +9,7 @@ import com.resolum.intiva.platform.iam.interfaces.rest.resources.requests.SignIn
 import com.resolum.intiva.platform.iam.interfaces.rest.resources.requests.SignUpResource;
 import com.resolum.intiva.platform.iam.interfaces.rest.resources.responses.AuthenticatedUserResource;
 import com.resolum.intiva.platform.iam.interfaces.rest.resources.responses.UserResource;
+import com.resolum.intiva.platform.shared.interfaces.rest.resource.MessageResource;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -88,7 +89,7 @@ public class AuthenticationController {
                     description = "Internal server error"
             )
     })
-    public ResponseEntity<UserResource> signUp(
+    public ResponseEntity<?> signUp(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Data required to register a new user.",
                     required = true,
@@ -132,7 +133,7 @@ public class AuthenticationController {
             var userResource = UserResourceFromEntityAssembler.toResourceFromEntity(user.get());
             return new ResponseEntity<>(userResource, HttpStatus.CREATED);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new MessageResource(e.getMessage()));
         }
     }
 
@@ -187,7 +188,7 @@ public class AuthenticationController {
                     description = "Internal server error"
             )
     })
-    public ResponseEntity<AuthenticatedUserResource> signIn(
+    public ResponseEntity<?> signIn(
             @RequestBody SignInResource resource
     ) {
         try {
@@ -208,7 +209,7 @@ public class AuthenticationController {
             return new ResponseEntity<>(authenticatedUserResource, HttpStatus.OK);
 
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new MessageResource(e.getMessage()));
         }
     }
 }
