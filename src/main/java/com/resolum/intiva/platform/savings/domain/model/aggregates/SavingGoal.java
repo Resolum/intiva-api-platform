@@ -138,16 +138,28 @@ public class SavingGoal extends AuditableAbstractAggregate<SavingGoal> {
 
     /**
      * Marks the saving goal as completed.
+     * Sets the status to COMPLETED and records the completion timestamp.
+     *
+     * @throws IllegalStateException if the saving goal is already marked as completed
      */
     public void completes() {
+        if (this.status == SavingGoalStatus.COMPLETED) {
+            throw new IllegalStateException("Saving goal is already completed");
+        }
         this.status = SavingGoalStatus.COMPLETED;
         this.completedAt = Instant.now();
     }
 
     /**
      * Reverts the saving goal to an uncompleted state.
+     * Clears the completion timestamp and sets the status to UNCOMPLETED.
+     *
+     * @throws IllegalStateException if the saving goal is already marked as uncompleted
      */
     public void uncompletes() {
+        if (this.status == SavingGoalStatus.UNCOMPLETED) {
+            throw new IllegalStateException("Saving goal is already marked as uncompleted");
+        }
         this.status = SavingGoalStatus.UNCOMPLETED;
         this.completedAt = null;
     }

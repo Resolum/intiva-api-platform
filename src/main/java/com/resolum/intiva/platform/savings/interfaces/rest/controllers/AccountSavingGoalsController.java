@@ -1,7 +1,10 @@
 package com.resolum.intiva.platform.savings.interfaces.rest.controllers;
 
+import com.resolum.intiva.platform.savings.domain.model.commands.CompleteSavingGoalCommand;
 import com.resolum.intiva.platform.savings.domain.model.commands.ContributeToSavingGoalCommand;
 import com.resolum.intiva.platform.savings.domain.model.commands.CreateSavingGoalCommand;
+import com.resolum.intiva.platform.savings.domain.model.commands.UncompleteSavingGoalCommand;
+import com.resolum.intiva.platform.savings.domain.model.queries.GetAllCompletedSavingGoalsByUserIdQuery;
 import com.resolum.intiva.platform.savings.domain.model.queries.GetAllSavingGoalsByUserIdQuery;
 import com.resolum.intiva.platform.savings.domain.model.queries.GetSavingGoalByIdQuery;
 import com.resolum.intiva.platform.savings.domain.services.SavingGoalCommandService;
@@ -195,6 +198,95 @@ public class AccountSavingGoalsController {
             @PathVariable Long accountId,
             @PathVariable String groupId) {
         var query = new com.resolum.intiva.platform.savings.domain.model.queries.GetAllSavingGoalsByGroupIdQuery(groupId);
+        var savingGoals = savingGoalQueryService.handle(query);
+
+        var resources = savingGoals.stream()
+                .map(SavingGoalResourceFromEntityAssembler::toResourceFromEntity)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(resources);
+    }
+
+    /**
+     * Marks an existing saving goal as completed for the specified account.
+     *
+     * @param accountId    the ID of the account that owns the saving goal
+     * @param savingGoalId the ID of the saving goal to complete
+     * @return 200 with the updated saving goal, 400 if already completed, 404 if not found
+     */
+    @Operation(
+            summary = "Complete a Saving Goal by Account",
+            description = "Marks a saving goal as COMPLETED for the specified account. Returns 400 if it is already completed and 404 if it does not exist."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Saving goal marked as completed successfully"),
+            @ApiResponse(responseCode = "400", description = "Saving goal is already completed"),
+            @ApiResponse(responseCode = "404", description = "Saving goal not found")
+    })
+    @PatchMapping("/{savingGoalId}/complete")
+    public ResponseEntity<?> completeSavingGoal(
+            @PathVariable Long accountId,
+            @PathVariable Long savingGoalId) {
+        try {
+            var command = new CompleteSavingGoalCommand(savingGoalId);
+            var savingGoal = savingGoalCommandService.handle(command);
+            var savingGoalResource = SavingGoalResourceFromEntityAssembler.toResourceFromEntity(savingGoal);
+            return ResponseEntity.ok(savingGoalResource);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    /**
+     * Reverts an existing saving goal back to uncompleted status for the specified account.
+     *
+     * @param accountId    the ID of the account that owns the saving goal
+     * @param savingGoalId the ID of the saving goal to uncomplete
+     * @return 200 with the updated saving goal, 400 if already uncompleted, 404 if not found
+     */
+    @Operation(
+            summary = "Uncomplete a Saving Goal by Account",
+            description = "Reverts a saving goal to UNCOMPLETED status for the specified account. Returns 400 if it is already uncompleted and 404 if it does not exist."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Saving goal reverted to uncompleted successfully"),
+            @ApiResponse(responseCode = "400", description = "Saving goal is already marked as uncompleted"),
+            @ApiResponse(responseCode = "404", description = "Saving goal not found")
+    })
+    @PatchMapping("/{savingGoalId}/uncomplete")
+    public ResponseEntity<?> uncompleteSavingGoal(
+            @PathVariable Long accountId,
+            @PathVariable Long savingGoalId) {
+        try {
+            var command = new UncompleteSavingGoalCommand(savingGoalId);
+            var savingGoal = savingGoalCommandService.handle(command);
+            var savingGoalResource = SavingGoalResourceFromEntityAssembler.toResourceFromEntity(savingGoal);
+            return ResponseEntity.ok(savingGoalResource);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    /**
+     * Retrieves all completed saving goals for the specified account.
+     *
+     * @param accountId the ID of the account whose completed saving goals to retrieve
+     * @return 200 with the list of completed saving goals
+     */
+    @Operation(
+            summary = "Get All Completed Saving Goals by Account ID",
+            description = "Retrieves all saving goals with COMPLETED status for a specific account."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Completed saving goals retrieved successfully")
+    })
+    @GetMapping("/completed")
+    public ResponseEntity<List<SavingGoalResource>> getCompletedSavingGoals(@PathVariable Long accountId) {
+        var query = new GetAllCompletedSavingGoalsByUserIdQuery(accountId);
         var savingGoals = savingGoalQueryService.handle(query);
 
         var resources = savingGoals.stream()

@@ -1,6 +1,7 @@
 package com.resolum.intiva.platform.savings.application.internal.queryhandlers;
 
 import com.resolum.intiva.platform.savings.domain.model.aggregates.SavingGoal;
+import com.resolum.intiva.platform.savings.domain.model.queries.GetAllCompletedSavingGoalsByUserIdQuery;
 import com.resolum.intiva.platform.savings.domain.model.queries.GetAllSavingGoalsByUserIdQuery;
 import com.resolum.intiva.platform.savings.domain.model.queries.GetAllSavingGoalsByGroupIdQuery;
 import com.resolum.intiva.platform.savings.domain.model.queries.GetSavingGoalByIdQuery;
@@ -60,5 +61,19 @@ public class SavingGoalQueryServiceImpl implements SavingGoalQueryService {
     @Override
     public List<SavingGoal> handle(GetAllSavingGoalsByGroupIdQuery query) {
         return savingGoalRepository.findAllByOwnerId(query.groupId());
+    }
+
+    /**
+     * Retrieves all saving goals with COMPLETED status belonging to a specific user.
+     *
+     * @param query the query containing the user ID
+     * @return a list of completed SavingGoal entities for the specified user
+     */
+    @Override
+    public List<SavingGoal> handle(GetAllCompletedSavingGoalsByUserIdQuery query) {
+        return savingGoalRepository.findByActorUserIdAndStatus(
+                query.userId(),
+                com.resolum.intiva.platform.savings.domain.model.valueobjects.SavingGoalStatus.COMPLETED
+        );
     }
 }
