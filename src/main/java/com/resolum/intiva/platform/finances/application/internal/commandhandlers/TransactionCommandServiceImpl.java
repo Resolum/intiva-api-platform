@@ -1,5 +1,8 @@
 package com.resolum.intiva.platform.finances.application.internal.commandhandlers;
 
+import com.resolum.intiva.platform.finances.application.internal.outboundservices.acl.FinancesExternalFinancialAccountService;
+import com.resolum.intiva.platform.paymentmethodsandcategories.interfaces.acl.CategoriesContextFacade;
+import com.resolum.intiva.platform.finances.application.internal.outboundservices.acl.FinancesExternalCategoriesService;
 import com.resolum.intiva.platform.finances.domain.model.aggregates.Transaction;
 import com.resolum.intiva.platform.finances.domain.model.commands.RegisterTransactionCommand;
 import com.resolum.intiva.platform.finances.domain.model.commands.UpdateTransactionAmountCommand;
@@ -25,9 +28,17 @@ public class TransactionCommandServiceImpl implements TransactionCommandService 
     // TransactionRepository is used to interact with the database for transaction-related operations
     private final TransactionRepository transactionRepository;
 
+    // FinancesExternalCategoriesService is used to interact with the external categories service for checking if a category exists
+    private final FinancesExternalCategoriesService financesExternalCategoriesService;
+
+    // FinancesExternalFinancialAccountService is used to interact with the external financial account service for checking if a financial account exists
+    private final FinancesExternalFinancialAccountService financesExternalFinancialAccountService;
+
     // Constructor injection for dependencies
-    public TransactionCommandServiceImpl(TransactionRepository transactionRepository) {
+    public TransactionCommandServiceImpl(TransactionRepository transactionRepository, FinancesExternalCategoriesService financesExternalCategoriesService, FinancesExternalFinancialAccountService financesExternalFinancialAccountService) {
         this.transactionRepository = transactionRepository;
+        this.financesExternalCategoriesService = financesExternalCategoriesService;
+        this.financesExternalFinancialAccountService = financesExternalFinancialAccountService;
     }
 
     /**
@@ -39,7 +50,19 @@ public class TransactionCommandServiceImpl implements TransactionCommandService 
     @Override
     public Optional<Transaction> handle(RegisterTransactionCommand command) {
         try {
+
+            if (financesExternalCategoriesService.existsCategoryById(command.categoryId().getValue()).orElse(false)) {
+                LOGGER.error("Category with ID {} does not exist for user {}.", command.categoryId().getValue(), command.actorUserId());
+                return Optional.empty();
+            }
+
+            if (financesExternalFinancialAccountService.existsFinancialAccountById(command.financialAccountId().getValue()).orElse(false)) {
+                LOGGER.error("Financial account with ID {} does not exist for user {}.", command.financialAccountId().getValue(), command.actorUserId());
+                return Optional.empty();
+            }
+
             var transaction = new Transaction(command);
+
             transactionRepository.save(transaction);
             return Optional.of(transaction);
         } catch (Exception e) {
