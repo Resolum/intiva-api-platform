@@ -1,8 +1,10 @@
 package com.resolum.intiva.platform.savings.application.internal.commandhandlers;
 
 import com.resolum.intiva.platform.savings.domain.model.aggregates.SavingGoal;
+import com.resolum.intiva.platform.savings.domain.model.commands.CompleteSavingGoalCommand;
 import com.resolum.intiva.platform.savings.domain.model.commands.ContributeToSavingGoalCommand;
 import com.resolum.intiva.platform.savings.domain.model.commands.CreateSavingGoalCommand;
+import com.resolum.intiva.platform.savings.domain.model.commands.UncompleteSavingGoalCommand;
 import com.resolum.intiva.platform.savings.domain.model.entities.GoalContribution;
 import com.resolum.intiva.platform.savings.domain.services.SavingGoalCommandService;
 import com.resolum.intiva.platform.savings.infrastructure.persistence.jpa.repositories.GoalContributionRepository;
@@ -119,5 +121,47 @@ public class SavingGoalCommandServiceImpl implements SavingGoalCommandService {
         savingGoalRepository.save(savingGoal);
         
         return Optional.of(savingGoal);
+    }
+
+    /**
+     * Handles the completion of an existing saving goal.
+     * Finds the goal, validates it is not already completed, marks it as completed, and persists it.
+     *
+     * @param command the command containing the ID of the saving goal to complete
+     * @return the updated SavingGoal with COMPLETED status
+     * @throws IllegalArgumentException if no saving goal exists with the given ID
+     * @throws IllegalStateException    if the saving goal is already marked as completed
+     */
+    @Override
+    @Transactional
+    public SavingGoal handle(CompleteSavingGoalCommand command) {
+        var savingGoalOpt = savingGoalRepository.findById(command.savingGoalId());
+        if (savingGoalOpt.isEmpty()) {
+            throw new IllegalArgumentException("Saving goal not found with id: " + command.savingGoalId());
+        }
+        var savingGoal = savingGoalOpt.get();
+        savingGoal.completes();
+        return savingGoalRepository.save(savingGoal);
+    }
+
+    /**
+     * Handles reverting an existing saving goal back to uncompleted status.
+     * Finds the goal, validates it is not already uncompleted, marks it as uncompleted, and persists it.
+     *
+     * @param command the command containing the ID of the saving goal to uncomplete
+     * @return the updated SavingGoal with UNCOMPLETED status
+     * @throws IllegalArgumentException if no saving goal exists with the given ID
+     * @throws IllegalStateException    if the saving goal is already marked as uncompleted
+     */
+    @Override
+    @Transactional
+    public SavingGoal handle(UncompleteSavingGoalCommand command) {
+        var savingGoalOpt = savingGoalRepository.findById(command.savingGoalId());
+        if (savingGoalOpt.isEmpty()) {
+            throw new IllegalArgumentException("Saving goal not found with id: " + command.savingGoalId());
+        }
+        var savingGoal = savingGoalOpt.get();
+        savingGoal.uncompletes();
+        return savingGoalRepository.save(savingGoal);
     }
 }
