@@ -1,5 +1,6 @@
-package com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.aggregates;
+package com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.entities;
 
+import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.aggregates.FinancialAccount;
 import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.valueobjects.AccountName;
 import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.valueobjects.Institution;
 import com.resolum.intiva.platform.shared.domain.valueobjects.Money;
@@ -10,16 +11,16 @@ import lombok.Getter;
 
 @Entity
 @Getter
-@DiscriminatorValue("WALLET")
-public class WalletAccount extends FinancialAccount {
+@DiscriminatorValue("DEBITCARD")
+public class DebitCardAccount extends FinancialAccount {
 
     @Embedded
     private Institution institution;
 
-    protected WalletAccount() {}
+    protected DebitCardAccount() {}
 
-    public WalletAccount(AccountName name, Money initialAmount,
-                         Institution institution, Long ownerId) {
+    public DebitCardAccount(AccountName name, Money initialAmount,
+                            Institution institution, Long ownerId) {
         super(name, initialAmount, ownerId);
         this.institution = institution;
     }

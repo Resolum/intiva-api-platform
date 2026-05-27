@@ -41,7 +41,7 @@ public class TransactionEntry extends AuditableAbstractAggregate<TransactionEntr
      * The identifier of the owner of the transaction, which could be a user or an entity responsible for the transaction. This field is mandatory and must not be null.
      */
     @AttributeOverride(name = "owner_id", column = @Column(nullable = false))
-    protected String ownerId;
+    protected Long ownerId;
 
     /**
      * The identifier of the financial account associated with the transaction, represented as a FinancialAccountId value object. This field is mandatory and must be valid.
@@ -60,7 +60,7 @@ public class TransactionEntry extends AuditableAbstractAggregate<TransactionEntr
     protected UserId actorUserId;
 
     // Constructors, getters, setters, and other methods
-    public TransactionEntry(Money amount, String description, String ownerId, FinancialAccountId financialAccountId, UserId actorUserId) {
+    public TransactionEntry(Money amount, String description, Long ownerId, FinancialAccountId financialAccountId, UserId actorUserId) {
         this.amount = amount;
         this.description = description;
         this.ownerId = ownerId;

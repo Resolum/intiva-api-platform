@@ -1,7 +1,7 @@
 package com.resolum.intiva.platform.finances.domain.model.aggregates;
 
 import com.resolum.intiva.platform.finances.domain.model.commands.RegisterTransactionCommand;
-import com.resolum.intiva.platform.finances.domain.model.valueobjects.TransactionTypes;
+import com.resolum.intiva.platform.shared.domain.valueobjects.TransactionTypes;
 import com.resolum.intiva.platform.shared.domain.entities.TransactionEntry;
 import com.resolum.intiva.platform.shared.domain.valueobjects.*;
 import jakarta.persistence.Embedded;
@@ -38,15 +38,11 @@ public class Transaction extends TransactionEntry {
     private CategoryId categoryId;
 
     // Constructor with validation for mandatory fields and business rules.
-    public Transaction(@Valid Money amount, String description, String ownerId, @Valid FinancialAccountId financialAccountId, @Valid UserId actorUserId, TransactionTypes transactionType, @Valid CategoryId categoryId) {
+    public Transaction(@Valid Money amount, String description, Long ownerId, @Valid FinancialAccountId financialAccountId, @Valid UserId actorUserId, TransactionTypes transactionType, @Valid CategoryId categoryId) {
         super(amount, description, ownerId, financialAccountId, actorUserId);
 
         if (description == null || description.isBlank()) {
             throw new IllegalArgumentException("Description cannot be null or blank");
-        }
-
-        if (ownerId == null || ownerId.isBlank()) {
-            throw new IllegalArgumentException("Owner ID cannot be null or blank");
         }
 
         this.transactionType = transactionType;

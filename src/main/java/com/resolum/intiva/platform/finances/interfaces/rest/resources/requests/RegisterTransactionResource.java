@@ -1,5 +1,7 @@
 package com.resolum.intiva.platform.finances.interfaces.rest.resources.requests;
 
+import java.math.BigDecimal;
+
 /**
  * RegisterTransactionResource is a record that represents the data structure of a financial transaction as it is received through the REST API when registering a new transaction. It contains fields that correspond to the properties of a Transaction entity, including the amount, currency code, description, owner ID, financial account ID, actor user ID, transaction type, and category ID.
  * @param amount The amount of the transaction, represented as a string to maintain precision and avoid issues with floating-point representation. It should be a valid decimal number in string format.
@@ -12,10 +14,10 @@ package com.resolum.intiva.platform.finances.interfaces.rest.resources.requests;
  * @param categoryId The identifier of the category associated with the transaction, represented as a long value. This field is optional and can be null if the transaction does not belong to any category. If provided, it must correspond to an existing category in the system.
  */
 public record RegisterTransactionResource(
-        String amount,
+        BigDecimal amount,
         String currencyCode,
         String description,
-        String ownerId,
+        Long ownerId,
         Long financialAccountId,
         Long actorUserId,
         String transactionType,

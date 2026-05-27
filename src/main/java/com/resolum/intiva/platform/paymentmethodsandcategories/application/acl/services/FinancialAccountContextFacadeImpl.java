@@ -2,9 +2,17 @@ package com.resolum.intiva.platform.paymentmethodsandcategories.application.acl.
 
 import com.resolum.intiva.platform.paymentmethodsandcategories.application.internal.commandhandlers.FinancialAccountCommandServiceImpl;
 import com.resolum.intiva.platform.paymentmethodsandcategories.application.internal.queryhandlers.FinancialAccountQueryServiceImpl;
+import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.aggregates.FinancialAccount;
 import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.commands.CreateDefaultFinancialAccountCommand;
+import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.commands.CreateFinancialAccountTransaction;
+import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.queries.GetFinancialAccountByIdQuery;
+import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.queries.GetFinancialAccountByOwnerId;
 import com.resolum.intiva.platform.paymentmethodsandcategories.interfaces.acl.FinancialAccountContextFacade;
+import com.resolum.intiva.platform.paymentmethodsandcategories.interfaces.rest.assemblers.FinancialAccountResourceFromEntityAssembler;
+import com.resolum.intiva.platform.paymentmethodsandcategories.interfaces.rest.resources.responses.FinancialAccountResource;
 import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
 
 /**
  * Implementation of the FinancialAccountContextFacade interface.
@@ -40,7 +48,10 @@ public class FinancialAccountContextFacadeImpl implements FinancialAccountContex
      */
     @Override
     public boolean existsFinancialAccountById(Long financialAccountId) {
-        return financialAccountQueryService.existsFinancialAccountById(financialAccountId);
+        var getFinancialAccountByOwnerIdQuery = new GetFinancialAccountByOwnerId(
+                financialAccountId
+        );
+        return financialAccountQueryService.existsFinancialAccountById(getFinancialAccountByOwnerIdQuery);
     }
 
     /**
@@ -53,5 +64,23 @@ public class FinancialAccountContextFacadeImpl implements FinancialAccountContex
                 ownerId
         );
         financialAccountCommandService.handle(createdDefaultFinancialAccount);
+    }
+
+    /**
+     * Creates a new financial account transaction for a financial account.
+     * @param financialAccountId the financial account id
+     * @param transactionType the type of transaction (e.g., deposit, withdrawal)
+     * @param amount the amount of the transaction
+     * @param currencyCode the currency code of the transaction
+     */
+    @Override
+    public void createFinancialAccountTransaction(Long financialAccountId, String transactionType, BigDecimal amount, String currencyCode) {
+        var createFinancialAccountTransactionCommand = new CreateFinancialAccountTransaction(
+                financialAccountId,
+                amount,
+                currencyCode,
+                transactionType
+        );
+        financialAccountCommandService.handle(createFinancialAccountTransactionCommand);
     }
 }

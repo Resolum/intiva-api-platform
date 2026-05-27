@@ -1,6 +1,6 @@
 package com.resolum.intiva.platform.finances.domain.model.commands;
 
-import com.resolum.intiva.platform.finances.domain.model.valueobjects.TransactionTypes;
+import com.resolum.intiva.platform.shared.domain.valueobjects.TransactionTypes;
 import com.resolum.intiva.platform.shared.domain.valueobjects.CategoryId;
 import com.resolum.intiva.platform.shared.domain.valueobjects.FinancialAccountId;
 import com.resolum.intiva.platform.shared.domain.valueobjects.Money;
@@ -20,7 +20,7 @@ import jakarta.validation.Valid;
 public record RegisterTransactionCommand(
         @Valid Money amount,
         String description,
-        String ownerId,
+        Long ownerId,
         @Valid FinancialAccountId financialAccountId,
         @Valid UserId actorUserId,
         TransactionTypes transactionType,

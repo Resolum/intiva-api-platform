@@ -1,6 +1,6 @@
 package com.resolum.intiva.platform.finances.domain.model.queries;
 
-import com.resolum.intiva.platform.finances.domain.model.valueobjects.TransactionTypes;
+import com.resolum.intiva.platform.shared.domain.valueobjects.TransactionTypes;
 
 /**
  * Query to get transactions by owner ID and transaction type.

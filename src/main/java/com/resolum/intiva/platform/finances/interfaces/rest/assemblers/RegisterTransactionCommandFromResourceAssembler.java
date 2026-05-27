@@ -1,7 +1,7 @@
 package com.resolum.intiva.platform.finances.interfaces.rest.assemblers;
 
 import com.resolum.intiva.platform.finances.domain.model.commands.RegisterTransactionCommand;
-import com.resolum.intiva.platform.finances.domain.model.valueobjects.TransactionTypes;
+import com.resolum.intiva.platform.shared.domain.valueobjects.TransactionTypes;
 import com.resolum.intiva.platform.finances.interfaces.rest.resources.requests.RegisterTransactionResource;
 import com.resolum.intiva.platform.shared.domain.valueobjects.*;
 
@@ -19,7 +19,7 @@ public class RegisterTransactionCommandFromResourceAssembler {
      * @return A RegisterTransactionCommand constructed from the provided resource, ready to be used in the application layer for processing the transaction registration. The command will contain all necessary information extracted and transformed from the resource to facilitate the registration of a new transaction in the system.
      */
     public static RegisterTransactionCommand toCommandFromResource(RegisterTransactionResource resource) {
-        var amount = new BigDecimal(resource.amount());
+        var amount = resource.amount();
         var currencyCode = CurrencyCodes.valueOf(resource.currencyCode());
         var money = new Money(amount, currencyCode);
 

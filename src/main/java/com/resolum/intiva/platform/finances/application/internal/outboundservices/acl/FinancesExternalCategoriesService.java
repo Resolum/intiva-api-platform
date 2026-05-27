@@ -30,7 +30,7 @@ public class FinancesExternalCategoriesService {
      * @param categoryId the ID of the category to check
      * @return an Optional containing a boolean indicating whether the category exists
      */
-    public Optional<Boolean> existsCategoryById(Long categoryId) {
-        return Optional.of(categoriesContextFacade.existsCategoryById(categoryId));
+    public Boolean existsCategoryById(Long categoryId) {
+        return categoriesContextFacade.existsCategoryById(categoryId);
     }
 }

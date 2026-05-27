@@ -1,5 +1,6 @@
 package com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.aggregates;
 
+import com.resolum.intiva.platform.shared.domain.valueobjects.TransactionTypes;
 import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.valueobjects.AccountName;
 import com.resolum.intiva.platform.shared.domain.aggregates.AuditableAbstractAggregate;
 import com.resolum.intiva.platform.shared.domain.valueobjects.Money;
@@ -18,8 +19,6 @@ public abstract class FinancialAccount extends AuditableAbstractAggregate<Financ
     private AccountName name;
 
     private Boolean isActive;
-
-    private BigDecimal creditLimit;
 
     @Embedded
     @AttributeOverrides({
@@ -51,5 +50,24 @@ public abstract class FinancialAccount extends AuditableAbstractAggregate<Financ
 
     public void updateCurrentAmount(Money amount) {
         this.currentAmount = this.currentAmount.add(amount);
+    }
+
+    public void applyTransaction(Money amount, TransactionTypes type) {
+
+        if (!isActive) {
+            throw new IllegalStateException("Account is inactive. Cannot apply transactions.");
+        }
+
+        if (amount.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Transaction amount must be greater than zero.");
+        }
+
+        if (type == TransactionTypes.EXPENSE) {
+            this.currentAmount = this.currentAmount.subtract(amount);
+        }
+
+        if (type == TransactionTypes.INCOME) {
+            this.currentAmount = this.currentAmount.add(amount);
+        }
     }
 }

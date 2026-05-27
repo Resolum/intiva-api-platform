@@ -1,4 +1,4 @@
-package com.resolum.intiva.platform.finances.domain.model.valueobjects;
+package com.resolum.intiva.platform.shared.domain.valueobjects;
 
 /**
  * Enum representing the types of transactions in the financial system.

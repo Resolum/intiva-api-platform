@@ -22,7 +22,7 @@ public class TransactionEntryTests {
         // Arrange
         var money = new Money(BigDecimal.valueOf(10.00), CurrencyCodes.PEN);
         var description = "Test transaction";
-        var ownerId = "owner123";
+        var ownerId = 1L;
         var financialAccountId = new FinancialAccountId(12345678L);
         var actorUserId = new UserId(12345L);
 
@@ -42,7 +42,7 @@ public class TransactionEntryTests {
         // Arrange
         Money money = null;
         var description = "Test transaction";
-        var ownerId = "owner123";
+        var ownerId = 1L;
         var financialAccountId = new FinancialAccountId(12345678L);
         var actorUserId = new UserId(12345L);
 
@@ -63,7 +63,7 @@ public class TransactionEntryTests {
         // Arrange
         var money = new Money(BigDecimal.valueOf(10.00), CurrencyCodes.PEN);
         String description = null;
-        var ownerId = "owner123";
+        var ownerId = 1L;
         var financialAccountId = new FinancialAccountId(12345678L);
         var actorUserId = new UserId(12345L);
 

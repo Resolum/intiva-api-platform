@@ -1,6 +1,6 @@
 package com.resolum.intiva.platform.finances.domain.model.aggregates;
 
-import com.resolum.intiva.platform.finances.domain.model.valueobjects.TransactionTypes;
+import com.resolum.intiva.platform.shared.domain.valueobjects.TransactionTypes;
 import com.resolum.intiva.platform.shared.domain.valueobjects.*;
 import org.junit.jupiter.api.Test;
 
@@ -22,7 +22,7 @@ public class TransactionTests {
         // Arrange
         var money = new Money(BigDecimal.valueOf(10.00), CurrencyCodes.PEN);
         var description = "Test transaction";
-        var ownerId = "owner123";
+        var ownerId = 1L;
         var financialAccountId = new FinancialAccountId(12345678L);
         var actorUserId = new UserId(12345L);
         var transactionType = TransactionTypes.INCOME;
@@ -43,7 +43,7 @@ public class TransactionTests {
     void create_shouldThrowException_whenAmountIsInvalid() {
         // Arrange
         var description = "Test transaction";
-        var ownerId = "owner123";
+        var ownerId = 1L;
         var financialAccountId = new FinancialAccountId(12345678L);
         var actorUserId = new UserId(12345L);
         var transactionType = TransactionTypes.INCOME;
@@ -61,7 +61,7 @@ public class TransactionTests {
     void create_shouldThrowException_whenDescriptionIsInvalid() {
         // Arrange
         var money = new Money(BigDecimal.valueOf(10.00), CurrencyCodes.PEN);
-        var ownerId = "owner123";
+        var ownerId = 1L;
         var financialAccountId = new FinancialAccountId(12345678L);
         var actorUserId = new UserId(12345L);
         var transactionType = TransactionTypes.INCOME;
@@ -86,7 +86,7 @@ public class TransactionTests {
         var categoryId = new CategoryId(123123L);
 
         // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> new Transaction(money, description, "", financialAccountId, actorUserId, transactionType, categoryId));
+        assertThrows(IllegalArgumentException.class, () -> new Transaction(money, description, 1L, financialAccountId, actorUserId, transactionType, categoryId));
     }
 
     /**
@@ -98,7 +98,7 @@ public class TransactionTests {
         // Arrange
         var money = new Money(BigDecimal.valueOf(10.00), CurrencyCodes.PEN);
         var description = "Test transaction";
-        var ownerId = "owner123";
+        var ownerId = 1L;
         var financialAccountId = new FinancialAccountId(12345678L);
         var actorUserId = new UserId(12345L);
         var transactionType = TransactionTypes.INCOME;
@@ -122,7 +122,7 @@ public class TransactionTests {
         // Arrange
         var money = new Money(BigDecimal.valueOf(10.00), CurrencyCodes.PEN);
         var description = "Test transaction";
-        var ownerId = "owner123";
+        var ownerId = 1L;
         var financialAccountId = new FinancialAccountId(12345678L);
         var actorUserId = new UserId(12345L);
         var transactionType = TransactionTypes.INCOME;
@@ -142,7 +142,7 @@ public class TransactionTests {
         // Arrange
         var money = new Money(BigDecimal.valueOf(10.00), CurrencyCodes.PEN);
         var description = "Test transaction";
-        var ownerId = "owner123";
+        var ownerId = 1L;
         var financialAccountId = new FinancialAccountId(12345678L);
         var actorUserId = new UserId(12345L);
         var transactionType = TransactionTypes.INCOME;
@@ -166,7 +166,7 @@ public class TransactionTests {
         // Arrange
         var money = new Money(BigDecimal.valueOf(10.00), CurrencyCodes.PEN);
         var description = "Test transaction";
-        var ownerId = "owner123";
+        var ownerId = 1L;
         var financialAccountId = new FinancialAccountId(12345678L);
         var actorUserId = new UserId(12345L);
         var transactionType = TransactionTypes.INCOME;
@@ -186,7 +186,7 @@ public class TransactionTests {
         // Arrange
         var money = new Money(BigDecimal.valueOf(10.00), CurrencyCodes.PEN);
         var description = "Test transaction";
-        var ownerId = "owner123";
+        var ownerId = 1L;
         var financialAccountId = new FinancialAccountId(12345678L);
         var actorUserId = new UserId(12345L);
         var transactionType = TransactionTypes.INCOME;
@@ -210,7 +210,7 @@ public class TransactionTests {
         // Arrange
         var money = new Money(BigDecimal.valueOf(10.00), CurrencyCodes.PEN);
         var description = "Test transaction";
-        var ownerId = "owner123";
+        var ownerId = 1L;
         var financialAccountId = new FinancialAccountId(12345678L);
         var actorUserId = new UserId(12345L);
         var transactionType = TransactionTypes.INCOME;
