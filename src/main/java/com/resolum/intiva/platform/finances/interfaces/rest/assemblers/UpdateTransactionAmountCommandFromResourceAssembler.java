@@ -22,7 +22,7 @@ public class UpdateTransactionAmountCommandFromResourceAssembler {
     public static UpdateTransactionAmountCommand toCommandFromResource(Long id, UpdateTransactionAmountResource resource) {
         var transactionId = new TransactionEntryId(id);
         var amount = new BigDecimal(resource.amount());
-        var currencyCode = CurrencyCodes.valueOf(resource.currencyCode());
+        var currencyCode = CurrencyCodes.fromString(resource.currencyCode());
         var money = new Money(amount, currencyCode);
 
         return new UpdateTransactionAmountCommand(

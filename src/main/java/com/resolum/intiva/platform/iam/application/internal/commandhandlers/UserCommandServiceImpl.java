@@ -6,12 +6,14 @@ import com.resolum.intiva.platform.iam.domain.exceptions.UserWithEmailAlreadyExi
 import com.resolum.intiva.platform.iam.domain.model.aggregates.User;
 import com.resolum.intiva.platform.iam.domain.model.commands.SignInCommand;
 import com.resolum.intiva.platform.iam.domain.model.commands.SignUpCommand;
+import com.resolum.intiva.platform.iam.domain.model.events.UserRegisteredEvent;
 import com.resolum.intiva.platform.iam.domain.model.valueobjects.PasswordHash;
 import com.resolum.intiva.platform.iam.domain.services.UserCommandService;
 import com.resolum.intiva.platform.iam.infrastructure.persistence.jpa.repositories.UserRepository;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -35,11 +37,15 @@ public class UserCommandServiceImpl implements UserCommandService {
     // TokenService is used to generate authentication tokens for users after successful sign-up or login
     private final TokenService tokenService;
 
+    // ApplicationEventPublisher is used to publish application-specific events
+    private final ApplicationEventPublisher eventPublisher;
+
     // Constructor injection for dependencies
-    public UserCommandServiceImpl(UserRepository userRepository, HashingService hashingService, TokenService tokenService) {
+    public UserCommandServiceImpl(UserRepository userRepository, HashingService hashingService, TokenService tokenService, ApplicationEventPublisher eventPublisher) {
         this.userRepository = userRepository;
         this.hashingService = hashingService;
         this.tokenService = tokenService;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -63,6 +69,11 @@ public class UserCommandServiceImpl implements UserCommandService {
             var hashedPassword = hashingService.encode(command.password());
             var user = new User(command.email(), new PasswordHash(hashedPassword));
             userRepository.save(user);
+
+            // Publish the UserRegisteredEvent after successfully saving the user to the database
+            eventPublisher.publishEvent(new UserRegisteredEvent(this, user.getId()));
+
+            LOGGER.info("User with email {} has been registered", email.getValue());
 
             LOGGER.info("User with email {} has signed-up", email.getValue());
 

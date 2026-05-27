@@ -18,7 +18,7 @@ public record TransactionResource(
         String amount,
         String currencyCode,
         String description,
-        String ownerId,
+        Long ownerId,
         Long financialAccountId,
         Long actorUserId,
         String transactionType,

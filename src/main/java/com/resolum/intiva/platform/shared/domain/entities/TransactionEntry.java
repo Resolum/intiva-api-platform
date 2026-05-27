@@ -3,6 +3,7 @@ package com.resolum.intiva.platform.shared.domain.entities;
 import com.resolum.intiva.platform.shared.domain.aggregates.AuditableAbstractAggregate;
 import com.resolum.intiva.platform.shared.domain.valueobjects.FinancialAccountId;
 import com.resolum.intiva.platform.shared.domain.valueobjects.Money;
+import com.resolum.intiva.platform.shared.domain.valueobjects.OwnerTypes;
 import com.resolum.intiva.platform.shared.domain.valueobjects.UserId;
 import jakarta.persistence.*;
 import jakarta.validation.Valid;
@@ -41,7 +42,7 @@ public class TransactionEntry extends AuditableAbstractAggregate<TransactionEntr
      * The identifier of the owner of the transaction, which could be a user or an entity responsible for the transaction. This field is mandatory and must not be null.
      */
     @AttributeOverride(name = "owner_id", column = @Column(nullable = false))
-    protected String ownerId;
+    protected Long ownerId;
 
     /**
      * The identifier of the financial account associated with the transaction, represented as a FinancialAccountId value object. This field is mandatory and must be valid.
@@ -56,15 +57,23 @@ public class TransactionEntry extends AuditableAbstractAggregate<TransactionEntr
      */
     @Embedded
     @Valid
-    @AttributeOverride(name = "actor_user_id", column = @Column(nullable = false))
-    protected UserId actorUserId;
+    @AttributeOverride(name = "performed_by_user_id", column = @Column(nullable = false))
+    protected UserId performedByUserId;
+
+    /**
+     * The type of owner of the transaction, which could be a user or an entity. This field is mandatory and must not be null.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "owner_type", nullable = false)
+    OwnerTypes ownerTypes;
 
     // Constructors, getters, setters, and other methods
-    public TransactionEntry(Money amount, String description, String ownerId, FinancialAccountId financialAccountId, UserId actorUserId) {
+    public TransactionEntry(Money amount, String description, Long ownerId, FinancialAccountId financialAccountId, UserId performedByUserId, OwnerTypes ownerTypes) {
         this.amount = amount;
         this.description = description;
         this.ownerId = ownerId;
         this.financialAccountId = financialAccountId;
-        this.actorUserId = actorUserId;
+        this.performedByUserId = performedByUserId;
+        this.ownerTypes = ownerTypes;
     }
 }

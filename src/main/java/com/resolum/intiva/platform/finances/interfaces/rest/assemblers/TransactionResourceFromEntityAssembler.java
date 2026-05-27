@@ -21,7 +21,7 @@ public class TransactionResourceFromEntityAssembler {
                 entity.getDescription(),
                 entity.getOwnerId(),
                 entity.getFinancialAccountId().getValue(),
-                entity.getActorUserId().getValue(),
+                entity.getPerformedByUserId().getValue(),
                 entity.getTransactionType().name(),
                 entity.getCategoryId().getValue(),
                 entity.getCreatedAt().toString()
