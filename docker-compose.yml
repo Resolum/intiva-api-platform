@@ -27,6 +27,21 @@ services:
       timeout: 5s
       retries: 5
 
+  # pgAdmin4 Database Management Tool Service
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: intiva_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    ports:
+      - "5050:80"
+    networks:
+      - intiva_internal
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
   # Redis Cache Service
   redis:
     image: redis:7-alpine
