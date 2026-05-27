@@ -3,10 +3,12 @@ package com.resolum.intiva.platform.finances.application.internal.eventhandlers;
 import com.resolum.intiva.platform.finances.application.internal.outboundservices.acl.FinancesExternalFinancialAccountService;
 import com.resolum.intiva.platform.finances.domain.model.events.RegisteredTransactionDetectedEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Service;
 
 /**
  * Event handler for RegisteredTransactionDetectedEvent. This class listens for RegisteredTransactionDetectedEvent and creates a financial account transaction using the FinancesExternalFinancialAccountService.
  */
+@Service
 public class RegisteredTransactionDetectedEventHandler {
 
     /**

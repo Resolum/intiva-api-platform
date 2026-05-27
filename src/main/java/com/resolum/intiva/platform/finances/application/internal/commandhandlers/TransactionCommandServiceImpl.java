@@ -2,7 +2,6 @@
 
     import com.resolum.intiva.platform.finances.application.internal.outboundservices.acl.FinancesExternalFinancialAccountService;
     import com.resolum.intiva.platform.finances.domain.model.events.RegisteredTransactionDetectedEvent;
-    import com.resolum.intiva.platform.paymentmethodsandcategories.interfaces.acl.CategoriesContextFacade;
     import com.resolum.intiva.platform.finances.application.internal.outboundservices.acl.FinancesExternalCategoriesService;
     import com.resolum.intiva.platform.finances.domain.model.aggregates.Transaction;
     import com.resolum.intiva.platform.finances.domain.model.commands.RegisterTransactionCommand;
@@ -58,25 +57,23 @@
             try {
 
                 if (!financesExternalCategoriesService.existsCategoryById(command.categoryId().getValue())) {
-                    LOGGER.error("Category with ID {} does not exist for user {}.", command.categoryId().getValue(), command.actorUserId());
-                    return Optional.empty();
+                    throw new IllegalArgumentException("Category with ID " + command.categoryId().getValue() + " does not exist.");
+
                 }
 
                 if (!financesExternalFinancialAccountService.existsFinancialAccountById(command.financialAccountId().getValue())) {
-                    LOGGER.error("Financial account with ID {} does not exist", command.financialAccountId().getValue());
-                    return Optional.empty();
+                    throw new IllegalArgumentException("Financial account with ID " + command.financialAccountId().getValue() + " does not exist.");
                 }
 
                 // Publish a domain event for the registered transaction, which will trigger the adjustment of the spent limit associated with the category of the transaction
-                eventPublisher.publishEvent(new RegisteredTransactionDetectedEvent(this, command.actorUserId().userId(), command.transactionType().name(), command.amount().getAmount(), command.amount().getCurrencyCode()));
+                eventPublisher.publishEvent(new RegisteredTransactionDetectedEvent(this, command.performedByUserId().userId(), command.transactionType().name(), command.amount().getAmount(), command.amount().getCurrencyCode()));
 
                 var transaction = new Transaction(command);
 
                 transactionRepository.save(transaction);
                 return Optional.of(transaction);
             } catch (Exception e) {
-                LOGGER.error("Error while registering transaction for user {}: {}", command.actorUserId(),e.getMessage());
-                return Optional.empty();
+                throw new IllegalArgumentException("Error while registering transaction: " + e.getMessage());
             }
         }
 

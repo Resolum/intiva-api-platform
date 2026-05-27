@@ -19,7 +19,7 @@ public class CreateSavingGoalCommandFromResourceAssembler {
      */
     public static CreateSavingGoalCommand toCommandFromResource(CreateSavingGoalResource resource) {
         String type = resource.ownerType().toUpperCase();
-        OwnerTypes parsedType = type.equals("FAMILY") ? OwnerTypes.Family : OwnerTypes.Individual;
+        OwnerTypes parsedType = type.equals("FAMILY") ? OwnerTypes.FAMILY : OwnerTypes.INDIVIDUAL;
 
         return new CreateSavingGoalCommand(
                 parsedType,
@@ -27,7 +27,7 @@ public class CreateSavingGoalCommandFromResourceAssembler {
                 resource.ownerId(),
                 resource.title(),
                 resource.targetAmount(),
-                CurrencyCodes.valueOf(resource.currencyCode().toUpperCase()),
+                CurrencyCodes.fromString(resource.currencyCode().toUpperCase()),
                 resource.description(),
                 resource.startsAt(),
                 resource.deadline(),

@@ -45,9 +45,9 @@ public class FinancialAccountCommandServiceImpl implements FinancialAccountComma
         financialAccount.applyTransaction(
                 new Money(
                         command.amount(),
-                        CurrencyCodes.valueOf(command.currencyCode())
+                        CurrencyCodes.fromString(command.currencyCode())
                 ),
-                TransactionTypes.valueOf(command.transactionType())
+                TransactionTypes.fromString(command.transactionType())
         );
         financialAccountRepository.save(financialAccount);
     }

@@ -1,5 +1,8 @@
 package com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.aggregates;
 
+import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.exceptions.InactiveFinancialAccountException;
+import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.exceptions.InsufficientFundsException;
+import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.exceptions.InvalidTransactionAmountException;
 import com.resolum.intiva.platform.shared.domain.valueobjects.TransactionTypes;
 import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.valueobjects.AccountName;
 import com.resolum.intiva.platform.shared.domain.aggregates.AuditableAbstractAggregate;
@@ -52,17 +55,32 @@ public abstract class FinancialAccount extends AuditableAbstractAggregate<Financ
         this.currentAmount = this.currentAmount.add(amount);
     }
 
+    /**
+     * Applies a transaction to the financial account, updating the current amount based on the transaction type.
+     *
+     * @param amount the amount of the transaction, must be greater than zero
+     * @param type   the type of the transaction (INCOME or EXPENSE)
+     * @throws InactiveFinancialAccountException if the account is inactive
+     * @throws InvalidTransactionAmountException if the transaction amount is not greater than zero
+     * @throws InsufficientFundsException        if the transaction is an expense and there are insufficient funds
+     */
     public void applyTransaction(Money amount, TransactionTypes type) {
 
         if (!isActive) {
-            throw new IllegalStateException("Account is inactive. Cannot apply transactions.");
+            throw new InactiveFinancialAccountException();
         }
 
         if (amount.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Transaction amount must be greater than zero.");
+            throw new InvalidTransactionAmountException();
         }
 
         if (type == TransactionTypes.EXPENSE) {
+
+            if (this.currentAmount.getAmount()
+                    .compareTo(amount.getAmount()) < 0) {
+                throw new InsufficientFundsException();
+            }
+
             this.currentAmount = this.currentAmount.subtract(amount);
         }
 

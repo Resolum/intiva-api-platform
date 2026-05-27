@@ -8,5 +8,23 @@ package com.resolum.intiva.platform.shared.domain.valueobjects;
 public enum TransactionTypes {
     INCOME,
     EXPENSE,
-    TRANSFER
+    TRANSFER;
+
+    /**
+     * Converts a string representation of a transaction type to its corresponding enum value.
+     * The input string is case-insensitive, and if it does not match any of the defined transaction types, an IllegalArgumentException is thrown.
+     *
+     * @param value the string representation of the transaction type (e.g., "income", "expense", "transfer")
+     * @return the corresponding TransactionTypes enum value
+     * @throws IllegalArgumentException if the input string does not match any of the defined transaction types
+     */
+    public static TransactionTypes fromString(String value) {
+        try {
+            return TransactionTypes.valueOf(value.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(
+                    "Invalid currency code."
+            );
+        }
+    }
 }
