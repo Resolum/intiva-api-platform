@@ -149,3 +149,19 @@ docker stats
  http://localhost:5050
 ```
 
+### Acceder a la base de datos
+
+```bash
+Name: Intiva PostgreSQL
+
+Host name/address: postgres
+
+Port: 5432
+
+Maintenance database: intiva_platform
+
+Username: {POSTGRES_USER}
+
+Password: {POSTGRES_PASSWORD}
+```
+

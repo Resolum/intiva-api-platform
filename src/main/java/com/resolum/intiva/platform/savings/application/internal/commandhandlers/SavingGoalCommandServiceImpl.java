@@ -63,12 +63,12 @@ public class SavingGoalCommandServiceImpl implements SavingGoalCommandService {
         Long actorUserId = null;
         String ownerId = null;
 
-        if (command.ownerType() == OwnerTypes.Individual) {
+        if (command.ownerType() == OwnerTypes.INDIVIDUAL) {
             if (command.actorUserId() == null) {
-                throw new IllegalArgumentException("actorUserId is required for INDIVIDUAL owner type");
+                throw new IllegalArgumentException("performedByUserId is required for INDIVIDUAL owner type");
             }
             actorUserId = command.actorUserId();
-        } else if (command.ownerType() == OwnerTypes.Family) {
+        } else if (command.ownerType() == OwnerTypes.FAMILY) {
             if (command.ownerId() == null || command.ownerId().trim().isEmpty()) {
                 throw new IllegalArgumentException("ownerId (groupId) is required for FAMILY owner type");
             }

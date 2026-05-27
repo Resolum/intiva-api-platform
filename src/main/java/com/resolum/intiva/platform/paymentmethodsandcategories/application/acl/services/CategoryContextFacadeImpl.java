@@ -35,9 +35,9 @@ public class CategoryContextFacadeImpl implements CategoriesContextFacade {
      */
     @Override
     public void createDefaultCategory(Long userId) {
-        var createDefaultCategory = new CreateDefaultCategoryCommand(
+        var createDefaultCategoryCommand = new CreateDefaultCategoryCommand(
                 userId
         );
-        categoryCommandService.handle(createDefaultCategory);
+        categoryCommandService.handle(createDefaultCategoryCommand);
     }
 }

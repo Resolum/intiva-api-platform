@@ -1,7 +1,7 @@
 package com.resolum.intiva.platform.finances.domain.model.aggregates;
 
 import com.resolum.intiva.platform.finances.domain.model.commands.RegisterTransactionCommand;
-import com.resolum.intiva.platform.finances.domain.model.valueobjects.TransactionTypes;
+import com.resolum.intiva.platform.shared.domain.valueobjects.TransactionTypes;
 import com.resolum.intiva.platform.shared.domain.entities.TransactionEntry;
 import com.resolum.intiva.platform.shared.domain.valueobjects.*;
 import jakarta.persistence.Embedded;
@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
 /**
- * Transaction represents a financial transaction in the system, which can be either an income or an expense. It extends the TransactionEntry class, inheriting common properties such as amount, description, ownerId, financialAccountId, and actorUserId.
+ * Transaction represents a financial transaction in the system, which can be either an income or an expense. It extends the TransactionEntry class, inheriting common properties such as amount, description, ownerId, financialAccountId, and performedByUserId.
  *
  * @summary
  * The Transaction class adds specific properties related to the type of transaction (income or expense) and the category of the transaction.
@@ -38,15 +38,11 @@ public class Transaction extends TransactionEntry {
     private CategoryId categoryId;
 
     // Constructor with validation for mandatory fields and business rules.
-    public Transaction(@Valid Money amount, String description, String ownerId, @Valid FinancialAccountId financialAccountId, @Valid UserId actorUserId, TransactionTypes transactionType, @Valid CategoryId categoryId) {
-        super(amount, description, ownerId, financialAccountId, actorUserId);
+    public Transaction(@Valid Money amount, String description, Long ownerId, @Valid FinancialAccountId financialAccountId, @Valid UserId performedByUserId, TransactionTypes transactionType, @Valid CategoryId categoryId, OwnerTypes ownerTypes) {
+        super(amount, description, ownerId, financialAccountId, performedByUserId, ownerTypes);
 
         if (description == null || description.isBlank()) {
             throw new IllegalArgumentException("Description cannot be null or blank");
-        }
-
-        if (ownerId == null || ownerId.isBlank()) {
-            throw new IllegalArgumentException("Owner ID cannot be null or blank");
         }
 
         this.transactionType = transactionType;
@@ -58,7 +54,7 @@ public class Transaction extends TransactionEntry {
      * @param command The RegisterTransactionCommand containing the data required to create a new Transaction instance. It must not be null and must contain valid data for all mandatory fields.
      */
     public Transaction(RegisterTransactionCommand command) {
-        this(command.amount(), command.description(), command.ownerId(), command.financialAccountId(), command.actorUserId(), command.transactionType(), command.categoryId());
+        this(command.amount(), command.description(), command.ownerId(), command.financialAccountId(), command.performedByUserId(), command.transactionType(), command.categoryId(), command.ownerTypes());
     }
 
     /**

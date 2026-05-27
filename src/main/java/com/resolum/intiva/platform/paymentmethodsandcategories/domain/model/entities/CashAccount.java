@@ -1,5 +1,6 @@
-package com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.aggregates;
+package com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.entities;
 
+import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.aggregates.FinancialAccount;
 import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.valueobjects.AccountName;
 import com.resolum.intiva.platform.shared.domain.valueobjects.CurrencyCodes;
 import com.resolum.intiva.platform.shared.domain.valueobjects.Money;

@@ -1,9 +1,9 @@
 package com.resolum.intiva.platform.paymentmethodsandcategories.interfaces.rest.assemblers;
 
-import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.aggregates.CreditCardAccount;
-import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.aggregates.DebitCardAccount;
+import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.entities.CreditCardAccount;
+import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.entities.DebitCardAccount;
 import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.aggregates.FinancialAccount;
-import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.aggregates.WalletAccount;
+import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.entities.WalletAccount;
 import com.resolum.intiva.platform.paymentmethodsandcategories.interfaces.rest.resources.responses.FinancialAccountResource;
 import jakarta.persistence.DiscriminatorValue;
 

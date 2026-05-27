@@ -1,8 +1,10 @@
 package com.resolum.intiva.platform.finances.application.internal.outboundservices.acl;
 
 import com.resolum.intiva.platform.paymentmethodsandcategories.interfaces.acl.FinancialAccountContextFacade;
+import com.resolum.intiva.platform.paymentmethodsandcategories.interfaces.rest.resources.responses.FinancialAccountResource;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 /**
@@ -30,7 +32,19 @@ public class FinancesExternalFinancialAccountService {
      * @param financialAccountId the ID of the financial account to check
      * @return an Optional containing a boolean indicating whether the financial account exists
      */
-    public Optional<Boolean> existsFinancialAccountById(Long financialAccountId) {
-        return Optional.of(financialAccountContextFacade.existsFinancialAccountById(financialAccountId));
+    public Boolean existsFinancialAccountById(Long financialAccountId) {
+        return financialAccountContextFacade.existsFinancialAccountById(financialAccountId);
     }
+
+    /**
+     * Creates a new financial account transaction for a specified financial account.
+     * @param financialAccountId the ID of the financial account for which to create the transaction
+     * @param transactionType the type of transaction (e.g., deposit, withdrawal)
+     * @param amount the amount of the transaction
+     * @param currencyCode the currency code of the transaction
+     */
+    public void createFinancialAccountTransaction(Long financialAccountId, String transactionType, BigDecimal amount, String currencyCode) {
+        financialAccountContextFacade.createFinancialAccountTransaction(financialAccountId, transactionType, amount, currencyCode);
+    }
+
 }

@@ -1,6 +1,6 @@
 package com.resolum.intiva.platform.finances.domain.model.aggregates;
 
-import com.resolum.intiva.platform.finances.domain.model.valueobjects.TransactionTypes;
+import com.resolum.intiva.platform.shared.domain.valueobjects.TransactionTypes;
 import com.resolum.intiva.platform.shared.domain.valueobjects.*;
 import org.junit.jupiter.api.Test;
 
@@ -15,21 +15,22 @@ public class TransactionTests {
 
     /**
      * Test case to verify that a Transaction can be created successfully with valid parameters.
-     * This test ensures that the constructor of the Transaction class correctly initializes the object when provided with valid input values for amount, description, ownerId, financialAccountId, actorUserId, transactionType, and categoryId.
+     * This test ensures that the constructor of the Transaction class correctly initializes the object when provided with valid input values for amount, description, ownerId, financialAccountId, performedByUserId, transactionType, and categoryId.
      */
     @Test
     void create_shouldRegisterEntry_whenParametersAreValid() {
         // Arrange
         var money = new Money(BigDecimal.valueOf(10.00), CurrencyCodes.PEN);
         var description = "Test transaction";
-        var ownerId = "owner123";
+        var ownerId = 1L;
         var financialAccountId = new FinancialAccountId(12345678L);
-        var actorUserId = new UserId(12345L);
+        var performedByUserId = new UserId(12345L);
         var transactionType = TransactionTypes.INCOME;
         var categoryId = new CategoryId(123123L);
+        var ownerType = OwnerTypes.INDIVIDUAL;
 
         // Act
-        var income = new Transaction(money, description, ownerId, financialAccountId, actorUserId, transactionType, categoryId);
+        var income = new Transaction(money, description, ownerId, financialAccountId, performedByUserId, transactionType, categoryId, ownerType);
 
         // Assert
         assertNotNull(income);
@@ -43,14 +44,15 @@ public class TransactionTests {
     void create_shouldThrowException_whenAmountIsInvalid() {
         // Arrange
         var description = "Test transaction";
-        var ownerId = "owner123";
+        var ownerId = 1L;
         var financialAccountId = new FinancialAccountId(12345678L);
-        var actorUserId = new UserId(12345L);
+        var performedByUserId = new UserId(12345L);
         var transactionType = TransactionTypes.INCOME;
         var categoryId = new CategoryId(123123L);
+        var ownerType = OwnerTypes.INDIVIDUAL;
 
         // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> new Transaction(new Money(BigDecimal.valueOf(-10.00), CurrencyCodes.PEN), description, ownerId, financialAccountId, actorUserId, transactionType, categoryId));
+        assertThrows(IllegalArgumentException.class, () -> new Transaction(new Money(BigDecimal.valueOf(-10.00), CurrencyCodes.PEN), description, ownerId, financialAccountId, performedByUserId, transactionType, categoryId, ownerType));
     }
 
     /**
@@ -61,14 +63,15 @@ public class TransactionTests {
     void create_shouldThrowException_whenDescriptionIsInvalid() {
         // Arrange
         var money = new Money(BigDecimal.valueOf(10.00), CurrencyCodes.PEN);
-        var ownerId = "owner123";
+        var ownerId = 1L;
         var financialAccountId = new FinancialAccountId(12345678L);
-        var actorUserId = new UserId(12345L);
+        var performedByUserId = new UserId(12345L);
         var transactionType = TransactionTypes.INCOME;
         var categoryId = new CategoryId(123123L);
+        var ownerType = OwnerTypes.INDIVIDUAL;
 
         // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> new Transaction(money, "", ownerId, financialAccountId, actorUserId, transactionType, categoryId));
+        assertThrows(IllegalArgumentException.class, () -> new Transaction(money, "", ownerId, financialAccountId, performedByUserId, transactionType, categoryId, ownerType));
     }
 
     /**
@@ -81,12 +84,13 @@ public class TransactionTests {
         var money = new Money(BigDecimal.valueOf(10.00), CurrencyCodes.PEN);
         var description = "Test transaction";
         var financialAccountId = new FinancialAccountId(12345678L);
-        var actorUserId = new UserId(12345L);
+        var performedByUserId = new UserId(12345L);
         var transactionType = TransactionTypes.INCOME;
         var categoryId = new CategoryId(123123L);
+        var ownerType = OwnerTypes.INDIVIDUAL;
 
         // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> new Transaction(money, description, "", financialAccountId, actorUserId, transactionType, categoryId));
+        assertThrows(IllegalArgumentException.class, () -> new Transaction(money, description, 1L, financialAccountId, performedByUserId, transactionType, categoryId, ownerType));
     }
 
     /**
@@ -98,12 +102,13 @@ public class TransactionTests {
         // Arrange
         var money = new Money(BigDecimal.valueOf(10.00), CurrencyCodes.PEN);
         var description = "Test transaction";
-        var ownerId = "owner123";
+        var ownerId = 1L;
         var financialAccountId = new FinancialAccountId(12345678L);
-        var actorUserId = new UserId(12345L);
+        var performedByUserId = new UserId(12345L);
         var transactionType = TransactionTypes.INCOME;
         var categoryId = new CategoryId(123123L);
-        var transaction = new Transaction(money, description, ownerId, financialAccountId, actorUserId, transactionType, categoryId);
+        var ownerType = OwnerTypes.INDIVIDUAL;
+        var transaction = new Transaction(money, description, ownerId, financialAccountId, performedByUserId, transactionType, categoryId, ownerType);
 
         // Act
         var newDescription = "Updated transaction description";
@@ -122,12 +127,13 @@ public class TransactionTests {
         // Arrange
         var money = new Money(BigDecimal.valueOf(10.00), CurrencyCodes.PEN);
         var description = "Test transaction";
-        var ownerId = "owner123";
+        var ownerId = 1L;
         var financialAccountId = new FinancialAccountId(12345678L);
-        var actorUserId = new UserId(12345L);
+        var performedByUserId = new UserId(12345L);
         var transactionType = TransactionTypes.INCOME;
         var categoryId = new CategoryId(123123L);
-        var transaction = new Transaction(money, description, ownerId, financialAccountId, actorUserId, transactionType, categoryId);
+        var ownerType = OwnerTypes.INDIVIDUAL;
+        var transaction = new Transaction(money, description, ownerId, financialAccountId, performedByUserId, transactionType, categoryId, ownerType);
 
         // Act & Assert
         assertThrows(IllegalArgumentException.class, () -> transaction.editDescription(""));
@@ -142,12 +148,13 @@ public class TransactionTests {
         // Arrange
         var money = new Money(BigDecimal.valueOf(10.00), CurrencyCodes.PEN);
         var description = "Test transaction";
-        var ownerId = "owner123";
+        var ownerId = 1L;
         var financialAccountId = new FinancialAccountId(12345678L);
-        var actorUserId = new UserId(12345L);
+        var performedByUserId = new UserId(12345L);
         var transactionType = TransactionTypes.INCOME;
         var categoryId = new CategoryId(123123L);
-        var transaction = new Transaction(money, description, ownerId, financialAccountId, actorUserId, transactionType, categoryId);
+        var ownerType = OwnerTypes.INDIVIDUAL;
+        var transaction = new Transaction(money, description, ownerId, financialAccountId, performedByUserId, transactionType, categoryId, ownerType);
 
         // Act
         var newAmount = new Money(BigDecimal.valueOf(20.00), CurrencyCodes.PEN);
@@ -166,12 +173,13 @@ public class TransactionTests {
         // Arrange
         var money = new Money(BigDecimal.valueOf(10.00), CurrencyCodes.PEN);
         var description = "Test transaction";
-        var ownerId = "owner123";
+        var ownerId = 1L;
         var financialAccountId = new FinancialAccountId(12345678L);
-        var actorUserId = new UserId(12345L);
+        var performedByUserId = new UserId(12345L);
         var transactionType = TransactionTypes.INCOME;
         var categoryId = new CategoryId(123123L);
-        var transaction = new Transaction(money, description, ownerId, financialAccountId, actorUserId, transactionType, categoryId);
+        var ownerType = OwnerTypes.INDIVIDUAL;
+        var transaction = new Transaction(money, description, ownerId, financialAccountId, performedByUserId, transactionType, categoryId, ownerType);
 
         // Act & Assert
         assertThrows(IllegalArgumentException.class, () -> transaction.editAmount(new Money(BigDecimal.valueOf(-20.00), CurrencyCodes.PEN)));
@@ -186,12 +194,13 @@ public class TransactionTests {
         // Arrange
         var money = new Money(BigDecimal.valueOf(10.00), CurrencyCodes.PEN);
         var description = "Test transaction";
-        var ownerId = "owner123";
+        var ownerId = 1L;
         var financialAccountId = new FinancialAccountId(12345678L);
-        var actorUserId = new UserId(12345L);
+        var performedByUserId = new UserId(12345L);
         var transactionType = TransactionTypes.INCOME;
         var categoryId = new CategoryId(123123L);
-        var transaction = new Transaction(money, description, ownerId, financialAccountId, actorUserId, transactionType, categoryId);
+        var ownerType = OwnerTypes.INDIVIDUAL;
+        var transaction = new Transaction(money, description, ownerId, financialAccountId, performedByUserId, transactionType, categoryId, ownerType);
 
         // Act
         var newCategoryId = new CategoryId(456456L);
@@ -210,12 +219,13 @@ public class TransactionTests {
         // Arrange
         var money = new Money(BigDecimal.valueOf(10.00), CurrencyCodes.PEN);
         var description = "Test transaction";
-        var ownerId = "owner123";
+        var ownerId = 1L;
         var financialAccountId = new FinancialAccountId(12345678L);
-        var actorUserId = new UserId(12345L);
+        var performedByUserId = new UserId(12345L);
         var transactionType = TransactionTypes.INCOME;
         var categoryId = new CategoryId(123123L);
-        var transaction = new Transaction(money, description, ownerId, financialAccountId, actorUserId, transactionType, categoryId);
+        var ownerType = OwnerTypes.INDIVIDUAL;
+        var transaction = new Transaction(money, description, ownerId, financialAccountId, performedByUserId, transactionType, categoryId, ownerType);
 
         // Act
         transaction.getCreatedAt().minusSeconds(4 * 24 * 60 * 60); // Simulate transaction created 4 days ago

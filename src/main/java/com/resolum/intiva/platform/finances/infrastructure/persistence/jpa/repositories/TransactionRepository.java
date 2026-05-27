@@ -1,12 +1,11 @@
 package com.resolum.intiva.platform.finances.infrastructure.persistence.jpa.repositories;
 
 import com.resolum.intiva.platform.finances.domain.model.aggregates.Transaction;
-import com.resolum.intiva.platform.finances.domain.model.valueobjects.TransactionTypes;
+import com.resolum.intiva.platform.shared.domain.valueobjects.TransactionTypes;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Repository interface for managing Transaction entities in the database.

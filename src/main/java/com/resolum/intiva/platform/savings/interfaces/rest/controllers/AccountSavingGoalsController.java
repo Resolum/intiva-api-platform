@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 /**
  * REST controller for managing saving goals scoped to a specific account.
  * All endpoints are nested under /api/v1/accounts/{accountId}/saving-goals.
- * The accountId is used as the actorUserId for personal goals and as the contributorId for contributions.
+ * The accountId is used as the performedByUserId for personal goals and as the contributorId for contributions.
  */
 @RestController
 @RequestMapping("/api/v1/accounts/{accountId}/saving-goals")
@@ -74,13 +74,13 @@ public class AccountSavingGoalsController {
 
     /**
      * Creates a new saving goal for the specified account.
-     * The actorUserId is automatically set to the provided accountId.
+     * The performedByUserId is automatically set to the provided accountId.
      *
      * @param accountId the ID of the account creating the saving goal
      * @param resource  the details of the saving goal to create
      * @return 201 with the created saving goal, or 400 if the input data is invalid
      */
-    @Operation(summary = "Create Saving Goal for Account", description = "Creates a new saving goal associated with the specified account. The actorUserId is automatically set to the accountId.")
+    @Operation(summary = "Create Saving Goal for Account", description = "Creates a new saving goal associated with the specified account. The performedByUserId is automatically set to the accountId.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Saving goal created successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid input data")
@@ -93,7 +93,7 @@ public class AccountSavingGoalsController {
             var initialCommand = CreateSavingGoalCommandFromResourceAssembler.toCommandFromResource(resource);
             var command = new CreateSavingGoalCommand(
                     initialCommand.ownerType(),
-                    accountId, // force actorUserId = accountId
+                    accountId, // force performedByUserId = accountId
                     initialCommand.ownerId(),
                     initialCommand.title(),
                     initialCommand.targetAmount(),
