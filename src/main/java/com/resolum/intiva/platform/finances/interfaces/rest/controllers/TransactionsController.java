@@ -1,6 +1,5 @@
 package com.resolum.intiva.platform.finances.interfaces.rest.controllers;
 
-import com.resolum.intiva.platform.finances.domain.model.aggregates.Transaction;
 import com.resolum.intiva.platform.finances.domain.model.queries.GetTransactionByIdQuery;
 import com.resolum.intiva.platform.finances.domain.model.queries.GetTransactionsByOwnerIdAndTransactionTypeQuery;
 import com.resolum.intiva.platform.finances.domain.model.queries.GetTransactionsByOwnerIdQuery;
@@ -8,8 +7,8 @@ import com.resolum.intiva.platform.finances.domain.services.TransactionQueryServ
 import com.resolum.intiva.platform.finances.interfaces.rest.assemblers.TransactionResourceFromEntityAssembler;
 import com.resolum.intiva.platform.finances.interfaces.rest.resources.responses.TransactionGroupByDateResource;
 import com.resolum.intiva.platform.finances.interfaces.rest.resources.responses.TransactionResource;
+import com.resolum.intiva.platform.finances.domain.model.valueobjects.TransactionWithCategoryDesign;
 import com.resolum.intiva.platform.shared.domain.valueobjects.TransactionEntryId;
-import com.resolum.intiva.platform.shared.domain.valueobjects.TransactionTypes;
 import com.resolum.intiva.platform.shared.interfaces.rest.resource.MessageWrapperResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -20,11 +19,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * TransactionsController is a REST controller that manages financial transactions.
@@ -129,7 +124,7 @@ public class TransactionsController {
             @RequestParam(required = false) String transactionType
     ) {
 
-        List<Transaction> transactions;
+        List<TransactionWithCategoryDesign> transactions;
 
         if (ownerId != null && transactionType != null) {
 

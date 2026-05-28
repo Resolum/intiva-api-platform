@@ -1,13 +1,10 @@
 package com.resolum.intiva.platform.finances.interfaces.rest.controllers;
 
-import com.resolum.intiva.platform.finances.domain.model.queries.GetTransactionByIdQuery;
 import com.resolum.intiva.platform.finances.domain.services.TransactionCommandService;
 import com.resolum.intiva.platform.finances.domain.services.TransactionQueryService;
 import com.resolum.intiva.platform.finances.interfaces.rest.assemblers.RegisterTransactionCommandFromResourceAssembler;
 import com.resolum.intiva.platform.finances.interfaces.rest.assemblers.TransactionResourceFromEntityAssembler;
 import com.resolum.intiva.platform.finances.interfaces.rest.resources.requests.RegisterTransactionResource;
-import com.resolum.intiva.platform.finances.interfaces.rest.resources.responses.TransactionResource;
-import com.resolum.intiva.platform.shared.domain.valueobjects.TransactionEntryId;
 import com.resolum.intiva.platform.shared.interfaces.rest.resource.MessageResource;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

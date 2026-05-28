@@ -4,13 +4,11 @@ import com.resolum.intiva.platform.finances.domain.model.commands.RegisterTransa
 import com.resolum.intiva.platform.shared.domain.valueobjects.TransactionTypes;
 import com.resolum.intiva.platform.shared.domain.entities.TransactionEntry;
 import com.resolum.intiva.platform.shared.domain.valueobjects.*;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import jakarta.persistence.*;
 import jakarta.validation.Valid;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 
@@ -22,6 +20,7 @@ import java.math.BigDecimal;
  */
 @Entity
 @Getter
+@Setter
 @NoArgsConstructor
 public class Transaction extends TransactionEntry {
 
