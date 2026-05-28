@@ -1,9 +1,6 @@
 package com.resolum.intiva.platform.paymentmethodsandcategories.application.acl.services;
 
-import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.aggregates.Category;
-import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.commands.CreateCategoryCommand;
 import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.commands.CreateDefaultCategoryCommand;
-import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.queries.GetCategoryByIdQuery;
 import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.queries.GetCategoryColorAndIconByIdQuery;
 import com.resolum.intiva.platform.paymentmethodsandcategories.domain.services.CategoryCommandService;
 import com.resolum.intiva.platform.paymentmethodsandcategories.domain.services.CategoryQueryService;

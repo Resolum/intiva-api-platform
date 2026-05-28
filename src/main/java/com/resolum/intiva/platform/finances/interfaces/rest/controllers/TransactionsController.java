@@ -77,13 +77,10 @@ public class TransactionsController {
 
     /**
      * Retrieves transactions using optional filters.
-     *
      * Available filters:
      * - ownerId
      * - transactionType
-     *
      * Transactions are grouped by creation date.
-     *
      * Examples:
      * - /api/v1/transactions?ownerId=1
      * - /api/v1/transactions?ownerId=1&transactionType=EXPENSE

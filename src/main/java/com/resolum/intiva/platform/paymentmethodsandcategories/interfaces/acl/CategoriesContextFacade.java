@@ -1,6 +1,5 @@
 package com.resolum.intiva.platform.paymentmethodsandcategories.interfaces.acl;
 
-import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.aggregates.Category;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
 /**

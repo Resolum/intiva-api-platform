@@ -4,7 +4,6 @@ import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.aggr
 import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.queries.GetAllCategoriesByUserIdQuery;
 import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.queries.GetCategoryByIdQuery;
 import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.queries.GetCategoryColorAndIconByIdQuery;
-import com.resolum.intiva.platform.savings.domain.model.queries.GetAllCompletedSavingGoalsByUserIdQuery;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import java.util.List;
