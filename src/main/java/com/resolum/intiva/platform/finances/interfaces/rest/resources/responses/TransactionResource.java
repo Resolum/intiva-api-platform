@@ -11,7 +11,6 @@ package com.resolum.intiva.platform.finances.interfaces.rest.resources.responses
  * @param actorUserId The identifier of the user who performed the transaction, represented as a string. This field is mandatory and must not be null or blank, as it is important for tracking the user responsible for the transaction.
  * @param transactionType The type of the transaction, indicating whether it is an income or an expense. This field is mandatory and must be a valid value corresponding to the TransactionTypes enum, such as "INCOME" or "EXPENSE".
  * @param categoryId The identifier of the category associated with the transaction, represented as a long value. This field is optional and can be null if the transaction does not belong to any category. If provided, it must correspond to an existing category in the system.
- * @param registeredAt The date and time when the transaction was registered, represented as a string in ISO 8601 format. This field is mandatory and must be a valid date-time string, such as "2024-06-01T12:00:00Z".
  */
 public record TransactionResource(
         Long id,
@@ -22,7 +21,6 @@ public record TransactionResource(
         Long financialAccountId,
         Long actorUserId,
         String transactionType,
-        Long categoryId,
-        String registeredAt
+        Long categoryId
 ) {
 }

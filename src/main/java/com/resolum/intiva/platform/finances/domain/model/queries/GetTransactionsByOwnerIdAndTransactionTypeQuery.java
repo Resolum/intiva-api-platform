@@ -8,4 +8,8 @@ import com.resolum.intiva.platform.shared.domain.valueobjects.TransactionTypes;
  * @param transactionType the type of transactions to be retrieved (e.g., INCOME, EXPENSE).
  */
 public record GetTransactionsByOwnerIdAndTransactionTypeQuery(Long ownerId, TransactionTypes transactionType) {
+
+    public GetTransactionsByOwnerIdAndTransactionTypeQuery(Long ownerId, String transactionType) {
+        this(ownerId, TransactionTypes.fromString(transactionType));
+    }
 }

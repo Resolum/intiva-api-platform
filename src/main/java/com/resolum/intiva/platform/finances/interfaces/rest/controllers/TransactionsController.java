@@ -133,16 +133,7 @@ public class TransactionsController {
 
         if (ownerId != null && transactionType != null) {
 
-            var query = new GetTransactionsByOwnerIdAndTransactionTypeQuery(
-                    ownerId,
-                    switch (transactionType.toUpperCase()) {
-                        case "INCOME" -> TransactionTypes.INCOME;
-                        case "EXPENSE" -> TransactionTypes.EXPENSE;
-                        default -> throw new IllegalArgumentException(
-                                "Invalid transaction type: " + transactionType
-                        );
-                    }
-            );
+            var query = new GetTransactionsByOwnerIdAndTransactionTypeQuery(ownerId, transactionType);
 
             transactions = transactionQueryService.handle(query);
 
@@ -156,34 +147,15 @@ public class TransactionsController {
 
             return ResponseEntity.badRequest().build();
         }
-
-        Map<LocalDate, List<TransactionResource>> groupedTransactions =
-                transactions.stream()
-                        .collect(Collectors.groupingBy(
-                                transaction -> transaction.getCreatedAt()
-                                        .atZone(ZoneId.systemDefault())
-                                        .toLocalDate(),
-                                Collectors.mapping(
-                                        TransactionResourceFromEntityAssembler::toResourceFromEntity,
-                                        Collectors.toList()
-                                )
-                        ));
-
-        var groupedResources = groupedTransactions.entrySet()
-                .stream()
-                .sorted(Map.Entry.<LocalDate, List<TransactionResource>>comparingByKey().reversed())
-                .map(entry -> new TransactionGroupByDateResource(
-                        entry.getKey(),
-                        entry.getValue()
-                ))
-                .toList();
+        var resources = TransactionResourceFromEntityAssembler
+                .toGroupedResourcesFromEntities(transactions);
 
         if (transactions.isEmpty()) {
 
             return ResponseEntity.status(HttpStatus.OK).body(
                     new MessageWrapperResponse<>(
                             "No transactions found for the provided criteria.",
-                            groupedResources
+                            resources
                     )
             );
         }
@@ -191,7 +163,7 @@ public class TransactionsController {
         return ResponseEntity.status(HttpStatus.OK).body(
                 new MessageWrapperResponse<>(
                         "Transactions retrieved successfully.",
-                        groupedResources
+                        resources
                 )
         );
     }

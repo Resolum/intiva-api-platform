@@ -1,7 +1,14 @@
 package com.resolum.intiva.platform.finances.interfaces.rest.assemblers;
 
 import com.resolum.intiva.platform.finances.domain.model.aggregates.Transaction;
+import com.resolum.intiva.platform.finances.interfaces.rest.resources.responses.TransactionGroupByDateResource;
 import com.resolum.intiva.platform.finances.interfaces.rest.resources.responses.TransactionResource;
+
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * TransactionResourceFromEntityAssembler is a utility class that provides a method to convert a Transaction entity from the domain model into a TransactionResource, which is a data transfer object used for REST API responses. This assembler helps to separate the concerns of the domain model and the API representation, allowing for a clean and maintainable codebase. By using this assembler, we can ensure that the data returned in API responses is properly formatted and contains all the necessary information extracted from the Transaction entity.
@@ -23,8 +30,22 @@ public class TransactionResourceFromEntityAssembler {
                 entity.getFinancialAccountId().getValue(),
                 entity.getPerformedByUserId().getValue(),
                 entity.getTransactionType().name(),
-                entity.getCategoryId().getValue(),
-                entity.getCreatedAt().toString()
+                entity.getCategoryId().getValue()
         );
+    }
+
+    public static List<TransactionGroupByDateResource> toGroupedResourcesFromEntities(List<Transaction> transactions) {
+        return transactions.stream()
+                .collect(Collectors.groupingBy(
+                        t -> t.getCreatedAt().atZone(ZoneId.systemDefault()).toLocalDate(),
+                        Collectors.mapping(
+                                TransactionResourceFromEntityAssembler::toResourceFromEntity,
+                                Collectors.toList()
+                        )
+                ))
+                .entrySet().stream()
+                .sorted(Map.Entry.<LocalDate, List<TransactionResource>>comparingByKey().reversed())
+                .map(e -> new TransactionGroupByDateResource(e.getKey(), e.getValue()))
+                .toList();
     }
 }
