@@ -29,13 +29,9 @@ public class UserTransactionsController {
     // TransactionCommandService is a service that handles commands related to transactions, such as registering a new transaction. It is injected into the controller to perform the necessary business logic for transaction registration operations.
     private final TransactionCommandService transactionCommandService;
 
-    // TransactionQueryService is a service that handles queries related to transactions, such as retrieving transaction details by ID. It is injected into the controller to perform the necessary business logic for transaction retrieval operations.
-    private final TransactionQueryService transactionQueryService;
-
     // Constructor injection for the TransactionCommandService and TransactionQueryService dependencies
     public UserTransactionsController(TransactionCommandService transactionCommandService, TransactionQueryService transactionQueryService) {
         this.transactionCommandService = transactionCommandService;
-        this.transactionQueryService = transactionQueryService;
     }
 
     /**
@@ -106,36 +102,5 @@ public class UserTransactionsController {
                             "Unexpected server error."
                     ));
         }
-    }
-
-    /**
-     * Endpoint to retrieve a financial transaction by its ID. It returns the transaction details if a transaction with the provided ID exists, or a 404 Not Found response if no such transaction is found.
-     * @param id The ID of the transaction to retrieve, provided as a path variable in the URL.
-     * @return A ResponseEntity containing the TransactionResource if the transaction is found, or a 404 Not Found response if no transaction with the provided ID exists.
-     */
-    @GetMapping("/{id}")
-    @Operation(
-            summary = "Get transaction by ID",
-            description = "Endpoint to retrieve a financial transaction by its ID. It returns the transaction details"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Transaction retrieved successfully"
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Transaction not found with the provided ID"
-            )
-    })
-    public ResponseEntity<TransactionResource> getTransactionById(@PathVariable Long id) {
-        var transactionId = new TransactionEntryId(id);
-        var getTransactionByIdQuery = new GetTransactionByIdQuery(transactionId);
-        var transaction = transactionQueryService.handle(getTransactionByIdQuery);
-        if (transaction.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        var transactionResource = TransactionResourceFromEntityAssembler.toResourceFromEntity(transaction.get());
-        return ResponseEntity.ok(transactionResource);
     }
 }

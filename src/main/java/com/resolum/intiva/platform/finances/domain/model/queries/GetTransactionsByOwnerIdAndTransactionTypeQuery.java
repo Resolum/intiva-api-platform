@@ -7,5 +7,5 @@ import com.resolum.intiva.platform.shared.domain.valueobjects.TransactionTypes;
  * @param ownerId the ID of the owner whose transactions are to be retrieved.
  * @param transactionType the type of transactions to be retrieved (e.g., INCOME, EXPENSE).
  */
-public record GetTransactionsByOwnerIdAndTransactionTypeQuery(String ownerId, TransactionTypes transactionType) {
+public record GetTransactionsByOwnerIdAndTransactionTypeQuery(Long ownerId, TransactionTypes transactionType) {
 }
