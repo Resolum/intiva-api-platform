@@ -16,8 +16,8 @@ public record CategoryDescription(String description) {
      * @throws IllegalArgumentException if the description exceeds 15 characters
      */
     public CategoryDescription {
-        if (description.length() > 20)
-            throw new IllegalArgumentException("Maximum 20 characters allowed for category description");
+        if (description.length() > 50)
+            throw new IllegalArgumentException("Maximum 50 characters allowed for category description");
     }
 
     /**
