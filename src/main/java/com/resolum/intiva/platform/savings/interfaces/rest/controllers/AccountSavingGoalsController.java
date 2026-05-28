@@ -27,12 +27,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * REST controller for managing saving goals scoped to a specific account.
- * All endpoints are nested under /api/v1/accounts/{accountId}/saving-goals.
- * The accountId is used as the performedByUserId for personal goals and as the contributorId for contributions.
+ * REST controller for managing saving goals scoped to a specific user.
+ * All endpoints are nested under /api/v1/users/{userId}/saving-goals.
+ * The userId is used as the performedByUserId for personal goals and as the contributorId for contributions.
  */
 @RestController
-@RequestMapping("/api/v1/accounts/{accountId}/saving-goals")
+@RequestMapping("/api/v1/users/{userId}/saving-goals")
 @Tag(name = "Accounts", description = "Available Account Endpoints")
 public class AccountSavingGoalsController {
 
@@ -51,18 +51,18 @@ public class AccountSavingGoalsController {
     }
 
     /**
-     * Retrieves all saving goals associated with a specific account.
+     * Retrieves all saving goals associated with a specific user.
      *
-     * @param accountId the ID of the account whose saving goals to retrieve
-     * @return 200 with the list of saving goals for the given account
+     * @param userId the ID of the user whose saving goals to retrieve
+     * @return 200 with the list of saving goals for the given user
      */
-    @Operation(summary = "Get All Saving Goals by Account ID", description = "Retrieves all saving goals associated with a specific account ID.")
+    @Operation(summary = "Get All Saving Goals by User ID", description = "Retrieves all saving goals associated with a specific user ID.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Saving goals retrieved successfully")
     })
     @GetMapping
-    public ResponseEntity<List<SavingGoalResource>> getAllSavingGoalsByUserId(@PathVariable Long accountId) {
-        var query = new GetAllSavingGoalsByUserIdQuery(accountId);
+    public ResponseEntity<List<SavingGoalResource>> getAllSavingGoalsByUserId(@PathVariable Long userId) {
+        var query = new GetAllSavingGoalsByUserIdQuery(userId);
         var savingGoals = savingGoalQueryService.handle(query);
 
         var resources = savingGoals.stream()
@@ -73,27 +73,27 @@ public class AccountSavingGoalsController {
     }
 
     /**
-     * Creates a new saving goal for the specified account.
-     * The performedByUserId is automatically set to the provided accountId.
+     * Creates a new saving goal for the specified user.
+     * The performedByUserId is automatically set to the provided userId.
      *
-     * @param accountId the ID of the account creating the saving goal
-     * @param resource  the details of the saving goal to create
+     * @param userId   the ID of the user creating the saving goal
+     * @param resource the details of the saving goal to create
      * @return 201 with the created saving goal, or 400 if the input data is invalid
      */
-    @Operation(summary = "Create Saving Goal for Account", description = "Creates a new saving goal associated with the specified account. The performedByUserId is automatically set to the accountId.")
+    @Operation(summary = "Create Saving Goal for User", description = "Creates a new saving goal associated with the specified user. The performedByUserId is automatically set to the userId.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Saving goal created successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid input data")
     })
     @PostMapping
     public ResponseEntity<?> createSavingGoal(
-            @PathVariable Long accountId,
+            @PathVariable Long userId,
             @RequestBody CreateSavingGoalResource resource) {
         try {
             var initialCommand = CreateSavingGoalCommandFromResourceAssembler.toCommandFromResource(resource);
             var command = new CreateSavingGoalCommand(
                     initialCommand.ownerType(),
-                    accountId, // force performedByUserId = accountId
+                    userId, 
                     initialCommand.ownerId(),
                     initialCommand.title(),
                     initialCommand.targetAmount(),
@@ -113,25 +113,25 @@ public class AccountSavingGoalsController {
     }
 
     /**
-     * Retrieves a specific saving goal by ID, only if it belongs to the given account.
+     * Retrieves a specific saving goal by ID, only if it belongs to the given user.
      *
-     * @param accountId    the ID of the account that owns the saving goal
+     * @param userId       the ID of the user that owns the saving goal
      * @param savingGoalId the ID of the saving goal to retrieve
-     * @return 200 with the saving goal, or 404 if not found or not owned by the account
+     * @return 200 with the saving goal, or 404 if not found or not owned by the user
      */
-    @Operation(summary = "Get Saving Goal by ID for Account", description = "Retrieves a specific saving goal by its ID, only if it belongs to the specified account.")
+    @Operation(summary = "Get Saving Goal by ID for User", description = "Retrieves a specific saving goal by its ID, only if it belongs to the specified user.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Saving goal found"),
-            @ApiResponse(responseCode = "404", description = "Saving goal not found or does not belong to this account")
+            @ApiResponse(responseCode = "404", description = "Saving goal not found or does not belong to this user")
     })
     @GetMapping("/{savingGoalId}")
     public ResponseEntity<SavingGoalResource> getSavingGoalById(
-            @PathVariable Long accountId,
+            @PathVariable Long userId,
             @PathVariable Long savingGoalId) {
         var query = new GetSavingGoalByIdQuery(savingGoalId);
         var savingGoalOpt = savingGoalQueryService.handle(query);
 
-        if (savingGoalOpt.isEmpty() || !accountId.equals(savingGoalOpt.get().getActorUserId())) {
+        if (savingGoalOpt.isEmpty() || !userId.equals(savingGoalOpt.get().getActorUserId())) {
             return ResponseEntity.notFound().build();
         }
 
@@ -140,15 +140,15 @@ public class AccountSavingGoalsController {
     }
 
     /**
-     * Registers a monetary contribution to a saving goal under the specified account.
-     * The contributorId is automatically set to the provided accountId.
+     * Registers a monetary contribution to a saving goal under the specified user.
+     * The contributorId is automatically set to the provided userId.
      *
-     * @param accountId    the ID of the account making the contribution
+     * @param userId       the ID of the user making the contribution
      * @param savingGoalId the ID of the saving goal to contribute to
      * @param resource     the contribution details including amount and currency
      * @return 201 with the updated saving goal, 404 if not found, 400 if amount is invalid
      */
-    @Operation(summary = "Contribute to Saving Goal for Account", description = "Registers a monetary contribution to a saving goal. The contributorId is automatically set to the accountId.")
+    @Operation(summary = "Contribute to Saving Goal for User", description = "Registers a monetary contribution to a saving goal. The contributorId is automatically set to the userId.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Contribution registered successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid contribution amount"),
@@ -156,7 +156,7 @@ public class AccountSavingGoalsController {
     })
     @PostMapping("/{savingGoalId}/contributions")
     public ResponseEntity<?> contribute(
-            @PathVariable Long accountId,
+            @PathVariable Long userId,
             @PathVariable Long savingGoalId,
             @RequestBody ContributeToSavingGoalResource resource) {
 
@@ -166,7 +166,7 @@ public class AccountSavingGoalsController {
                     initialCommand.savingGoalId(),
                     initialCommand.amount(),
                     initialCommand.currencyCode(),
-                    accountId // force contributorId = accountId
+                    userId // force contributorId = userId
             );
 
             var savingGoalOpt = savingGoalCommandService.handle(command);
@@ -183,19 +183,19 @@ public class AccountSavingGoalsController {
     }
 
     /**
-     * Retrieves all saving goals belonging to a specific family group under this account.
+     * Retrieves all saving goals belonging to a specific family group under this user.
      *
-     * @param accountId the ID of the account making the request
-     * @param groupId   the ID of the family group whose saving goals to retrieve
+     * @param userId  the ID of the user making the request
+     * @param groupId the ID of the family group whose saving goals to retrieve
      * @return 200 with the list of group saving goals
      */
-    @Operation(summary = "Get All Group Saving Goals by Account", description = "Retrieves all shared saving goals associated with a specific family group, accessible from the account context.")
+    @Operation(summary = "Get All Group Saving Goals by User", description = "Retrieves all shared saving goals associated with a specific family group, accessible from the user context.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Group saving goals retrieved successfully")
     })
     @GetMapping("/group/{groupId}")
     public ResponseEntity<List<SavingGoalResource>> getAllSavingGoalsByGroupId(
-            @PathVariable Long accountId,
+            @PathVariable Long userId,
             @PathVariable String groupId) {
         var query = new com.resolum.intiva.platform.savings.domain.model.queries.GetAllSavingGoalsByGroupIdQuery(groupId);
         var savingGoals = savingGoalQueryService.handle(query);
@@ -208,15 +208,15 @@ public class AccountSavingGoalsController {
     }
 
     /**
-     * Marks an existing saving goal as completed for the specified account.
+     * Marks an existing saving goal as completed for the specified user.
      *
-     * @param accountId    the ID of the account that owns the saving goal
+     * @param userId       the ID of the user that owns the saving goal
      * @param savingGoalId the ID of the saving goal to complete
      * @return 200 with the updated saving goal, 400 if already completed, 404 if not found
      */
     @Operation(
-            summary = "Complete a Saving Goal by Account",
-            description = "Marks a saving goal as COMPLETED for the specified account. Returns 400 if it is already completed and 404 if it does not exist."
+            summary = "Complete a Saving Goal by User",
+            description = "Marks a saving goal as COMPLETED for the specified user. Returns 400 if it is already completed and 404 if it does not exist."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Saving goal marked as completed successfully"),
@@ -225,7 +225,7 @@ public class AccountSavingGoalsController {
     })
     @PatchMapping("/{savingGoalId}/complete")
     public ResponseEntity<?> completeSavingGoal(
-            @PathVariable Long accountId,
+            @PathVariable Long userId,
             @PathVariable Long savingGoalId) {
         try {
             var command = new CompleteSavingGoalCommand(savingGoalId);
@@ -240,15 +240,15 @@ public class AccountSavingGoalsController {
     }
 
     /**
-     * Reverts an existing saving goal back to uncompleted status for the specified account.
+     * Reverts an existing saving goal back to uncompleted status for the specified user.
      *
-     * @param accountId    the ID of the account that owns the saving goal
+     * @param userId       the ID of the user that owns the saving goal
      * @param savingGoalId the ID of the saving goal to uncomplete
      * @return 200 with the updated saving goal, 400 if already uncompleted, 404 if not found
      */
     @Operation(
-            summary = "Uncomplete a Saving Goal by Account",
-            description = "Reverts a saving goal to UNCOMPLETED status for the specified account. Returns 400 if it is already uncompleted and 404 if it does not exist."
+            summary = "Uncomplete a Saving Goal by User",
+            description = "Reverts a saving goal to UNCOMPLETED status for the specified user. Returns 400 if it is already uncompleted and 404 if it does not exist."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Saving goal reverted to uncompleted successfully"),
@@ -257,7 +257,7 @@ public class AccountSavingGoalsController {
     })
     @PatchMapping("/{savingGoalId}/uncomplete")
     public ResponseEntity<?> uncompleteSavingGoal(
-            @PathVariable Long accountId,
+            @PathVariable Long userId,
             @PathVariable Long savingGoalId) {
         try {
             var command = new UncompleteSavingGoalCommand(savingGoalId);
@@ -272,21 +272,21 @@ public class AccountSavingGoalsController {
     }
 
     /**
-     * Retrieves all completed saving goals for the specified account.
+     * Retrieves all completed saving goals for the specified user.
      *
-     * @param accountId the ID of the account whose completed saving goals to retrieve
+     * @param userId the ID of the user whose completed saving goals to retrieve
      * @return 200 with the list of completed saving goals
      */
     @Operation(
-            summary = "Get All Completed Saving Goals by Account ID",
-            description = "Retrieves all saving goals with COMPLETED status for a specific account."
+            summary = "Get All Completed Saving Goals by User ID",
+            description = "Retrieves all saving goals with COMPLETED status for a specific user."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Completed saving goals retrieved successfully")
     })
     @GetMapping("/completed")
-    public ResponseEntity<List<SavingGoalResource>> getCompletedSavingGoals(@PathVariable Long accountId) {
-        var query = new GetAllCompletedSavingGoalsByUserIdQuery(accountId);
+    public ResponseEntity<List<SavingGoalResource>> getCompletedSavingGoals(@PathVariable Long userId) {
+        var query = new GetAllCompletedSavingGoalsByUserIdQuery(userId);
         var savingGoals = savingGoalQueryService.handle(query);
 
         var resources = savingGoals.stream()
