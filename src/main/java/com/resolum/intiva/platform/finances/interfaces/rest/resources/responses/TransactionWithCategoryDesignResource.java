@@ -22,6 +22,7 @@ public record TransactionWithCategoryDesignResource(
         Long actorUserId,
         String transactionType,
         Long categoryId,
+        String registeredAt,
         CategoryDesignResource categoryDesign
 ) {
 }

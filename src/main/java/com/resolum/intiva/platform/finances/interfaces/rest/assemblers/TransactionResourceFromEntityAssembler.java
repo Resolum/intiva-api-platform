@@ -35,6 +35,7 @@ public class TransactionResourceFromEntityAssembler {
                 entity.transaction().getPerformedByUserId().getValue(),
                 entity.transaction().getTransactionType().name(),
                 entity.transaction().getCategoryId().getValue(),
+                entity.transaction().getCreatedAt().atZone(ZoneId.systemDefault()).toLocalDateTime().toString(),
                 new CategoryDesignResource(
                         entity.categoryColor(),
                         entity.categoryIcon()
@@ -58,7 +59,8 @@ public class TransactionResourceFromEntityAssembler {
                 entity.getFinancialAccountId().getValue(),
                 entity.getPerformedByUserId().getValue(),
                 entity.getTransactionType().name(),
-                entity.getCategoryId().getValue()
+                entity.getCategoryId().getValue(),
+                entity.getCreatedAt().atZone(ZoneId.systemDefault()).toLocalDateTime().toString()
         );
     }
 

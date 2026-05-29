@@ -21,5 +21,6 @@ public record TransactionResource(
         Long financialAccountId,
         Long actorUserId,
         String transactionType,
-        Long categoryId) {
+        Long categoryId,
+        String registeredAt) {
 }
