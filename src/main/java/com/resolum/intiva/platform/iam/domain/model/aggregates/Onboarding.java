@@ -66,9 +66,37 @@ public class Onboarding extends AuditableAbstractAggregate<Onboarding> {
                             FirstTransactionTutorialStep.CONFIRM_TRANSACTION;
 
             case CONFIRM_TRANSACTION -> {
+                this.currentStep = FirstTransactionTutorialStep.COMPLETED;
                 this.onboardingCompleted = true;
                 this.completedAt = Instant.now();
             }
+        }
+    }
+
+    /**
+     * Rolls back the user to the previous step in the first transaction tutorial.
+     * Used when the user abandons the flow mid-way and needs to restart from a safe state.
+     *
+     * @throws IllegalStateException if the onboarding is already at the first step or completed.
+     */
+    public void rollbackTutorialStep() {
+
+        if (this.currentStep == null) {
+            throw new IllegalStateException("Tutorial not started");
+        }
+
+        if (this.onboardingCompleted) {
+            throw new IllegalStateException("Cannot rollback a completed onboarding");
+        }
+
+        switch (this.currentStep) {
+
+            case SELECT_CATEGORY, CONFIRM_TRANSACTION ->
+                    this.currentStep =
+                            FirstTransactionTutorialStep.OPEN_CREATE_TRANSACTION;
+
+            case OPEN_CREATE_TRANSACTION ->
+                    throw new IllegalStateException("Cannot rollback from the first step");
         }
     }
 }

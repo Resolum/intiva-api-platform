@@ -7,13 +7,21 @@ import java.time.ZoneId;
 
 public class OnboardingStatusResourceFromEntityAssembler {
 
-    public static OnboardingStatusResource fromEntityToResource(Onboarding entity) {
+    public static OnboardingStatusResource toResourceFromEntity(Onboarding entity) {
+
+        String completedAt = entity.getCompletedAt() != null
+                ? entity.getCompletedAt()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime()
+                .toString()
+                : null;
+
         return new OnboardingStatusResource(
                 entity.getId(),
                 entity.getUserId(),
                 entity.getCurrentStep().toString(),
                 entity.isOnboardingCompleted(),
-                entity.getCompletedAt().atZone(ZoneId.systemDefault()).toLocalDateTime().toString()
+                completedAt
         );
     }
 }

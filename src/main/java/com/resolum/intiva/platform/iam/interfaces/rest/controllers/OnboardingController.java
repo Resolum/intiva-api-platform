@@ -5,7 +5,9 @@ import com.resolum.intiva.platform.iam.domain.services.OnboardingCommandService;
 import com.resolum.intiva.platform.iam.domain.services.OnboardingQueryService;
 import com.resolum.intiva.platform.iam.interfaces.rest.assemblers.AdvanceTutorialStepCommandFromResourceAssembler;
 import com.resolum.intiva.platform.iam.interfaces.rest.assemblers.OnboardingStatusResourceFromEntityAssembler;
+import com.resolum.intiva.platform.iam.interfaces.rest.assemblers.RollbackOnboardingResourceFromEntityAssembler;
 import com.resolum.intiva.platform.iam.interfaces.rest.resources.requests.AdvanceOnboardingProcessResource;
+import com.resolum.intiva.platform.iam.interfaces.rest.resources.requests.RollbackOnboardingResource;
 import com.resolum.intiva.platform.iam.interfaces.rest.resources.responses.OnboardingStatusResource;
 import com.resolum.intiva.platform.shared.interfaces.rest.resource.MessageResource;
 import io.swagger.v3.oas.annotations.Operation;
@@ -68,7 +70,7 @@ public class OnboardingController {
         if (onboarding.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        var onboardingResource = OnboardingStatusResourceFromEntityAssembler.fromEntityToResource(onboarding.get());
+        var onboardingResource = OnboardingStatusResourceFromEntityAssembler.toResourceFromEntity(onboarding.get());
         return ResponseEntity.ok(onboardingResource);
     }
 
@@ -95,6 +97,33 @@ public class OnboardingController {
         return ResponseEntity.status(HttpStatus.OK).body(
                 new MessageResource(
                         "Onboarding process advanced successfully"
+                )
+        );
+    }
+
+    /**
+     * Endpoint to rollback the onboarding process for a user.
+     *
+     * @param resource the resource containing the user ID for which to rollback the onboarding process
+     * @return a response entity with a success message if the onboarding process was rolled back successfully
+     */
+    @PatchMapping("/rollbacks")
+    @Operation(
+            summary = "Rollback onboarding process",
+            description = "Endpoint to rollback the onboarding process for a user. This will move the user back to the previous step in the onboarding flow."
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Onboarding process rolled back successfully"
+    )
+    public ResponseEntity<?> rollbackOnboarding(
+            @RequestBody RollbackOnboardingResource resource
+    ) {
+        var rollbackOnboardingCommand = RollbackOnboardingResourceFromEntityAssembler.toCommandFromResource(resource);
+        onboardingCommandService.handle(rollbackOnboardingCommand);
+        return ResponseEntity.status(HttpStatus.OK).body(
+                new MessageResource(
+                        "Onboarding process rolled back successfully"
                 )
         );
     }
