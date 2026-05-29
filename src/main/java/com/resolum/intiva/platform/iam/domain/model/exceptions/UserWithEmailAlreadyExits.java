@@ -1,4 +1,4 @@
-package com.resolum.intiva.platform.iam.domain.exceptions;
+package com.resolum.intiva.platform.iam.domain.model.exceptions;
 
 
 /**
