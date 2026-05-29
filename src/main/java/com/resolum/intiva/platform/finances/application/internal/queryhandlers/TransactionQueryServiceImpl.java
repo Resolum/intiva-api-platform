@@ -2,6 +2,7 @@ package com.resolum.intiva.platform.finances.application.internal.queryhandlers;
 
 import com.resolum.intiva.platform.finances.application.internal.outboundservices.acl.FinancesExternalCategoriesService;
 import com.resolum.intiva.platform.finances.domain.model.aggregates.Transaction;
+import com.resolum.intiva.platform.finances.domain.model.queries.GetLastTransactionsByOwnerIdQuery;
 import com.resolum.intiva.platform.finances.domain.model.queries.GetTransactionByIdQuery;
 import com.resolum.intiva.platform.finances.domain.model.queries.GetTransactionsByOwnerIdAndTransactionTypeQuery;
 import com.resolum.intiva.platform.finances.domain.model.queries.GetTransactionsByOwnerIdQuery;
@@ -74,6 +75,19 @@ public class TransactionQueryServiceImpl implements TransactionQueryService {
 
         return transactions.stream().map(transaction -> {
             var designPair = financesExternalCategoriesService.getCategoryColorAndNameById(transaction.getCategoryId().getValue());
+
+            return new TransactionWithCategoryDesign(transaction, designPair.getLeft(), designPair.getRight());
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<TransactionWithCategoryDesign> handle(GetLastTransactionsByOwnerIdQuery query) {
+        List<Transaction> transactions = transactionRepository
+                .findTop5ByOwnerIdOrderByCreatedAtDesc(query.ownerId());
+
+        return transactions.stream().map(transaction -> {
+            var designPair = financesExternalCategoriesService
+                    .getCategoryColorAndNameById(transaction.getCategoryId().getValue());
 
             return new TransactionWithCategoryDesign(transaction, designPair.getLeft(), designPair.getRight());
         }).collect(Collectors.toList());

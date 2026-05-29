@@ -1,5 +1,6 @@
 package com.resolum.intiva.platform.finances.interfaces.rest.controllers;
 
+import com.resolum.intiva.platform.finances.domain.model.queries.GetLastTransactionsByOwnerIdQuery;
 import com.resolum.intiva.platform.finances.domain.model.queries.GetTransactionByIdQuery;
 import com.resolum.intiva.platform.finances.domain.model.queries.GetTransactionsByOwnerIdAndTransactionTypeQuery;
 import com.resolum.intiva.platform.finances.domain.model.queries.GetTransactionsByOwnerIdQuery;
@@ -91,7 +92,7 @@ public class TransactionsController {
      */
     @GetMapping
     @Operation(
-            summary = "Get transactions",
+            summary = "Get transactions by owner or transaction type.",
             description = """
                     Endpoint to retrieve financial transactions using optional filters.
                     
@@ -155,6 +156,54 @@ public class TransactionsController {
         return ResponseEntity.status(HttpStatus.OK).body(
                 new MessageWrapperResponse<>(
                         "Transactions retrieved successfully.",
+                        resources
+                )
+        );
+    }
+
+    /**
+     * Retrieves the last 5 transactions by owner ID.
+     *
+     * @param ownerId owner identifier
+     * @return last 5 transactions
+     */
+    @GetMapping("/lastest")
+    @Operation(
+            summary = "Get last 5 transactions by owner ID",
+            description = "Endpoint to retrieve the last 5 financial transactions for a specific owner."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Transactions retrieved successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid request parameters"
+            )
+    })
+    public ResponseEntity<MessageWrapperResponse<List<TransactionGroupByDateResource>>> getLastTransactions(
+            @RequestParam Long ownerId
+    ) {
+        var query = new GetLastTransactionsByOwnerIdQuery(ownerId);
+
+        var transactions = transactionQueryService.handle(query);
+
+        var resources = TransactionResourceFromEntityAssembler
+                .toGroupedResourcesFromEntities(transactions);
+
+        if (transactions.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.OK).body(
+                    new MessageWrapperResponse<>(
+                            "No transactions found for the provided owner.",
+                            resources
+                    )
+            );
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                new MessageWrapperResponse<>(
+                        "Last transactions retrieved successfully.",
                         resources
                 )
         );

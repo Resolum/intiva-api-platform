@@ -1,6 +1,7 @@
 package com.resolum.intiva.platform.finances.domain.services;
 
 import com.resolum.intiva.platform.finances.domain.model.aggregates.Transaction;
+import com.resolum.intiva.platform.finances.domain.model.queries.GetLastTransactionsByOwnerIdQuery;
 import com.resolum.intiva.platform.finances.domain.model.queries.GetTransactionByIdQuery;
 import com.resolum.intiva.platform.finances.domain.model.queries.GetTransactionsByOwnerIdAndTransactionTypeQuery;
 import com.resolum.intiva.platform.finances.domain.model.queries.GetTransactionsByOwnerIdQuery;
@@ -35,4 +36,11 @@ public interface TransactionQueryService {
      * @return A list of Transactions associated with the specified owner ID and transaction type. If no transactions are found, an empty list is returned.
      */
     List<TransactionWithCategoryDesign> handle(GetTransactionsByOwnerIdAndTransactionTypeQuery query);
+
+    /**
+     * Handles the query to retrieve the last transactions by the owner's unique identifier.
+     * @param query The query containing the owner ID for which the last transactions are to be retrieved.
+     * @return A list of the last Transactions associated with the specified owner ID. If no transactions are found, an empty list is returned.
+     */
+    List<TransactionWithCategoryDesign> handle(GetLastTransactionsByOwnerIdQuery query);
 }

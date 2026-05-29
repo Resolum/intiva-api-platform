@@ -28,4 +28,11 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
      * @return An Optional containing the Transaction if found, or empty if not found.
      */
     List<Transaction> findTransactionByOwnerIdAndTransactionType(Long ownerId, TransactionTypes transactionType);
+
+    /**
+     * Finds the top 5 transactions by owner ID, ordered by creation date in descending order.
+     * @param ownerId The ID of the owner of the transactions.
+     * @return A list of the top 5 transactions for the specified owner, ordered by creation date.
+     */
+    List<Transaction> findTop5ByOwnerIdOrderByCreatedAtDesc(Long ownerId);
 }
