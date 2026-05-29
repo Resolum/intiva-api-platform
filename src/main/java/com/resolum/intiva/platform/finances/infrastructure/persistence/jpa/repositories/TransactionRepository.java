@@ -19,7 +19,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
      * @param ownerId The ID of the owner of the transaction.
      * @return An Optional containing the Transaction if found, or empty if not found.
      */
-    List<Transaction> findTransactionByOwnerId(String ownerId);
+    List<Transaction> findTransactionByOwnerId(Long ownerId);
 
     /**
      * Finds a transaction list by its owner ID and transaction type.
@@ -27,5 +27,5 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
      * @param transactionType The type of the transaction (e.g., EXPENSE, INCOME).
      * @return An Optional containing the Transaction if found, or empty if not found.
      */
-    List<Transaction> findTransactionByOwnerIdAndTransactionType(String ownerId, TransactionTypes transactionType);
+    List<Transaction> findTransactionByOwnerIdAndTransactionType(Long ownerId, TransactionTypes transactionType);
 }

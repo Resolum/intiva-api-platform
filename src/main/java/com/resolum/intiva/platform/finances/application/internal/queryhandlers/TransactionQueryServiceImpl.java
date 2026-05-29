@@ -1,15 +1,18 @@
 package com.resolum.intiva.platform.finances.application.internal.queryhandlers;
 
+import com.resolum.intiva.platform.finances.application.internal.outboundservices.acl.FinancesExternalCategoriesService;
 import com.resolum.intiva.platform.finances.domain.model.aggregates.Transaction;
 import com.resolum.intiva.platform.finances.domain.model.queries.GetTransactionByIdQuery;
 import com.resolum.intiva.platform.finances.domain.model.queries.GetTransactionsByOwnerIdAndTransactionTypeQuery;
 import com.resolum.intiva.platform.finances.domain.model.queries.GetTransactionsByOwnerIdQuery;
 import com.resolum.intiva.platform.finances.domain.services.TransactionQueryService;
 import com.resolum.intiva.platform.finances.infrastructure.persistence.jpa.repositories.TransactionRepository;
+import com.resolum.intiva.platform.finances.domain.model.valueobjects.TransactionWithCategoryDesign;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Implementation of the TransactionQueryService interface that handles queries related to transactions.
@@ -21,9 +24,12 @@ public class TransactionQueryServiceImpl implements TransactionQueryService {
     // Repository for accessing transaction data from the database
     private final TransactionRepository transactionRepository;
 
+    private final FinancesExternalCategoriesService financesExternalCategoriesService;
+
     // Constructor for dependency injection of the TransactionRepository
-    public TransactionQueryServiceImpl(TransactionRepository transactionRepository) {
+    public TransactionQueryServiceImpl(TransactionRepository transactionRepository, FinancesExternalCategoriesService financesExternalCategoriesService) {
         this.transactionRepository = transactionRepository;
+        this.financesExternalCategoriesService = financesExternalCategoriesService;
     }
 
     /**
@@ -44,8 +50,15 @@ public class TransactionQueryServiceImpl implements TransactionQueryService {
      * @return A list of Transactions associated with the specified owner ID. If no transactions are found, an empty list is returned.
      */
     @Override
-    public List<Transaction> handle(GetTransactionsByOwnerIdQuery query) {
-        return transactionRepository.findTransactionByOwnerId(query.ownerId());
+    public List<TransactionWithCategoryDesign> handle(GetTransactionsByOwnerIdQuery query) {
+        List<Transaction> transactions = transactionRepository
+                .findTransactionByOwnerId(query.ownerId());
+
+        return transactions.stream().map(transaction -> {
+            var designPair = financesExternalCategoriesService.getCategoryColorAndNameById(transaction.getCategoryId().getValue());
+
+            return new TransactionWithCategoryDesign(transaction, designPair.getLeft(), designPair.getRight());
+        }).collect(Collectors.toList());
     }
 
     /**
@@ -55,7 +68,14 @@ public class TransactionQueryServiceImpl implements TransactionQueryService {
      * @return A list of Transactions associated with the specified owner ID and transaction type. If no transactions are found, an empty list is returned.
      */
     @Override
-    public List<Transaction> handle(GetTransactionsByOwnerIdAndTransactionTypeQuery query) {
-        return transactionRepository.findTransactionByOwnerIdAndTransactionType(query.ownerId(), query.transactionType());
+    public List<TransactionWithCategoryDesign> handle(GetTransactionsByOwnerIdAndTransactionTypeQuery query) {
+        List<Transaction> transactions = transactionRepository
+                .findTransactionByOwnerIdAndTransactionType(query.ownerId(), query.transactionType());
+
+        return transactions.stream().map(transaction -> {
+            var designPair = financesExternalCategoriesService.getCategoryColorAndNameById(transaction.getCategoryId().getValue());
+
+            return new TransactionWithCategoryDesign(transaction, designPair.getLeft(), designPair.getRight());
+        }).collect(Collectors.toList());
     }
 }

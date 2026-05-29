@@ -47,7 +47,7 @@ public class CategoryCommandServiceImpl implements CategoryCommandService {
      */
     @Override
     public void handle(CreateDefaultCategoryCommand command) {
-        var salaryCategory = Category.createDefault(command.userId());
-        categoryRepository.save(salaryCategory);
+        var categories = Category.createDefault(command.userId());
+        categoryRepository.saveAll(categories);
     }
 }
