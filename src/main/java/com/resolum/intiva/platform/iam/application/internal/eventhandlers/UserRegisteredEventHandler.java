@@ -2,7 +2,9 @@ package com.resolum.intiva.platform.iam.application.internal.eventhandlers;
 
 import com.resolum.intiva.platform.iam.application.internal.outboundservices.acl.IamExternalCategoriesService;
 import com.resolum.intiva.platform.iam.application.internal.outboundservices.acl.IamExternalFinancialAccountsService;
+import com.resolum.intiva.platform.iam.domain.model.commands.CreateUserOnboardingCommand;
 import com.resolum.intiva.platform.iam.domain.model.events.UserRegisteredEvent;
+import com.resolum.intiva.platform.iam.domain.services.OnboardingCommandService;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
@@ -22,13 +24,16 @@ public class UserRegisteredEventHandler {
      */
     private final IamExternalFinancialAccountsService iamExternalFinancialAccountsService;
 
+    private final OnboardingCommandService onboardingCommandService;
+
     /**
      * Constructor for UserRegisteredEventHandler.
      * @param iamExternalCategoriesService the ExternalCategoriesService to be used by this event handler
      */
-    public UserRegisteredEventHandler(IamExternalCategoriesService iamExternalCategoriesService, IamExternalFinancialAccountsService iamExternalFinancialAccountsService) {
+    public UserRegisteredEventHandler(IamExternalCategoriesService iamExternalCategoriesService, IamExternalFinancialAccountsService iamExternalFinancialAccountsService, OnboardingCommandService onboardingCommandService) {
         this.iamExternalCategoriesService = iamExternalCategoriesService;
         this.iamExternalFinancialAccountsService = iamExternalFinancialAccountsService;
+        this.onboardingCommandService = onboardingCommandService;
     }
 
     /**
@@ -39,5 +44,8 @@ public class UserRegisteredEventHandler {
     public void on(UserRegisteredEvent event) {
         iamExternalCategoriesService.createDefaultCategory(event.getUserId());
         iamExternalFinancialAccountsService.createDefaultFinancialAccount(event.getUserId());
+        onboardingCommandService.handle(new CreateUserOnboardingCommand(
+                event.getUserId()
+        ));
     }
 }
