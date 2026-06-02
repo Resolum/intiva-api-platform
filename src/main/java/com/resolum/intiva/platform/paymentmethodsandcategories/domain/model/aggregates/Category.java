@@ -8,6 +8,8 @@ import com.resolum.intiva.platform.shared.domain.valueobjects.Icon;
 import jakarta.persistence.*;
 import lombok.Getter;
 
+import java.util.List;
+
 @Entity
 @Getter
 @Table(name = "categories")
@@ -38,10 +40,18 @@ public class Category extends AuditableAbstractAggregate<Category> {
     @Embedded
     private Icon icon;
 
+    /**
+     * Protected no-args constructor for JPA.
+     */
     protected Category() {
 
     }
 
+    /**
+     * Constructs a new Category instance based on the provided CreateCategoryCommand.
+     *
+     * @param command the command containing the details for creating a new category
+     */
     public Category(CreateCategoryCommand command) {
         this.name = command.name();
         this.ownerType = command.ownerType().toUpperCase();
@@ -64,17 +74,49 @@ public class Category extends AuditableAbstractAggregate<Category> {
         this.isActive = false;
     }
 
-    public static Category createDefault(Long userId) {
-        return new Category(
-                new CreateCategoryCommand(
-                        "Salario",
-                        "USER",
-                        userId,
-                        null,
-                        "Ingresos mensuales",
-                        "#4CAF50",
-                        "wallet"
-                )
+    /**
+     * Creates a list of default categories for a given user ID.
+     *
+     * @param userId the ID of the user for whom the default categories should be created
+     * @return a list of default Category instances
+     */
+    public static List<Category> createDefault(Long userId) {
+        return List.of(
+                new Category(new CreateCategoryCommand(
+                        "Salario", "USER", userId, null,
+                        "Ingresos mensuales por empleo",
+                        "#4CAF50", "briefcase"
+                )),
+                new Category(new CreateCategoryCommand(
+                        "Freelance", "USER", userId, null,
+                        "Ingresos por trabajo independiente",
+                        "#2196F3", "laptop"
+                )),
+                new Category(new CreateCategoryCommand(
+                        "Negocio", "USER", userId, null,
+                        "Ingresos de tu negocio o empresa",
+                        "#FF9800", "store"
+                )),
+                new Category(new CreateCategoryCommand(
+                        "Inversión", "USER", userId, null,
+                        "Rendimientos e intereses de inversiones",
+                        "#9C27B0", "trending_up"
+                )),
+                new Category(new CreateCategoryCommand(
+                        "Renta", "USER", userId, null,
+                        "Ingresos por alquiler de propiedades",
+                        "#00BCD4", "home"
+                )),
+                new Category(new CreateCategoryCommand(
+                        "Pensión", "USER", userId, null,
+                        "Pensión, jubilación o subsidios",
+                        "#FF5722", "shield"
+                )),
+                new Category(new CreateCategoryCommand(
+                        "Otros", "USER", userId, null,
+                        "Otros ingresos no clasificados",
+                        "#607D8B", "more_horiz"
+                ))
         );
     }
 }

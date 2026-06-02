@@ -1,10 +1,11 @@
 package com.resolum.intiva.platform.paymentmethodsandcategories.application.acl.services;
 
-import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.commands.CreateCategoryCommand;
 import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.commands.CreateDefaultCategoryCommand;
+import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.queries.GetCategoryColorAndIconByIdQuery;
 import com.resolum.intiva.platform.paymentmethodsandcategories.domain.services.CategoryCommandService;
 import com.resolum.intiva.platform.paymentmethodsandcategories.domain.services.CategoryQueryService;
 import com.resolum.intiva.platform.paymentmethodsandcategories.interfaces.acl.CategoriesContextFacade;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -20,6 +21,7 @@ public class CategoryContextFacadeImpl implements CategoriesContextFacade {
 
     /**
      * Check if a category exists by id
+     *
      * @param categoryId the category id
      * @return true if a category exists, false otherwise
      */
@@ -30,7 +32,7 @@ public class CategoryContextFacadeImpl implements CategoriesContextFacade {
 
     /**
      * Create a new category
-
+     *
      * @param userId the user id
      */
     @Override
@@ -39,5 +41,19 @@ public class CategoryContextFacadeImpl implements CategoriesContextFacade {
                 userId
         );
         categoryCommandService.handle(createDefaultCategoryCommand);
+    }
+
+    /**
+     * Get a category color and icon by id
+     *
+     * @param categoryId the category id
+     * @return the category color and icon
+     */
+    @Override
+    public ImmutablePair<String, String> getCategoryColorAndIconById(Long categoryId) {
+        var getCategoryColorAndIconQuery = new GetCategoryColorAndIconByIdQuery(
+                categoryId
+        );
+        return categoryQueryService.getCategoryColorAndIconById(getCategoryColorAndIconQuery).orElse(null);
     }
 }

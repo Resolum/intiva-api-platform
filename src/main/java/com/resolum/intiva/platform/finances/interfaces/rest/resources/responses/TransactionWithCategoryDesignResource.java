@@ -12,7 +12,7 @@ package com.resolum.intiva.platform.finances.interfaces.rest.resources.responses
  * @param transactionType The type of the transaction, indicating whether it is an income or an expense. This field is mandatory and must be a valid value corresponding to the TransactionTypes enum, such as "INCOME" or "EXPENSE".
  * @param categoryId The identifier of the category associated with the transaction, represented as a long value. This field is optional and can be null if the transaction does not belong to any category. If provided, it must correspond to an existing category in the system.
  */
-public record TransactionResource(
+public record TransactionWithCategoryDesignResource(
         Long id,
         String amount,
         String currencyCode,
@@ -22,5 +22,7 @@ public record TransactionResource(
         Long actorUserId,
         String transactionType,
         Long categoryId,
-        String registeredAt) {
+        String registeredAt,
+        CategoryDesignResource categoryDesign
+) {
 }
