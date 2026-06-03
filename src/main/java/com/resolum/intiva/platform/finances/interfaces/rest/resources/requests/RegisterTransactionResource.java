@@ -1,5 +1,7 @@
 package com.resolum.intiva.platform.finances.interfaces.rest.resources.requests;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.math.BigDecimal;
 
 /**
@@ -12,14 +14,30 @@ import java.math.BigDecimal;
  * @param transactionType The type of the transaction, indicating whether it is an income or an expense. This field is mandatory and must be a valid value corresponding to the TransactionTypes enum, such as "INCOME" or "EXPENSE".
  * @param categoryId The identifier of the category associated with the transaction, represented as a long value. This field is optional and can be null if the transaction does not belong to any category. If provided, it must correspond to an existing category in the system.
  */
+@Schema(description = "Request body used to register an income or expense transaction.")
 public record RegisterTransactionResource(
+        @Schema(description = "Transaction amount. It must be greater than zero.", example = "80.00")
         BigDecimal amount,
+
+        @Schema(description = "Currency code used by the transaction.", example = "PEN", allowableValues = {"PEN", "USD", "EUR"})
         String currencyCode,
+
+        @Schema(description = "Human-readable transaction description.", example = "Cena")
         String description,
+
+        @Schema(description = "Financial account/payment method used by the transaction.", example = "3")
         Long financialAccountId,
+
+        @Schema(description = "User who performed the transaction. In family transactions this can differ from ownerId.", example = "1")
         Long performedByUserId,
+
+        @Schema(description = "Transaction type. Spending limits are consumed only by EXPENSE transactions.", example = "EXPENSE", allowableValues = {"INCOME", "EXPENSE"})
         String transactionType,
+
+        @Schema(description = "Category assigned to the transaction.", example = "5")
         Long categoryId,
+
+        @Schema(description = "Owner scope. INDIVIDUAL is personal finance and FAMILY is group/family finance.", example = "INDIVIDUAL", allowableValues = {"INDIVIDUAL", "FAMILY"})
         String ownerType
 ) {
 }

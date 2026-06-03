@@ -7,6 +7,9 @@ import com.resolum.intiva.platform.finances.interfaces.rest.assemblers.Transacti
 import com.resolum.intiva.platform.finances.interfaces.rest.resources.requests.RegisterTransactionResource;
 import com.resolum.intiva.platform.shared.interfaces.rest.resource.MessageResource;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -16,25 +19,36 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * UserTransactionsController is a REST controller that manages user transactions. It provides endpoints for registering new transactions and retrieving transaction details by ID. The controller interacts with the TransactionCommandService to handle transaction registration commands and the TransactionQueryService to handle transaction retrieval queries. It also includes error handling to return appropriate responses for invalid input data and unexpected server errors.
+ * REST controller that registers user-scoped transactions.
+ *
+ * <p>Expense transactions registered here also trigger spending-limit consumption in the finances bounded context.</p>
  */
 @RestController
 @RequestMapping(value = "/api/v1/users", produces = MediaType.APPLICATION_JSON_VALUE)
 @Tag(name = "Users", description = "Endpoints related to user transactions management")
 public class UserTransactionsController {
 
-    // TransactionCommandService is a service that handles commands related to transactions, such as registering a new transaction. It is injected into the controller to perform the necessary business logic for transaction registration operations.
+    /**
+     * Command service used to register transactions.
+     */
     private final TransactionCommandService transactionCommandService;
 
-    // Constructor injection for the TransactionCommandService and TransactionQueryService dependencies
+    /**
+     * Creates the controller with the required transaction command service.
+     *
+     * @param transactionCommandService command service dependency
+     * @param transactionQueryService query service dependency kept for compatibility with the existing constructor shape
+     */
     public UserTransactionsController(TransactionCommandService transactionCommandService, TransactionQueryService transactionQueryService) {
         this.transactionCommandService = transactionCommandService;
     }
 
     /**
-     * Endpoint to register a new financial transaction. It accepts transaction details and creates a new transaction record if the provided information is valid. If the registration is successful, it returns a 201 Created response with the created TransactionResource. If the input data is invalid, it returns a 400 Bad Request response.
-     * @param resource The RegisterTransactionResource object containing the transaction details sent in the request body (e.g., amount, description, date).
-     * @return A ResponseEntity containing the created TransactionResource if the registration is successful, or an appropriate error response if the registration fails (e.g., due to invalid input data).
+     * Registers a new transaction for the given user path id.
+     *
+     * @param resource request payload describing the transaction
+     * @param userId owner identifier passed in the path
+     * @return the created transaction or an error response
      */
     @PostMapping("/{userId}/transactions")
     @Operation(
@@ -54,6 +68,12 @@ public class UserTransactionsController {
                 - Currency code validity
                 - Available balance for expenses
                 - Owner type validity
+
+                When transactionType is EXPENSE, the finances context also consumes active spending limits that match:
+                - Same ownerId and ownerType
+                - Same categoryId for CATEGORY limits
+                - Same financialAccountId for FINANCIAL_ACCOUNT limits
+                - Same currency and active period
                 
                 If the request is valid, the transaction is stored successfully.
                 """
@@ -76,6 +96,47 @@ public class UserTransactionsController {
             )
     })
     public ResponseEntity<?> registerTransaction(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Transaction to register. EXPENSE transactions automatically consume matching spending limits.",
+                    required = true,
+                    content = @Content(
+                            schema = @Schema(implementation = RegisterTransactionResource.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Personal expense",
+                                            summary = "Consumes INDIVIDUAL limits matching categoryId and financialAccountId",
+                                            value = """
+                                                    {
+                                                      "amount": 80.00,
+                                                      "currencyCode": "PEN",
+                                                      "description": "Cena",
+                                                      "financialAccountId": 3,
+                                                      "performedByUserId": 1,
+                                                      "transactionType": "EXPENSE",
+                                                      "categoryId": 5,
+                                                      "ownerType": "INDIVIDUAL"
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "Family expense",
+                                            summary = "Consumes FAMILY limits matching categoryId and financialAccountId",
+                                            value = """
+                                                    {
+                                                      "amount": 250.00,
+                                                      "currencyCode": "PEN",
+                                                      "description": "Compra familiar de supermercado",
+                                                      "financialAccountId": 12,
+                                                      "performedByUserId": 4,
+                                                      "transactionType": "EXPENSE",
+                                                      "categoryId": 8,
+                                                      "ownerType": "FAMILY"
+                                                    }
+                                                    """
+                                    )
+                            }
+                    )
+            )
             @RequestBody RegisterTransactionResource resource,
             @PathVariable Long userId
     ) {
