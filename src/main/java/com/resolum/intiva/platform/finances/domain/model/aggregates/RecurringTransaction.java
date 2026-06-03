@@ -237,9 +237,10 @@ public class RecurringTransaction extends AuditableAbstractAggregate<RecurringTr
      */
     private LocalDate calculateNextExecutionDate(LocalDate baseDate) {
         return switch (frequency) {
+            case DAILY -> baseDate.plusDays(1);
             case WEEKLY -> baseDate.plusWeeks(1);
-            case BIWEEKLY -> baseDate.plusWeeks(2);
             case MONTHLY -> baseDate.plusMonths(1);
+            case ANNUAL -> baseDate.plusYears(1);
         };
     }
 

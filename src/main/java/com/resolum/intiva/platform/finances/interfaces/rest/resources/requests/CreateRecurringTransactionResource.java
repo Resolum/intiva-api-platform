@@ -50,7 +50,7 @@ public record CreateRecurringTransactionResource(
         @Schema(description = "Owner scope. INDIVIDUAL is personal finance and FAMILY is group finance.", example = "INDIVIDUAL", allowableValues = {"INDIVIDUAL", "FAMILY"})
         String ownerType,
 
-        @Schema(description = "Recurring cadence used to calculate the next execution date.", example = "MONTHLY", allowableValues = {"WEEKLY", "BIWEEKLY", "MONTHLY"})
+        @Schema(description = "Recurring cadence used to calculate the next execution date.", example = "MONTHLY", allowableValues = {"DAILY", "WEEKLY", "MONTHLY", "ANNUAL"})
         String frequency,
 
         @Schema(description = "First date on which the definition should execute.", example = "2026-06-15")
