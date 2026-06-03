@@ -30,4 +30,20 @@ public interface FinancialAccountContextFacade {
      * @param currencyCode the currency code of the transaction
      */
     void createFinancialAccountTransaction(Long financialAccountId, String transactionType, BigDecimal amount, String currencyCode);
+
+    /**
+     * Get the current amount of a financial account
+     * @param financialAccountId the financial account id
+     * @return the current amount of the financial account
+     */
+    BigDecimal getCurrentAmount(Long financialAccountId);
+
+    /**
+     * Checks whether the current amount of a financial account can cover a requested expense amount.
+     *
+     * @param financialAccountId the financial account id
+     * @param amount the requested expense amount
+     * @return true when the account balance is greater than or equal to the requested amount
+     */
+    boolean hasSufficientBalance(Long financialAccountId, BigDecimal amount);
 }

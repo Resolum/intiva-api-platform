@@ -47,4 +47,12 @@ public class AuditableAbstractAggregate<T extends AbstractAggregateRoot<T>> exte
     protected void onUpdate() {
         this.updatedAt = Instant.now();
     }
+
+    /**
+     * Adds a domain event to the aggregate's event log.
+     * @param event the domain event to add
+     */
+    public void addDomainEvent(Object event) {
+        registerEvent(event);
+    }
 }

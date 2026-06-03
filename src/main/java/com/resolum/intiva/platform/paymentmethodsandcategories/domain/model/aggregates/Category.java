@@ -83,37 +83,32 @@ public class Category extends AuditableAbstractAggregate<Category> {
     public static List<Category> createDefault(Long userId) {
         return List.of(
                 new Category(new CreateCategoryCommand(
-                        "Salario", "USER", userId, null,
+                        "Salario", "INDIVIDUAL", userId, null,
                         "Ingresos mensuales por empleo",
                         "#4CAF50", "briefcase"
                 )),
                 new Category(new CreateCategoryCommand(
-                        "Freelance", "USER", userId, null,
+                        "Freelance", "INDIVIDUAL", userId, null,
                         "Ingresos por trabajo independiente",
                         "#2196F3", "laptop"
                 )),
                 new Category(new CreateCategoryCommand(
-                        "Negocio", "USER", userId, null,
+                        "Negocio", "INDIVIDUAL", userId, null,
                         "Ingresos de tu negocio o empresa",
                         "#FF9800", "store"
                 )),
                 new Category(new CreateCategoryCommand(
-                        "Inversión", "USER", userId, null,
+                        "Inversión", "INDIVIDUAL", userId, null,
                         "Rendimientos e intereses de inversiones",
                         "#9C27B0", "trending_up"
                 )),
                 new Category(new CreateCategoryCommand(
-                        "Renta", "USER", userId, null,
-                        "Ingresos por alquiler de propiedades",
-                        "#00BCD4", "home"
-                )),
-                new Category(new CreateCategoryCommand(
-                        "Pensión", "USER", userId, null,
+                        "Pensión", "INDIVIDUAL", userId, null,
                         "Pensión, jubilación o subsidios",
                         "#FF5722", "shield"
                 )),
                 new Category(new CreateCategoryCommand(
-                        "Otros", "USER", userId, null,
+                        "Otros", "INDIVIDUAL", userId, null,
                         "Otros ingresos no clasificados",
                         "#607D8B", "more_horiz"
                 ))
