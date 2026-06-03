@@ -6,7 +6,7 @@ import com.resolum.intiva.platform.iam.domain.model.exceptions.UserWithEmailAlre
 import com.resolum.intiva.platform.iam.domain.model.aggregates.User;
 import com.resolum.intiva.platform.iam.domain.model.commands.SignInCommand;
 import com.resolum.intiva.platform.iam.domain.model.commands.SignUpCommand;
-import com.resolum.intiva.platform.iam.domain.model.events.UserRegisteredEvent;
+import com.resolum.intiva.platform.iam.domain.events.UserRegisteredEvent;
 import com.resolum.intiva.platform.iam.domain.model.valueobjects.PasswordHash;
 import com.resolum.intiva.platform.iam.domain.services.UserCommandService;
 import com.resolum.intiva.platform.iam.infrastructure.persistence.jpa.repositories.UserRepository;

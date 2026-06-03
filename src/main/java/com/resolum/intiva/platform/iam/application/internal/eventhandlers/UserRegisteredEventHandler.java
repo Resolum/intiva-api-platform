@@ -3,7 +3,7 @@ package com.resolum.intiva.platform.iam.application.internal.eventhandlers;
 import com.resolum.intiva.platform.iam.application.internal.outboundservices.acl.IamExternalCategoriesService;
 import com.resolum.intiva.platform.iam.application.internal.outboundservices.acl.IamExternalFinancialAccountsService;
 import com.resolum.intiva.platform.iam.domain.model.commands.CreateUserOnboardingCommand;
-import com.resolum.intiva.platform.iam.domain.model.events.UserRegisteredEvent;
+import com.resolum.intiva.platform.iam.domain.events.UserRegisteredEvent;
 import com.resolum.intiva.platform.iam.domain.services.OnboardingCommandService;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;

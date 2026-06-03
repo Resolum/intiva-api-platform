@@ -1,4 +1,4 @@
-package com.resolum.intiva.platform.iam.domain.model.events;
+package com.resolum.intiva.platform.iam.domain.events;
 
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
