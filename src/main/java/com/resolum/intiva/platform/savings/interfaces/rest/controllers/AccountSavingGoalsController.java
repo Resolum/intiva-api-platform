@@ -3,6 +3,7 @@ package com.resolum.intiva.platform.savings.interfaces.rest.controllers;
 import com.resolum.intiva.platform.savings.domain.model.commands.CompleteSavingGoalCommand;
 import com.resolum.intiva.platform.savings.domain.model.commands.ContributeToSavingGoalCommand;
 import com.resolum.intiva.platform.savings.domain.model.commands.CreateSavingGoalCommand;
+import com.resolum.intiva.platform.savings.domain.model.commands.DeleteSavingGoalCommand;
 import com.resolum.intiva.platform.savings.domain.model.commands.UncompleteSavingGoalCommand;
 import com.resolum.intiva.platform.savings.domain.model.queries.GetAllCompletedSavingGoalsByUserIdQuery;
 import com.resolum.intiva.platform.savings.domain.model.queries.GetAllSavingGoalsByUserIdQuery;
@@ -12,8 +13,10 @@ import com.resolum.intiva.platform.savings.domain.services.SavingGoalQueryServic
 import com.resolum.intiva.platform.savings.interfaces.rest.assemblers.ContributeToSavingGoalCommandFromResourceAssembler;
 import com.resolum.intiva.platform.savings.interfaces.rest.assemblers.CreateSavingGoalCommandFromResourceAssembler;
 import com.resolum.intiva.platform.savings.interfaces.rest.assemblers.SavingGoalResourceFromEntityAssembler;
+import com.resolum.intiva.platform.savings.interfaces.rest.assemblers.UpdateSavingGoalCommandFromResourceAssembler;
 import com.resolum.intiva.platform.savings.interfaces.rest.resources.requests.ContributeToSavingGoalResource;
 import com.resolum.intiva.platform.savings.interfaces.rest.resources.requests.CreateSavingGoalResource;
+import com.resolum.intiva.platform.savings.interfaces.rest.resources.requests.UpdateSavingGoalResource;
 import com.resolum.intiva.platform.savings.interfaces.rest.resources.responses.SavingGoalResource;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -294,5 +297,84 @@ public class AccountSavingGoalsController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(resources);
+    }
+
+    /**
+     * Updates the title, description, and/or target amount of a saving goal belonging to the user.
+     * Only allowed while the saving goal's deadline has not passed.
+     * Validates that the saving goal belongs to the specified user before updating.
+     *
+     * @param userId       the ID of the user that owns the saving goal
+     * @param savingGoalId the ID of the saving goal to update
+     * @param resource     the fields to update (all optional)
+     * @return 200 with the updated saving goal, 400 if deadline passed or invalid input, 404 if not found or not owned
+     */
+    @Operation(
+            summary = "Update a Saving Goal by User",
+            description = "Updates the title, description, and/or target amount of a saving goal. Only allowed before the deadline. Ownership is validated against the userId."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Saving goal updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Deadline has passed or invalid input"),
+            @ApiResponse(responseCode = "404", description = "Saving goal not found or does not belong to this user")
+    })
+    @PatchMapping("/{savingGoalId}")
+    public ResponseEntity<?> updateSavingGoal(
+            @PathVariable Long userId,
+            @PathVariable Long savingGoalId,
+            @RequestBody UpdateSavingGoalResource resource) {
+        try {
+            var query = new GetSavingGoalByIdQuery(savingGoalId);
+            var savingGoalOpt = savingGoalQueryService.handle(query);
+            if (savingGoalOpt.isEmpty() || !userId.equals(savingGoalOpt.get().getActorUserId())) {
+                return ResponseEntity.notFound().build();
+            }
+            var command = UpdateSavingGoalCommandFromResourceAssembler.toCommandFromResource(savingGoalId, resource);
+            var savingGoal = savingGoalCommandService.handle(command);
+            var savingGoalResource = SavingGoalResourceFromEntityAssembler.toResourceFromEntity(savingGoal);
+            return ResponseEntity.ok(savingGoalResource);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    /**
+     * Deletes a saving goal belonging to the specified user.
+     * Only allowed while the saving goal's deadline has not passed.
+     * Validates that the saving goal belongs to the specified user before deleting.
+     *
+     * @param userId       the ID of the user that owns the saving goal
+     * @param savingGoalId the ID of the saving goal to delete
+     * @return 204 on success, 400 if deadline passed, 404 if not found or not owned
+     */
+    @Operation(
+            summary = "Delete a Saving Goal by User",
+            description = "Permanently deletes a saving goal owned by the user. Only allowed before the deadline."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Saving goal deleted successfully"),
+            @ApiResponse(responseCode = "400", description = "Deadline has passed"),
+            @ApiResponse(responseCode = "404", description = "Saving goal not found or does not belong to this user")
+    })
+    @DeleteMapping("/{savingGoalId}")
+    public ResponseEntity<?> deleteSavingGoal(
+            @PathVariable Long userId,
+            @PathVariable Long savingGoalId) {
+        try {
+            var query = new GetSavingGoalByIdQuery(savingGoalId);
+            var savingGoalOpt = savingGoalQueryService.handle(query);
+            if (savingGoalOpt.isEmpty() || !userId.equals(savingGoalOpt.get().getActorUserId())) {
+                return ResponseEntity.notFound().build();
+            }
+            var command = new DeleteSavingGoalCommand(savingGoalId);
+            savingGoalCommandService.handle(command);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

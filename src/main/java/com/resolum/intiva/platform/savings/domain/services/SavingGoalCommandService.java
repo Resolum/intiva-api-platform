@@ -4,7 +4,9 @@ import com.resolum.intiva.platform.savings.domain.model.aggregates.SavingGoal;
 import com.resolum.intiva.platform.savings.domain.model.commands.CompleteSavingGoalCommand;
 import com.resolum.intiva.platform.savings.domain.model.commands.ContributeToSavingGoalCommand;
 import com.resolum.intiva.platform.savings.domain.model.commands.CreateSavingGoalCommand;
+import com.resolum.intiva.platform.savings.domain.model.commands.DeleteSavingGoalCommand;
 import com.resolum.intiva.platform.savings.domain.model.commands.UncompleteSavingGoalCommand;
+import com.resolum.intiva.platform.savings.domain.model.commands.UpdateSavingGoalCommand;
 import java.util.Optional;
 
 /**
@@ -49,4 +51,25 @@ public interface SavingGoalCommandService {
      * @throws IllegalStateException    if the saving goal is already marked as uncompleted
      */
     SavingGoal handle(UncompleteSavingGoalCommand command);
+
+    /**
+     * Handles updating the details of an existing saving goal.
+     * Only allowed while the saving goal's deadline has not passed.
+     *
+     * @param command the command containing the fields to update
+     * @return the updated SavingGoal entity
+     * @throws IllegalArgumentException if the saving goal does not exist
+     * @throws IllegalStateException    if the saving goal's deadline has already passed
+     */
+    SavingGoal handle(UpdateSavingGoalCommand command);
+
+    /**
+     * Handles deleting an existing saving goal.
+     * Only allowed while the saving goal's deadline has not passed.
+     *
+     * @param command the command containing the ID of the saving goal to delete
+     * @throws IllegalArgumentException if the saving goal does not exist
+     * @throws IllegalStateException    if the saving goal's deadline has already passed
+     */
+    void handle(DeleteSavingGoalCommand command);
 }
