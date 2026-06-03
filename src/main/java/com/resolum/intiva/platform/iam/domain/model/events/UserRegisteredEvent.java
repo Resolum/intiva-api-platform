@@ -1,24 +1,34 @@
 package com.resolum.intiva.platform.iam.domain.model.events;
 
+import com.resolum.intiva.platform.iam.domain.model.aggregates.User;
 import lombok.Getter;
-import org.springframework.context.ApplicationEvent;
 
 /**
  * Event triggered when a new user is registered.
  */
 @Getter
-public class UserRegisteredEvent extends ApplicationEvent {
+public class UserRegisteredEvent {
 
-    /** The ID of the user that was registered. */
-    private final Long userId;
+    /**
+     * Aggregate instance that raised the event.
+     */
+    private final User user;
 
     /**
      * Constructor for UserRegisteredEvent.
-     * @param source the source of the event
-     * @param userId the ID of the user that was registered
+     *
+     * @param user the user aggregate that has just been registered
      */
-    public UserRegisteredEvent(Object source, Long userId) {
-        super(source);
-        this.userId = userId;
+    public UserRegisteredEvent(User user) {
+        this.user = user;
+    }
+
+    /**
+     * Returns the persisted user identifier at the moment the event is consumed.
+     *
+     * @return persisted user id
+     */
+    public Long getUserId() {
+        return user.getId();
     }
 }

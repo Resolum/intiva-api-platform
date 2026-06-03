@@ -8,8 +8,7 @@ import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.comm
 import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.queries.GetFinancialAccountByIdQuery;
 import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.queries.GetFinancialAccountByOwnerId;
 import com.resolum.intiva.platform.paymentmethodsandcategories.interfaces.acl.FinancialAccountContextFacade;
-import com.resolum.intiva.platform.paymentmethodsandcategories.interfaces.rest.assemblers.FinancialAccountResourceFromEntityAssembler;
-import com.resolum.intiva.platform.paymentmethodsandcategories.interfaces.rest.resources.responses.FinancialAccountResource;
+import com.resolum.intiva.platform.shared.domain.valueobjects.Money;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -51,7 +50,7 @@ public class FinancialAccountContextFacadeImpl implements FinancialAccountContex
         var getFinancialAccountByOwnerIdQuery = new GetFinancialAccountByOwnerId(
                 financialAccountId
         );
-        return financialAccountQueryService.existsFinancialAccountById(getFinancialAccountByOwnerIdQuery);
+        return financialAccountQueryService.handle(getFinancialAccountByOwnerIdQuery);
     }
 
     /**
@@ -82,5 +81,29 @@ public class FinancialAccountContextFacadeImpl implements FinancialAccountContex
                 transactionType
         );
         financialAccountCommandService.handle(createFinancialAccountTransactionCommand);
+    }
+
+    @Override
+    public BigDecimal getCurrentAmount(Long financialAccountId) {
+        var getFinancialAccountBy = new GetFinancialAccountByIdQuery(
+                financialAccountId
+        );
+        var financialAccount = financialAccountQueryService.handle(getFinancialAccountBy);
+        return financialAccount
+                .map(FinancialAccount::getCurrentAmount)
+                .map(Money::amount)
+                .orElse(BigDecimal.ZERO);
+    }
+
+    /**
+     * Verifies whether the financial account can cover a requested expense amount.
+     *
+     * @param financialAccountId the financial account id
+     * @param amount the requested expense amount
+     * @return true if the current amount is greater than or equal to the requested amount
+     */
+    @Override
+    public boolean hasSufficientBalance(Long financialAccountId, BigDecimal amount) {
+        return getCurrentAmount(financialAccountId).compareTo(amount) >= 0;
     }
 }

@@ -1,11 +1,9 @@
 package com.resolum.intiva.platform.finances.application.internal.outboundservices.acl;
 
 import com.resolum.intiva.platform.paymentmethodsandcategories.interfaces.acl.FinancialAccountContextFacade;
-import com.resolum.intiva.platform.paymentmethodsandcategories.interfaces.rest.resources.responses.FinancialAccountResource;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.Optional;
 
 /**
  * Service class for interacting with external financial account services.
@@ -47,4 +45,14 @@ public class FinancesExternalFinancialAccountService {
         financialAccountContextFacade.createFinancialAccountTransaction(financialAccountId, transactionType, amount, currencyCode);
     }
 
+    /**
+     * Checks whether the referenced financial account can cover a requested expense amount.
+     *
+     * @param financialAccountId financial account identifier
+     * @param amount requested expense amount
+     * @return true when the account balance is sufficient
+     */
+    public Boolean hasSufficientBalance(Long financialAccountId, BigDecimal amount) {
+        return financialAccountContextFacade.hasSufficientBalance(financialAccountId, amount);
+    }
 }

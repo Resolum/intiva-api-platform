@@ -41,7 +41,7 @@ public class FinancialAccountQueryServiceImpl implements FinancialAccountQuerySe
      * @return true if the financial account exists, false otherwise
      */
     @Override
-    public boolean existsFinancialAccountById(GetFinancialAccountByOwnerId query) {
+    public boolean handle(GetFinancialAccountByOwnerId query) {
         return financialAccountRepository.existsById(query.ownerId());
     }
 
@@ -51,7 +51,7 @@ public class FinancialAccountQueryServiceImpl implements FinancialAccountQuerySe
      * @return an Optional containing the FinancialAccount if found, or empty if not found
      */
     @Override
-    public Optional<FinancialAccount> getFinancialAccountById(GetFinancialAccountByIdQuery query) {
+    public Optional<FinancialAccount> handle(GetFinancialAccountByIdQuery query) {
         return financialAccountRepository.findById(query.financialAccountId());
     }
 }

@@ -25,12 +25,12 @@ public interface FinancialAccountQueryService {
      * @param query the query containing the financial account id
      * @return true if the financial account exists, false otherwise
      */
-    boolean existsFinancialAccountById(GetFinancialAccountByOwnerId query);
+    boolean handle(GetFinancialAccountByOwnerId query);
 
     /**
      * Get a financial account by id
      * @param query the query containing the financial account id
      * @return an Optional containing the financial account if found, or empty if not found
      */
-    Optional<FinancialAccount> getFinancialAccountById(GetFinancialAccountByIdQuery query);
+    Optional<FinancialAccount> handle(GetFinancialAccountByIdQuery query);
 }
