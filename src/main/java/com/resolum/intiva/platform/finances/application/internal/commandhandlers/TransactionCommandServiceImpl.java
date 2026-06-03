@@ -2,7 +2,7 @@ package com.resolum.intiva.platform.finances.application.internal.commandhandler
 
 import com.resolum.intiva.platform.finances.application.internal.outboundservices.acl.FinancesExternalFinancialAccountService;
 import com.resolum.intiva.platform.finances.domain.model.commands.RegisterExpenseAgainstSpendingLimitsCommand;
-import com.resolum.intiva.platform.finances.domain.events.RegisteredTransactionDetectedEvent;
+import com.resolum.intiva.platform.finances.domain.model.events.RegisteredTransactionDetectedEvent;
 import com.resolum.intiva.platform.finances.application.internal.outboundservices.acl.FinancesExternalCategoriesService;
 import com.resolum.intiva.platform.finances.domain.model.aggregates.Transaction;
 import com.resolum.intiva.platform.finances.domain.model.commands.RegisterTransactionCommand;

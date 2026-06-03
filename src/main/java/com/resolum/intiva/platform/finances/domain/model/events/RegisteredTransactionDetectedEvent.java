@@ -1,4 +1,4 @@
-package com.resolum.intiva.platform.finances.domain.events;
+package com.resolum.intiva.platform.finances.domain.model.events;
 
 import com.resolum.intiva.platform.shared.domain.valueobjects.CategoryId;
 import com.resolum.intiva.platform.shared.domain.valueobjects.OwnerTypes;
