@@ -1,5 +1,7 @@
 package com.resolum.intiva.platform.shared.interfaces.rest;
 
+import com.resolum.intiva.platform.household.domain.exceptions.ResourceNotFoundException;
+import com.resolum.intiva.platform.household.domain.exceptions.UnauthorizedException;
 import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.exceptions.InactiveFinancialAccountException;
 import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.exceptions.InsufficientFundsException;
 import org.springframework.http.HttpStatus;
@@ -104,5 +106,23 @@ public class GlobalExceptionHandler {
         problem.setTitle("Inactive Account");
 
         return problem;
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ProblemDetail handleResourceNotFound(ResourceNotFoundException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ProblemDetail handleUnauthorized(UnauthorizedException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ProblemDetail handleIllegalState(IllegalStateException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 }
