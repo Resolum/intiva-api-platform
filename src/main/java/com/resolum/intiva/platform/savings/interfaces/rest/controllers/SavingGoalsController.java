@@ -1,6 +1,7 @@
 package com.resolum.intiva.platform.savings.interfaces.rest.controllers;
 
 import com.resolum.intiva.platform.savings.domain.model.commands.CompleteSavingGoalCommand;
+import com.resolum.intiva.platform.savings.domain.model.commands.DeleteSavingGoalCommand;
 import com.resolum.intiva.platform.savings.domain.model.commands.UncompleteSavingGoalCommand;
 import com.resolum.intiva.platform.savings.domain.model.queries.GetAllCompletedSavingGoalsByUserIdQuery;
 import com.resolum.intiva.platform.savings.domain.model.queries.GetAllSavingGoalsByUserIdQuery;
@@ -10,8 +11,10 @@ import com.resolum.intiva.platform.savings.domain.services.SavingGoalQueryServic
 import com.resolum.intiva.platform.savings.interfaces.rest.assemblers.ContributeToSavingGoalCommandFromResourceAssembler;
 import com.resolum.intiva.platform.savings.interfaces.rest.assemblers.SavingGoalResourceFromEntityAssembler;
 import com.resolum.intiva.platform.savings.interfaces.rest.assemblers.CreateSavingGoalCommandFromResourceAssembler;
+import com.resolum.intiva.platform.savings.interfaces.rest.assemblers.UpdateSavingGoalCommandFromResourceAssembler;
 import com.resolum.intiva.platform.savings.interfaces.rest.resources.requests.ContributeToSavingGoalResource;
 import com.resolum.intiva.platform.savings.interfaces.rest.resources.requests.CreateSavingGoalResource;
+import com.resolum.intiva.platform.savings.interfaces.rest.resources.requests.UpdateSavingGoalResource;
 import com.resolum.intiva.platform.savings.interfaces.rest.resources.responses.SavingGoalResource;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -251,5 +254,67 @@ public class SavingGoalsController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(resources);
+    }
+
+    /**
+     * Updates the title, description, and/or target amount of an existing saving goal.
+     * Only allowed while the saving goal's deadline has not passed.
+     *
+     * @param savingGoalId the ID of the saving goal to update
+     * @param resource     the fields to update (all optional)
+     * @return 200 with the updated saving goal, 400 if deadline passed or input is invalid, 404 if not found
+     */
+    @Operation(
+            summary = "Update a Saving Goal",
+            description = "Updates the title, description, and/or target amount of a saving goal. Only allowed before the deadline."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Saving goal updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Deadline has passed or invalid input"),
+            @ApiResponse(responseCode = "404", description = "Saving goal not found")
+    })
+    @PatchMapping("/{savingGoalId}")
+    public ResponseEntity<?> updateSavingGoal(
+            @PathVariable Long savingGoalId,
+            @RequestBody UpdateSavingGoalResource resource) {
+        try {
+            var command = UpdateSavingGoalCommandFromResourceAssembler.toCommandFromResource(savingGoalId, resource);
+            var savingGoal = savingGoalCommandService.handle(command);
+            var savingGoalResource = SavingGoalResourceFromEntityAssembler.toResourceFromEntity(savingGoal);
+            return ResponseEntity.ok(savingGoalResource);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    /**
+     * Deletes an existing saving goal.
+     * Only allowed while the saving goal's deadline has not passed.
+     *
+     * @param savingGoalId the ID of the saving goal to delete
+     * @return 204 on success, 400 if deadline passed, 404 if not found
+     */
+    @Operation(
+            summary = "Delete a Saving Goal",
+            description = "Permanently deletes a saving goal. Only allowed before the deadline."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Saving goal deleted successfully"),
+            @ApiResponse(responseCode = "400", description = "Deadline has passed"),
+            @ApiResponse(responseCode = "404", description = "Saving goal not found")
+    })
+    @DeleteMapping("/{savingGoalId}")
+    public ResponseEntity<?> deleteSavingGoal(@PathVariable Long savingGoalId) {
+        try {
+            var command = new DeleteSavingGoalCommand(savingGoalId);
+            savingGoalCommandService.handle(command);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

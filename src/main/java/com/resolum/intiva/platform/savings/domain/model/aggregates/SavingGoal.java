@@ -165,22 +165,42 @@ public class SavingGoal extends AuditableAbstractAggregate<SavingGoal> {
     }
 
     /**
+     * Returns whether this saving goal can still be modified or deleted.
+     * A goal is editable only while its deadline has not yet passed.
+     *
+     * @return true if the current time is before the deadline, false otherwise
+     */
+    public boolean isEditable() {
+        return this.deadline != null && Instant.now().isBefore(this.deadline);
+    }
+
+    /**
      * Updates the description and title of the saving goal.
+     * Only allowed while the deadline has not passed.
      *
      * @param description the new description
      * @param title       the new title
+     * @throws IllegalStateException if the saving goal's deadline has already passed
      */
     public void editDescriptionOrTitle(String description, String title) {
+        if (!isEditable()) {
+            throw new IllegalStateException("Saving goal cannot be modified after its deadline has passed");
+        }
         this.description = description;
         this.title = title;
     }
 
     /**
      * Updates the target amount of the saving goal.
+     * Only allowed while the deadline has not passed.
      *
      * @param newTargetAmount the new target amount
+     * @throws IllegalStateException if the saving goal's deadline has already passed
      */
     public void editTargetAmount(Money newTargetAmount) {
+        if (!isEditable()) {
+            throw new IllegalStateException("Saving goal cannot be modified after its deadline has passed");
+        }
         this.targetAmount = newTargetAmount;
     }
 
