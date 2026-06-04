@@ -2,6 +2,7 @@ package com.resolum.intiva.platform.household.domain.model.aggregates;
 
 import com.resolum.intiva.platform.household.domain.model.valueobjects.FamilyMemberStatus;
 import com.resolum.intiva.platform.household.domain.model.valueobjects.FamilyRole;
+import com.resolum.intiva.platform.shared.domain.valueobjects.UserId;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -9,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class FamilyMemberTests {
 
     private FamilyMember buildMember(FamilyRole role) {
-        return new FamilyMember(1L, "user-123", role);
+        return new FamilyMember(1L, new UserId(212342432L), role);
     }
 
     @Test
@@ -20,7 +21,7 @@ public class FamilyMemberTests {
         // Assert
         assertNotNull(member);
         assertEquals(1L, member.getFamilyId());
-        assertEquals("user-123", member.getUserId());
+        assertEquals(new UserId(212342432L), member.getUserId());
         assertEquals(FamilyRole.MEMBER, member.getRole());
         assertEquals(FamilyMemberStatus.ACTIVE, member.getStatus());
     }
