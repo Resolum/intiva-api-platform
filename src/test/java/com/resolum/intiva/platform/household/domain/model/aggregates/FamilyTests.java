@@ -2,6 +2,7 @@ package com.resolum.intiva.platform.household.domain.model.aggregates;
 
 import com.resolum.intiva.platform.household.domain.model.commands.CreateFamilyCommand;
 import com.resolum.intiva.platform.household.domain.model.valueobjects.FamilyStatus;
+import com.resolum.intiva.platform.shared.domain.valueobjects.UserId;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -9,13 +10,13 @@ import static org.junit.jupiter.api.Assertions.*;
 public class FamilyTests {
 
     private Family buildFamily() {
-        return new Family(new CreateFamilyCommand("Mi Familia", "Grupo familiar principal", "user-123"));
+        return new Family(new CreateFamilyCommand("Mi Familia", "Grupo familiar principal", new UserId(212342432L)));
     }
 
     @Test
     void create_shouldCreateFamily_whenParametersAreValid() {
         // Arrange
-        var command = new CreateFamilyCommand("Mi Familia", "Descripción", "user-123");
+        var command = new CreateFamilyCommand("Mi Familia", "Descripción", new UserId(212342432L));
 
         // Act
         var family = new Family(command);
@@ -24,7 +25,7 @@ public class FamilyTests {
         assertNotNull(family);
         assertEquals("Mi Familia", family.getName());
         assertEquals("Descripción", family.getDescription());
-        assertEquals("user-123", family.getOwnerId());
+        assertEquals(new UserId(212342432L), family.getOwnerId());
         assertEquals(FamilyStatus.ACTIVE, family.getStatus());
         assertNotNull(family.getResourcesUsage());
         assertEquals(0, family.getResourcesUsage().membersActive());
@@ -33,7 +34,7 @@ public class FamilyTests {
     @Test
     void create_shouldCreateFamily_whenDescriptionIsNull() {
         // Arrange
-        var command = new CreateFamilyCommand("Mi Familia", null, "user-123");
+        var command = new CreateFamilyCommand("Mi Familia", null, new UserId(212342432L));
 
         // Act
         var family = new Family(command);

@@ -1,6 +1,7 @@
 package com.resolum.intiva.platform.household.domain.model.aggregates;
 
 import com.resolum.intiva.platform.household.domain.model.valueobjects.InvitationStatus;
+import com.resolum.intiva.platform.shared.domain.valueobjects.UserId;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
@@ -12,18 +13,18 @@ public class InvitationTests {
     private Invitation buildPendingInvitation() {
         return new Invitation(
                 LocalDateTime.now().plusDays(7),
-                "user-inviter",
+                new UserId(12312434L),
                 1L,
-                "user-invited"
+                new UserId(75646456456L)
         );
     }
 
     private Invitation buildExpiredInvitation() {
         return new Invitation(
                 LocalDateTime.now().minusDays(1),
-                "user-inviter",
+                new UserId(12312434L),
                 1L,
-                "user-invited"
+                new UserId(75646456456L)
         );
     }
 
@@ -36,9 +37,9 @@ public class InvitationTests {
         assertNotNull(invitation);
         assertNotNull(invitation.getToken());
         assertEquals(InvitationStatus.PENDING, invitation.getStatus());
-        assertEquals("user-inviter", invitation.getInvitedBy());
+        assertEquals(new UserId(12312434L), invitation.getInvitedBy());
         assertEquals(1L, invitation.getInvitedForFamily());
-        assertEquals("user-invited", invitation.getUserInvitedId());
+        assertEquals(new UserId(75646456456L), invitation.getUserInvitedId());
         assertNotNull(invitation.getSentAt());
         assertNull(invitation.getRespondedAt());
     }
