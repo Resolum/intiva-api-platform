@@ -38,4 +38,11 @@ public interface RecurringTransactionRepository extends JpaRepository<RecurringT
      * @return due recurring transaction definitions
      */
     List<RecurringTransaction> findAllByActiveTrueAndNextExecutionDateLessThanEqual(LocalDate date);
+
+    /**
+     * Finds all active recurring transaction definitions that have a non-null end date.
+     *
+     * @return active recurring transactions with an end date set
+     */
+    List<RecurringTransaction> findAllByActiveTrueAndEndDateIsNotNull();
 }

@@ -124,11 +124,16 @@ public class RecurringTransaction extends AuditableAbstractAggregate<RecurringTr
     @Column(nullable = false)
     private Boolean active;
 
-    /**
-     * Creates a recurring transaction definition from the create command.
-     *
-     * @param command command that carries the recurring configuration
-     */
+    @Column(nullable = false)
+    private Integer reminderDaysBefore = 3;
+
+    public void updateReminderDays(int reminderDaysBefore) {
+        if (reminderDaysBefore != 1 && reminderDaysBefore != 3 && reminderDaysBefore != 7) {
+            throw new IllegalArgumentException("reminderDaysBefore must be 1, 3, or 7");
+        }
+        this.reminderDaysBefore = reminderDaysBefore;
+    }
+
     public RecurringTransaction(CreateRecurringTransactionCommand command) {
         if (command == null) {
             throw new IllegalArgumentException("Command cannot be null");

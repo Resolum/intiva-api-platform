@@ -6,6 +6,7 @@ import com.resolum.intiva.platform.finances.domain.model.queries.GetRecurringTra
 import com.resolum.intiva.platform.finances.domain.model.queries.GetRecurringTransactionsByOwnerIdQuery;
 import com.resolum.intiva.platform.finances.domain.services.RecurringTransactionQueryService;
 import com.resolum.intiva.platform.finances.infrastructure.persistence.jpa.repositories.RecurringTransactionRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.Optional;
  * Default query implementation for recurring transaction definitions.
  */
 @Service
+@Slf4j
 public class RecurringTransactionQueryServiceImpl implements RecurringTransactionQueryService {
 
     /**
@@ -39,7 +41,14 @@ public class RecurringTransactionQueryServiceImpl implements RecurringTransactio
      */
     @Override
     public Optional<RecurringTransaction> handle(GetRecurringTransactionByIdQuery query) {
-        return recurringTransactionRepository.findById(query.recurringTransactionId());
+        log.info("Querying recurring transaction by ID. recurringTransactionId={}", query.recurringTransactionId());
+        var result = recurringTransactionRepository.findById(query.recurringTransactionId());
+        if (result.isPresent()) {
+            log.info("Recurring transaction found. recurringTransactionId={}", query.recurringTransactionId());
+        } else {
+            log.warn("Recurring transaction not found. recurringTransactionId={}", query.recurringTransactionId());
+        }
+        return result;
     }
 
     /**
@@ -50,7 +59,10 @@ public class RecurringTransactionQueryServiceImpl implements RecurringTransactio
      */
     @Override
     public List<RecurringTransaction> handle(GetRecurringTransactionsByOwnerIdQuery query) {
-        return recurringTransactionRepository.findByOwnerId(query.ownerId());
+        log.info("Querying recurring transactions by ownerId={}", query.ownerId());
+        var result = recurringTransactionRepository.findByOwnerId(query.ownerId());
+        log.info("Found {} recurring transactions for ownerId={}", result.size(), query.ownerId());
+        return result;
     }
 
     /**
@@ -61,6 +73,10 @@ public class RecurringTransactionQueryServiceImpl implements RecurringTransactio
      */
     @Override
     public List<RecurringTransaction> handle(GetRecurringTransactionsByOwnerIdAndOwnerTypeQuery query) {
-        return recurringTransactionRepository.findByOwnerIdAndOwnerType(query.ownerId(), query.ownerType());
+        log.info("Querying recurring transactions by ownerId={} and ownerType={}", query.ownerId(), query.ownerType());
+        var result = recurringTransactionRepository.findByOwnerIdAndOwnerType(query.ownerId(), query.ownerType());
+        log.info("Found {} recurring transactions for ownerId={} and ownerType={}",
+                result.size(), query.ownerId(), query.ownerType());
+        return result;
     }
 }
