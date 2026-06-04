@@ -5,7 +5,6 @@ import com.resolum.intiva.platform.communications.domain.model.commands.SendPush
 import com.resolum.intiva.platform.communications.domain.services.NotificationCommandService;
 import com.resolum.intiva.platform.communications.infrastructure.persistence.jpa.repositories.NotificationDeviceRepository;
 import com.resolum.intiva.platform.communications.interfaces.acl.CommunicationsContextFacade;
-import com.resolum.intiva.platform.household.interfaces.acl.HouseholdContextFacade;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -28,10 +27,7 @@ public class CommunicationsContextFacadeImpl implements CommunicationsContextFac
      */
     private final NotificationDeviceRepository notificationDeviceRepository;
 
-    /**
-     * Repository used to query family members for group notification targeting.
-     */
-    private final HouseholdContextFacade householdContextFacade;
+
 
     /**
      * Creates the ACL facade with the notification command service dependency.
@@ -40,12 +36,10 @@ public class CommunicationsContextFacadeImpl implements CommunicationsContextFac
      */
     public CommunicationsContextFacadeImpl(
             NotificationCommandService notificationCommandService,
-            NotificationDeviceRepository notificationDeviceRepository,
-            HouseholdContextFacade householdContextFacade
+            NotificationDeviceRepository notificationDeviceRepository
     ) {
         this.notificationCommandService = notificationCommandService;
         this.notificationDeviceRepository = notificationDeviceRepository;
-        this.householdContextFacade = householdContextFacade;
     }
 
     /**
@@ -104,11 +98,5 @@ public class CommunicationsContextFacadeImpl implements CommunicationsContextFac
         )));
     }
 
-    /**
-     * Retrieves the user IDs of all active members of a family group.
-     */
-    @Override
-    public List<Long> getMemberUserIdsByFamilyId(Long familyId) {
-        return householdContextFacade.getActiveFamilyMemberUserIds(familyId);
-    }
+
 }
