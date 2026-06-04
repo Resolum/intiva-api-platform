@@ -9,6 +9,7 @@ import com.resolum.intiva.platform.communications.domain.model.valueobject.Notif
 import com.resolum.intiva.platform.communications.domain.model.valueobject.NotificationType;
 import com.resolum.intiva.platform.communications.domain.services.NotificationCommandService;
 import com.resolum.intiva.platform.communications.infrastructure.persistence.jpa.repositories.NotificationRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -20,6 +21,7 @@ import java.util.Optional;
  * their entry point unified for the rest of the system.</p>
  */
 @Service
+@Slf4j
 public class NotificationCommandServiceImpl implements NotificationCommandService {
 
     /**
@@ -54,6 +56,9 @@ public class NotificationCommandServiceImpl implements NotificationCommandServic
      */
     @Override
     public Optional<Notification> handle(CreateInAppNotificationCommand command) {
+        log.info("Persisting in-app notification. recipientUserId={}, type={}, source={}, sourceId={}, title={}",
+                command.recipientUserId(), command.type(), command.source(), command.sourceId(), command.title());
+
         var notification = new Notification(
                 command.recipientUserId(),
                 NotificationType.valueOf(command.type().toUpperCase()),
@@ -73,6 +78,13 @@ public class NotificationCommandServiceImpl implements NotificationCommandServic
      */
     @Override
     public void handle(SendPushNotificationCommand command) {
+        log.info("Sending push notification through gateway. recipientUserId={}, tokenPrefix={}, type={}, source={}, sourceId={}, title={}",
+                command.recipientUserId(),
+                command.deviceToken(),
+                command.type(),
+                command.source(),
+                command.sourceId(),
+                command.title());
         firebaseMessagingGateway.send(command);
     }
 

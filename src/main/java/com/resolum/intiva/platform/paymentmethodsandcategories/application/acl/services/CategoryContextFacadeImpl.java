@@ -1,6 +1,8 @@
 package com.resolum.intiva.platform.paymentmethodsandcategories.application.acl.services;
 
+import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.aggregates.Category;
 import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.commands.CreateDefaultCategoryCommand;
+import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.queries.GetCategoryByIdQuery;
 import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.queries.GetCategoryColorAndIconByIdQuery;
 import com.resolum.intiva.platform.paymentmethodsandcategories.domain.services.CategoryCommandService;
 import com.resolum.intiva.platform.paymentmethodsandcategories.domain.services.CategoryQueryService;
@@ -55,5 +57,19 @@ public class CategoryContextFacadeImpl implements CategoriesContextFacade {
                 categoryId
         );
         return categoryQueryService.getCategoryColorAndIconById(getCategoryColorAndIconQuery).orElse(null);
+    }
+
+    /**
+     * Get a category name by id
+     *
+     * @param categoryId the category id
+     * @return the category name
+     */
+    @Override
+    public String getCategoryNameById(Long categoryId) {
+        var getCategoryByIdQuery = new GetCategoryByIdQuery(
+                categoryId
+        );
+        return categoryQueryService.handle(getCategoryByIdQuery).map(Category::getName).orElse(null);
     }
 }

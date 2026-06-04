@@ -27,4 +27,11 @@ public interface CategoriesContextFacade {
      * @return the category
      */
     ImmutablePair<String, String> getCategoryColorAndIconById(Long categoryId);
+
+    /**
+     * Get a category name by id
+     * @param categoryId the category id
+     * @return the category name
+     */
+    String getCategoryNameById(Long categoryId);
 }

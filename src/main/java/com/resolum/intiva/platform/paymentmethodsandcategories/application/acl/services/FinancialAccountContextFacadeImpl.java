@@ -7,6 +7,7 @@ import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.comm
 import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.commands.CreateFinancialAccountTransaction;
 import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.queries.GetFinancialAccountByIdQuery;
 import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.queries.GetFinancialAccountByOwnerId;
+import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.valueobjects.AccountName;
 import com.resolum.intiva.platform.paymentmethodsandcategories.interfaces.acl.FinancialAccountContextFacade;
 import com.resolum.intiva.platform.shared.domain.valueobjects.Money;
 import org.springframework.stereotype.Service;
@@ -105,5 +106,22 @@ public class FinancialAccountContextFacadeImpl implements FinancialAccountContex
     @Override
     public boolean hasSufficientBalance(Long financialAccountId, BigDecimal amount) {
         return getCurrentAmount(financialAccountId).compareTo(amount) >= 0;
+    }
+
+    /**
+     * Retrieves the name of a financial account by its id.
+     *
+     * @param financialAccountId the financial account id
+     * @return the name of the financial account, or null if not found
+     */
+    @Override
+    public String getFinancialAccountNameById(Long financialAccountId) {
+        var financialAccountByIdQuery = new GetFinancialAccountByIdQuery(
+                financialAccountId
+        );
+        return financialAccountQueryService.handle(financialAccountByIdQuery)
+                .map(FinancialAccount::getName)
+                .map(AccountName::getName)
+                .orElse(null);
     }
 }

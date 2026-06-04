@@ -5,12 +5,14 @@ import com.resolum.intiva.platform.communications.domain.model.commands.SendPush
 import com.resolum.intiva.platform.communications.domain.services.NotificationCommandService;
 import com.resolum.intiva.platform.communications.infrastructure.persistence.jpa.repositories.NotificationDeviceRepository;
 import com.resolum.intiva.platform.communications.interfaces.acl.CommunicationsContextFacade;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
  * Default ACL facade implementation that lets external bounded contexts create in-app notifications.
  */
 @Service
+@Slf4j
 public class CommunicationsContextFacadeImpl implements CommunicationsContextFacade {
 
     /**
@@ -48,6 +50,8 @@ public class CommunicationsContextFacadeImpl implements CommunicationsContextFac
             String title,
             String message
     ) {
+        log.info("Creating in-app notification. recipientUserId={}, type={}, source={}, sourceId={}, title={}",
+                recipientUserId, type, source, sourceId, title);
         notificationCommandService.handle(new CreateInAppNotificationCommand(
                 recipientUserId,
                 type,
@@ -71,6 +75,13 @@ public class CommunicationsContextFacadeImpl implements CommunicationsContextFac
             String message
     ) {
         var activeDevices = notificationDeviceRepository.findByUserIdAndActiveTrueOrderByUpdatedAtDesc(recipientUserId);
+        log.info("Preparing push notifications. recipientUserId={}, activeDeviceCount={}, type={}, source={}, sourceId={}, title={}",
+                recipientUserId, activeDevices.size(), type, source, sourceId, title);
+
+        if (activeDevices.isEmpty()) {
+            log.warn("No active notification devices found. Push notification will not be sent. recipientUserId={}, type={}, sourceId={}",
+                    recipientUserId, type, sourceId);
+        }
 
         activeDevices.forEach(device -> notificationCommandService.handle(new SendPushNotificationCommand(
                 recipientUserId,

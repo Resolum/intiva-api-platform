@@ -46,4 +46,11 @@ public interface FinancialAccountContextFacade {
      * @return true when the account balance is greater than or equal to the requested amount
      */
     boolean hasSufficientBalance(Long financialAccountId, BigDecimal amount);
+
+    /**
+     * Get a financial account by id
+     * @param financialAccountId the financial account id
+     * @return the financial account resource
+     */
+    String getFinancialAccountNameById(Long financialAccountId);
 }

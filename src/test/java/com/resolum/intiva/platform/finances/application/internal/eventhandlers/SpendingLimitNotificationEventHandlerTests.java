@@ -1,5 +1,7 @@
 package com.resolum.intiva.platform.finances.application.internal.eventhandlers;
 
+import com.resolum.intiva.platform.finances.application.internal.outboundservices.acl.FinancesExternalCategoriesService;
+import com.resolum.intiva.platform.finances.application.internal.outboundservices.acl.FinancesExternalFinancialAccountService;
 import com.resolum.intiva.platform.finances.application.internal.outboundservices.acl.FinancesExternalNotificationsService;
 import com.resolum.intiva.platform.finances.domain.model.aggregates.SpendingLimit;
 import com.resolum.intiva.platform.finances.domain.model.commands.CreateSpendingLimitCommand;
@@ -32,7 +34,9 @@ class SpendingLimitNotificationEventHandlerTests {
     void onWarning_shouldRequestWarningNotificationThroughAcl() {
         // Arrange
         var notificationsService = mock(FinancesExternalNotificationsService.class);
-        var handler = new SpendingLimitNotificationEventHandler(notificationsService);
+        var categoriesService = mock(FinancesExternalCategoriesService.class);
+        var financialAccountService = mock(FinancesExternalFinancialAccountService.class);
+        var handler = new SpendingLimitNotificationEventHandler(notificationsService, categoriesService, financialAccountService);
         var spendingLimit = buildSpendingLimit(SpendingLimitTargetType.CATEGORY);
         var event = new SpendingLimitWarningReachedEvent(spendingLimit);
 
@@ -57,7 +61,9 @@ class SpendingLimitNotificationEventHandlerTests {
     void onExceeded_shouldRequestExceededNotificationThroughAcl() {
         // Arrange
         var notificationsService = mock(FinancesExternalNotificationsService.class);
-        var handler = new SpendingLimitNotificationEventHandler(notificationsService);
+        var categoriesService = mock(FinancesExternalCategoriesService.class);
+        var financialAccountService = mock(FinancesExternalFinancialAccountService.class);
+        var handler = new SpendingLimitNotificationEventHandler(notificationsService, categoriesService, financialAccountService);
         var spendingLimit = buildSpendingLimit(SpendingLimitTargetType.FINANCIAL_ACCOUNT);
         var event = new SpendingLimitExceededEvent(spendingLimit);
 

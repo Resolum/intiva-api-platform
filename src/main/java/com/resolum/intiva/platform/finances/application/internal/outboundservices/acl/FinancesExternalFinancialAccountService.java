@@ -55,4 +55,13 @@ public class FinancesExternalFinancialAccountService {
     public Boolean hasSufficientBalance(Long financialAccountId, BigDecimal amount) {
         return financialAccountContextFacade.hasSufficientBalance(financialAccountId, amount);
     }
+
+    /**
+     * Retrieves the name of a financial account by its ID.
+     * @param financialAccountId the ID of the financial account to retrieve
+     * @return the name of the financial account
+     */
+    public String getFinancialAccountNameById(Long financialAccountId) {
+        return financialAccountContextFacade.getFinancialAccountNameById(financialAccountId);
+    }
 }
