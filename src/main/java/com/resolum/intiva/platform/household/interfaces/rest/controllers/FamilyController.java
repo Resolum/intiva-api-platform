@@ -17,14 +17,12 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
-
 /**
  * REST controller for managing family groups.
  * Exposes endpoints for creating and retrieving family groups.
  */
 @RestController
-@RequestMapping(value = "/api/v1/group-families", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/api/v1/users/{userId}/group-families", produces = MediaType.APPLICATION_JSON_VALUE)
 @Tag(name = "Family Group", description = "Endpoints related to family group management and member administration")
 public class FamilyController {
 
@@ -43,28 +41,26 @@ public class FamilyController {
     }
 
     /**
-     * Creates a new family group and assigns the authenticated user as administrator.
-     * The authenticated user's numeric ID (from JWT subject) is used as the owner.
+     * Creates a new family group and assigns the specified user as administrator.
      *
-     * @param resource  request body with the family group details
-     * @param principal authenticated user whose name is the numeric user ID from JWT
+     * @param userId   the numeric ID of the user creating and owning the group
+     * @param resource request body with the family group details
      * @return 201 with the created family group resource, or 400 if input is invalid
      */
     @PostMapping
     @Operation(
             summary = "Create a family group",
-            description = "Creates a new family group and automatically assigns the authenticated user as the ADMIN member."
+            description = "Creates a new family group and automatically assigns the user as the ADMIN member."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Family group created successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid request data")
     })
     public ResponseEntity<?> createFamily(
-            @Valid @RequestBody CreateFamilyResource resource,
-            Principal principal) {
+            @PathVariable Long userId,
+            @Valid @RequestBody CreateFamilyResource resource) {
         try {
-            var ownerId = Long.parseLong(principal.getName());
-            var command = CreateFamilyCommandFromResourceAssembler.toCommandFromResource(resource, ownerId);
+            var command = CreateFamilyCommandFromResourceAssembler.toCommandFromResource(resource, userId);
             var family = familyCommandService.handle(command);
             var familyResource = FamilyResourceFromEntityAssembler.toResourceFromEntity(family);
             return new ResponseEntity<>(familyResource, HttpStatus.CREATED);
@@ -76,7 +72,8 @@ public class FamilyController {
     /**
      * Retrieves a family group by its unique identifier.
      *
-     * @param id the unique identifier of the family group
+     * @param userId the ID of the authenticated user (for path consistency)
+     * @param id     the unique identifier of the family group
      * @return 200 with the family group resource, or 404 if not found
      */
     @GetMapping("/{id}")
@@ -88,7 +85,9 @@ public class FamilyController {
             @ApiResponse(responseCode = "200", description = "Family group found"),
             @ApiResponse(responseCode = "404", description = "Family group not found")
     })
-    public ResponseEntity<FamilyResource> getFamilyById(@PathVariable Long id) {
+    public ResponseEntity<FamilyResource> getFamilyById(
+            @PathVariable Long userId,
+            @PathVariable Long id) {
         var query = new GetFamilyByIdQuery(id);
         var family = familyQueryService.handle(query);
         return family

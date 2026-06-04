@@ -19,15 +19,16 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
 import java.util.List;
 
 /**
  * REST controller for managing family group invitations.
- * Exposes endpoints for accepting, rejecting, and retrieving invitations.
+ * All endpoints are scoped under /api/v1/users/{userId}/invitations.
+ * The userId path variable identifies the acting user for accept/reject operations
+ * and filters queries to return only that user's invitations.
  */
 @RestController
-@RequestMapping(value = "/api/v1/invitations", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/api/v1/users/{userId}/invitations", produces = MediaType.APPLICATION_JSON_VALUE)
 @Tag(name = "Invitations", description = "Endpoints related to family group invitation management")
 public class InvitationController {
 
@@ -46,18 +47,18 @@ public class InvitationController {
     }
 
     /**
-     * Accepts a pending invitation for the authenticated user.
+     * Accepts a pending invitation for the specified user.
      * Adds the user as a MEMBER of the family group and marks the invitation as ACCEPTED.
      *
+     * @param userId       the numeric ID of the user accepting the invitation
      * @param invitationId the ID of the invitation to accept
-     * @param principal    the authenticated user; their numeric ID is the JWT subject
      * @return 200 with the updated invitation resource, 400 if already responded or expired,
-     *         403 if not the invited user, 404 if not found
+     *         403 if the user is not the invited user, 404 if not found
      */
     @PatchMapping("/{invitationId}/accept")
     @Operation(
             summary = "Accept a family group invitation",
-            description = "Accepts a pending and valid invitation. Adds the authenticated user as a MEMBER of the family group."
+            description = "Accepts a pending and valid invitation. Adds the user as a MEMBER of the family group."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Invitation accepted successfully"),
@@ -66,11 +67,10 @@ public class InvitationController {
             @ApiResponse(responseCode = "404", description = "Invitation not found")
     })
     public ResponseEntity<?> acceptInvitation(
-            @PathVariable Long invitationId,
-            Principal principal) {
+            @PathVariable Long userId,
+            @PathVariable Long invitationId) {
         try {
-            var userId = new UserId(Long.parseLong(principal.getName()));
-            var command = AcceptInvitationCommandFromResourceAssembler.toCommandFromResource(invitationId, userId.getValue());
+            var command = AcceptInvitationCommandFromResourceAssembler.toCommandFromResource(invitationId, userId);
             var invitation = invitationCommandService.handle(command);
             var resource = InvitationResourceFromEntityAssembler.toResourceFromEntity(invitation);
             return ResponseEntity.ok(resource);
@@ -84,13 +84,13 @@ public class InvitationController {
     }
 
     /**
-     * Rejects a pending invitation for the authenticated user.
+     * Rejects a pending invitation for the specified user.
      * Marks the invitation as REJECTED without adding the user to the family group.
      *
+     * @param userId       the numeric ID of the user rejecting the invitation
      * @param invitationId the ID of the invitation to reject
-     * @param principal    the authenticated user; their numeric ID is the JWT subject
      * @return 200 with the updated invitation resource, 400 if already responded or expired,
-     *         403 if not the invited user, 404 if not found
+     *         403 if the user is not the invited user, 404 if not found
      */
     @PatchMapping("/{invitationId}/reject")
     @Operation(
@@ -104,11 +104,10 @@ public class InvitationController {
             @ApiResponse(responseCode = "404", description = "Invitation not found")
     })
     public ResponseEntity<?> rejectInvitation(
-            @PathVariable Long invitationId,
-            Principal principal) {
+            @PathVariable Long userId,
+            @PathVariable Long invitationId) {
         try {
-            var userId = new UserId(Long.parseLong(principal.getName()));
-            var command = RejectInvitationCommandFromResourceAssembler.toCommandFromResource(invitationId, userId.getValue());
+            var command = RejectInvitationCommandFromResourceAssembler.toCommandFromResource(invitationId, userId);
             var invitation = invitationCommandService.handle(command);
             var resource = InvitationResourceFromEntityAssembler.toResourceFromEntity(invitation);
             return ResponseEntity.ok(resource);
@@ -122,22 +121,21 @@ public class InvitationController {
     }
 
     /**
-     * Retrieves all pending and non-expired invitations for the authenticated user.
+     * Retrieves all pending and non-expired invitations for the specified user.
      *
-     * @param principal the authenticated user; their numeric ID is the JWT subject
+     * @param userId the numeric ID of the user
      * @return 200 with the list of pending invitations
      */
-    @GetMapping("/me/pending")
+    @GetMapping("/pending")
     @Operation(
-            summary = "Get pending invitations for the authenticated user",
-            description = "Retrieves all invitations with PENDING status that have not yet expired for the current user."
+            summary = "Get pending invitations for a user",
+            description = "Retrieves all invitations with PENDING status that have not yet expired for the specified user."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Pending invitations retrieved successfully")
     })
-    public ResponseEntity<List<InvitationResource>> getMyPendingInvitations(Principal principal) {
-        var userId = new UserId(Long.parseLong(principal.getName()));
-        var query = new GetPendingInvitationsByUserIdQuery(userId);
+    public ResponseEntity<List<InvitationResource>> getMyPendingInvitations(@PathVariable Long userId) {
+        var query = new GetPendingInvitationsByUserIdQuery(new UserId(userId));
         var invitations = invitationQueryService.handle(query);
         var resources = invitations.stream()
                 .map(InvitationResourceFromEntityAssembler::toResourceFromEntity)
@@ -146,22 +144,21 @@ public class InvitationController {
     }
 
     /**
-     * Retrieves all invitations (regardless of status) for the authenticated user.
+     * Retrieves all invitations (regardless of status) for the specified user.
      *
-     * @param principal the authenticated user; their numeric ID is the JWT subject
+     * @param userId the numeric ID of the user
      * @return 200 with the list of all invitations
      */
-    @GetMapping("/me")
+    @GetMapping
     @Operation(
-            summary = "Get all invitations for the authenticated user",
-            description = "Retrieves all invitations (PENDING, ACCEPTED, REJECTED) associated with the current user."
+            summary = "Get all invitations for a user",
+            description = "Retrieves all invitations (PENDING, ACCEPTED, REJECTED) for the specified user."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Invitations retrieved successfully")
     })
-    public ResponseEntity<List<InvitationResource>> getMyInvitations(Principal principal) {
-        var userId = new UserId(Long.parseLong(principal.getName()));
-        var query = new GetInvitationsByUserIdQuery(userId);
+    public ResponseEntity<List<InvitationResource>> getMyInvitations(@PathVariable Long userId) {
+        var query = new GetInvitationsByUserIdQuery(new UserId(userId));
         var invitations = invitationQueryService.handle(query);
         var resources = invitations.stream()
                 .map(InvitationResourceFromEntityAssembler::toResourceFromEntity)

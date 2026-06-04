@@ -5,8 +5,12 @@ import com.resolum.intiva.platform.communications.domain.model.commands.SendPush
 import com.resolum.intiva.platform.communications.domain.services.NotificationCommandService;
 import com.resolum.intiva.platform.communications.infrastructure.persistence.jpa.repositories.NotificationDeviceRepository;
 import com.resolum.intiva.platform.communications.interfaces.acl.CommunicationsContextFacade;
+import com.resolum.intiva.platform.household.domain.model.valueobjects.FamilyMemberStatus;
+import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.FamilyMemberRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * Default ACL facade implementation that lets external bounded contexts create in-app notifications.
@@ -26,16 +30,23 @@ public class CommunicationsContextFacadeImpl implements CommunicationsContextFac
     private final NotificationDeviceRepository notificationDeviceRepository;
 
     /**
+     * Repository used to query family members for group notification targeting.
+     */
+    private final FamilyMemberRepository familyMemberRepository;
+
+    /**
      * Creates the ACL facade with the notification command service dependency.
      *
      * @param notificationCommandService in-app notification command service
      */
     public CommunicationsContextFacadeImpl(
             NotificationCommandService notificationCommandService,
-            NotificationDeviceRepository notificationDeviceRepository
+            NotificationDeviceRepository notificationDeviceRepository,
+            FamilyMemberRepository familyMemberRepository
     ) {
         this.notificationCommandService = notificationCommandService;
         this.notificationDeviceRepository = notificationDeviceRepository;
+        this.familyMemberRepository = familyMemberRepository;
     }
 
     /**
@@ -92,5 +103,17 @@ public class CommunicationsContextFacadeImpl implements CommunicationsContextFac
                 title,
                 message
         )));
+    }
+
+    /**
+     * Retrieves the user IDs of all active members of a family group.
+     */
+    @Override
+    public List<Long> getMemberUserIdsByFamilyId(Long familyId) {
+        log.info("Querying active member user IDs for familyId={}", familyId);
+        return familyMemberRepository.findByFamilyIdAndStatus(familyId, FamilyMemberStatus.ACTIVE)
+                .stream()
+                .map(member -> member.getUserId().getValue())
+                .toList();
     }
 }
