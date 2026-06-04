@@ -18,5 +18,7 @@ public record CreateCategoryResource(
         @Schema(description = "The color of the category in hex format", example = "#FF5733")
         String color,
         @Schema(description = "The icon representing the category", example = "briefcase")
-        String icon
+        String icon,
+        @Schema(description = "The type of the category", example = "income")
+        String type
 ) {}
