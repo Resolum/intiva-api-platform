@@ -1,8 +1,8 @@
-package com.resolum.intiva.platform.paymentmethodsandcategories.domain.services;
+package com.resolum.intiva.platform.categories.domain.services;
 
-import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.aggregates.Category;
-import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.commands.CreateCategoryCommand;
-import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.commands.CreateDefaultCategoryCommand;
+import com.resolum.intiva.platform.categories.domain.model.aggregates.Category;
+import com.resolum.intiva.platform.categories.domain.model.commands.CreateCategoryCommand;
+import com.resolum.intiva.platform.categories.domain.model.commands.CreateDefaultCategoryCommand;
 
 import java.util.Optional;
 

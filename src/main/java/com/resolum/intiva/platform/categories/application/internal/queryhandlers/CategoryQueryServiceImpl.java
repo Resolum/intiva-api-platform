@@ -1,13 +1,15 @@
-package com.resolum.intiva.platform.paymentmethodsandcategories.application.internal.queryhandlers;
+package com.resolum.intiva.platform.categories.application.internal.queryhandlers;
 
-import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.aggregates.Category;
-import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.queries.GetAllCategoriesByUserIdQuery;
-import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.queries.GetCategoryByIdQuery;
-import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.queries.GetCategoryColorAndIconByIdQuery;
-import com.resolum.intiva.platform.paymentmethodsandcategories.domain.services.CategoryQueryService;
-import com.resolum.intiva.platform.paymentmethodsandcategories.infraestructure.persistence.jpa.repositories.CategoryRepository;
+import com.resolum.intiva.platform.categories.domain.model.aggregates.Category;
+import com.resolum.intiva.platform.categories.domain.model.queries.GetAllCategoriesByOwnerTypeAndOwnerId;
+import com.resolum.intiva.platform.categories.domain.model.queries.GetCategoryByIdQuery;
+import com.resolum.intiva.platform.categories.domain.model.queries.GetCategoryColorAndIconByIdQuery;
+import com.resolum.intiva.platform.categories.domain.services.CategoryQueryService;
+import com.resolum.intiva.platform.categories.infraestructure.persistence.jpa.repositories.CategoryRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,6 +17,7 @@ import java.util.Optional;
 /**
  * Implementation of the CategoryQueryService interface that provides methods for handling queries related to categories. This service interacts with the CategoryRepository to retrieve category data from the database.
  */
+@Slf4j
 @Service
 public class CategoryQueryServiceImpl implements CategoryQueryService {
 
@@ -39,19 +42,32 @@ public class CategoryQueryServiceImpl implements CategoryQueryService {
      * @return an Optional containing the Category if found, or an empty Optional if not found
      */
     @Override
+    @Transactional(readOnly = true)
     public Optional<Category> handle(GetCategoryByIdQuery query) {
+        log.info(
+                "{} - Fetching category with id {}",
+                query.getClass().getSimpleName(),
+                query.id()
+        );
         return categoryRepository.findById(query.id());
     }
 
     /**
-     * Handles the GetAllCategoriesByUserIdQuery by retrieving all categories associated with the specified user ID from the repository.
+     * Handle the GetAllCategoriesByOwnerTypeAndOwnerId query to retrieve all categories for a given owner type and owner id.
      *
-     * @param query the query containing the user ID for which to retrieve categories
-     * @return a list of Category objects associated with the specified user ID
+     * @param query the query containing the owner type and owner id
+     * @return a list of categories associated with the specified owner type and owner id
      */
     @Override
-    public List<Category> handle(GetAllCategoriesByUserIdQuery query) {
-        return categoryRepository.findAllByUserId(query.userId());
+    @Transactional(readOnly = true)
+    public List<Category> handle(GetAllCategoriesByOwnerTypeAndOwnerId query) {
+        log.info(
+                "{} - Fetching all categories for owner type {} and owner id {}",
+                query.getClass().getSimpleName(),
+                query.ownerType(),
+                query.ownerId()
+        );
+        return categoryRepository.findAllByOwnerTypeAndOwnerId(query.ownerType().toUpperCase(), query.ownerId());
     }
 
     /**
@@ -61,7 +77,13 @@ public class CategoryQueryServiceImpl implements CategoryQueryService {
      * @return true if a category with the specified ID exists, false otherwise
      */
     @Override
+    @Transactional(readOnly = true)
     public boolean existsCategoryById(Long categoryId) {
+        log.info(
+                "{} - Checking existence of category with id {}",
+                "ExistsCategoryById",
+                categoryId
+        );
         return categoryRepository.existsById(categoryId);
     }
 
@@ -72,7 +94,15 @@ public class CategoryQueryServiceImpl implements CategoryQueryService {
      * @return an Optional containing an ImmutablePair with the category name and description if found, or an empty Optional if not found
      */
     @Override
+    @Transactional(readOnly = true)
     public Optional<ImmutablePair<String, String>> getCategoryColorAndIconById(GetCategoryColorAndIconByIdQuery query) {
-        return categoryRepository.findById(query.categoryId()).map(category -> new ImmutablePair<>(category.getColor().getColor(), category.getIcon().getIcon()));
+        log.info(
+                "{} - Fetching category color and icon for category id {}",
+                query.getClass().getSimpleName(),
+                query.categoryId()
+        );
+        return categoryRepository
+                .findById(query.categoryId())
+                .map(category -> new ImmutablePair<>(category.getColor().getColor(), category.getIcon().getIcon()));
     }
 }

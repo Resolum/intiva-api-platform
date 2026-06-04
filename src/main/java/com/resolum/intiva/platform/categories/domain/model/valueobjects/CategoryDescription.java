@@ -1,4 +1,4 @@
-package com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.valueobjects;
+package com.resolum.intiva.platform.categories.domain.model.valueobjects;
 
 import jakarta.persistence.Embeddable;
 

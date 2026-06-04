@@ -1,9 +1,9 @@
-package com.resolum.intiva.platform.paymentmethodsandcategories.domain.services;
+package com.resolum.intiva.platform.categories.domain.services;
 
-import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.aggregates.Category;
-import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.queries.GetAllCategoriesByUserIdQuery;
-import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.queries.GetCategoryByIdQuery;
-import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.queries.GetCategoryColorAndIconByIdQuery;
+import com.resolum.intiva.platform.categories.domain.model.aggregates.Category;
+import com.resolum.intiva.platform.categories.domain.model.queries.GetAllCategoriesByOwnerTypeAndOwnerId;
+import com.resolum.intiva.platform.categories.domain.model.queries.GetCategoryByIdQuery;
+import com.resolum.intiva.platform.categories.domain.model.queries.GetCategoryColorAndIconByIdQuery;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import java.util.List;
@@ -19,11 +19,12 @@ public interface CategoryQueryService {
     Optional<Category> handle(GetCategoryByIdQuery query);
 
     /**
-     * Handle the GetAllCategoriesByUserIdQuery to retrieve all categories for a given user id.
-     * @param query the query containing the user id
-     * @return a list of categories associated with the user id
+     * Handle the GetAllCategoriesByOwnerTypeAndOwnerId query to retrieve all categories for a given owner type and owner id.
+     *
+     * @param query the query containing the owner type and owner id
+     * @return a list of categories associated with the specified owner type and owner id
      */
-    List<Category> handle(GetAllCategoriesByUserIdQuery query);
+    List<Category> handle(GetAllCategoriesByOwnerTypeAndOwnerId query);
 
     /**
      * Check if a category exists by id
