@@ -5,8 +5,7 @@ import com.resolum.intiva.platform.communications.domain.model.commands.SendPush
 import com.resolum.intiva.platform.communications.domain.services.NotificationCommandService;
 import com.resolum.intiva.platform.communications.infrastructure.persistence.jpa.repositories.NotificationDeviceRepository;
 import com.resolum.intiva.platform.communications.interfaces.acl.CommunicationsContextFacade;
-import com.resolum.intiva.platform.household.domain.model.valueobjects.FamilyMemberStatus;
-import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.FamilyMemberRepository;
+import com.resolum.intiva.platform.household.interfaces.acl.HouseholdContextFacade;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -32,7 +31,7 @@ public class CommunicationsContextFacadeImpl implements CommunicationsContextFac
     /**
      * Repository used to query family members for group notification targeting.
      */
-    private final FamilyMemberRepository familyMemberRepository;
+    private final HouseholdContextFacade householdContextFacade;
 
     /**
      * Creates the ACL facade with the notification command service dependency.
@@ -42,11 +41,11 @@ public class CommunicationsContextFacadeImpl implements CommunicationsContextFac
     public CommunicationsContextFacadeImpl(
             NotificationCommandService notificationCommandService,
             NotificationDeviceRepository notificationDeviceRepository,
-            FamilyMemberRepository familyMemberRepository
+            HouseholdContextFacade householdContextFacade
     ) {
         this.notificationCommandService = notificationCommandService;
         this.notificationDeviceRepository = notificationDeviceRepository;
-        this.familyMemberRepository = familyMemberRepository;
+        this.householdContextFacade = householdContextFacade;
     }
 
     /**
@@ -110,10 +109,6 @@ public class CommunicationsContextFacadeImpl implements CommunicationsContextFac
      */
     @Override
     public List<Long> getMemberUserIdsByFamilyId(Long familyId) {
-        log.info("Querying active member user IDs for familyId={}", familyId);
-        return familyMemberRepository.findByFamilyIdAndStatus(familyId, FamilyMemberStatus.ACTIVE)
-                .stream()
-                .map(member -> member.getUserId().getValue())
-                .toList();
+        return householdContextFacade.getActiveFamilyMemberUserIds(familyId);
     }
 }
