@@ -21,6 +21,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param lastExecutionDate most recent scheduled execution date that completed successfully
  * @param endDate optional inclusive final execution date
  * @param active whether the definition is currently active
+ * @param reminderDaysBefore days before the end date to send a payment reminder
  * @param createdAt timestamp at which the definition was created
  */
 @Schema(description = "Recurring transaction definition returned by the finances API.")
@@ -41,6 +42,7 @@ public record RecurringTransactionResource(
         String lastExecutionDate,
         String endDate,
         Boolean active,
+        Integer reminderDaysBefore,
         String createdAt
 ) {
 }

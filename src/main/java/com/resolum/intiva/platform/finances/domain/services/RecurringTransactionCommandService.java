@@ -4,6 +4,7 @@ import com.resolum.intiva.platform.finances.domain.model.aggregates.RecurringTra
 import com.resolum.intiva.platform.finances.domain.model.commands.ActivateRecurringTransactionCommand;
 import com.resolum.intiva.platform.finances.domain.model.commands.CreateRecurringTransactionCommand;
 import com.resolum.intiva.platform.finances.domain.model.commands.DeactivateRecurringTransactionCommand;
+import com.resolum.intiva.platform.finances.domain.model.commands.UpdatePaymentReminderCommand;
 
 import java.util.Optional;
 
@@ -35,4 +36,12 @@ public interface RecurringTransactionCommandService {
      * @return updated aggregate when successful
      */
     Optional<RecurringTransaction> handle(DeactivateRecurringTransactionCommand command);
+
+    /**
+     * Updates the reminder configuration for a recurring transaction definition.
+     *
+     * @param command reminder update input
+     * @return updated aggregate when successful
+     */
+    Optional<RecurringTransaction> handle(UpdatePaymentReminderCommand command);
 }
