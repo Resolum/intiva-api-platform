@@ -7,10 +7,21 @@ import com.resolum.intiva.platform.communications.domain.model.commands.SendPush
  */
 public interface FirebaseMessagingGateway {
 
-    /**
-     * Sends a push notification using the configured external provider.
+    /** Sends one push notification to the given device token through the external provider.
      *
-     * @param command push notification command
+     * @param recipientUserId user who should receive the push notification
+     * @param deviceToken active device token registered by the recipient user
+     * @param type notification business type
+     * @param source business source that originated the notification
+     * @param sourceId source aggregate identifier
+     * @param title notification title
+     * @param message notification body
      */
-    void send(SendPushNotificationCommand command);
+    void send(Long recipientUserId,
+              String deviceToken,
+              String type,
+              String source,
+              Long sourceId,
+              String title,
+              String message);
 }
