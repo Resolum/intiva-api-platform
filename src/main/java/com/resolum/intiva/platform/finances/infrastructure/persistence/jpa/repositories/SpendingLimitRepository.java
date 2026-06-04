@@ -40,6 +40,22 @@ public interface SpendingLimitRepository extends JpaRepository<SpendingLimit, Lo
     List<SpendingLimit> findByTargetTypeAndTargetId(SpendingLimitTargetType targetType, Long targetId);
 
     /**
+     * Finds active spending limits that control the same target for the same owner scope.
+     *
+     * @param ownerId owner identifier
+     * @param ownerType owner scope
+     * @param targetType controlled target type
+     * @param targetId controlled target identifier
+     * @return active limits that could conflict with a new or updated limit
+     */
+    List<SpendingLimit> findByOwnerIdAndOwnerTypeAndTargetTypeAndTargetIdAndActiveTrue(
+            Long ownerId,
+            OwnerTypes ownerType,
+            SpendingLimitTargetType targetType,
+            Long targetId
+    );
+
+    /**
      * Finds active spending limits for one owner.
      *
      * @param ownerId owner identifier

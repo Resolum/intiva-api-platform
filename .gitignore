@@ -35,3 +35,7 @@ build/
 .env
 .env.*
 !.env.example
+
+# Firebase Json
+src/main/resources/firebase/*.json
+firebase-service-account.json

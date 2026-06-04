@@ -44,4 +44,13 @@ public class FinancesExternalCategoriesService {
     public ImmutablePair<String, String> getCategoryColorAndNameById(Long categoryId) {
         return categoriesContextFacade.getCategoryColorAndIconById(categoryId);
     }
+
+    /**
+     * Retrieves the name of a category by its ID.
+     * @param categoryId the ID of the category to retrieve
+     * @return the name of the category
+     */
+    public String getCategoryNameById(Long categoryId) {
+        return categoriesContextFacade.getCategoryNameById(categoryId);
+    }
 }

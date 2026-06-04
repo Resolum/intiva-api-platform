@@ -2,6 +2,7 @@ package com.resolum.intiva.platform.finances.domain.model.aggregates;
 
 import com.resolum.intiva.platform.finances.domain.model.commands.CreateRecurringTransactionCommand;
 import com.resolum.intiva.platform.finances.domain.model.valueobjects.RecurringFrequency;
+import com.resolum.intiva.platform.finances.domain.model.valueobjects.SpendingLimitTargetType;
 import com.resolum.intiva.platform.shared.domain.aggregates.AuditableAbstractAggregate;
 import com.resolum.intiva.platform.shared.domain.valueobjects.*;
 import jakarta.persistence.*;

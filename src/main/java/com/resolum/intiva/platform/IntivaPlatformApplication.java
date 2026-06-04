@@ -13,5 +13,4 @@ public class IntivaPlatformApplication {
     public static void main(String[] args) {
         SpringApplication.run(IntivaPlatformApplication.class, args);
     }
-
 }
