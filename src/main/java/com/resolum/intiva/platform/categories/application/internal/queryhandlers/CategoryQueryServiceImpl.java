@@ -1,7 +1,7 @@
 package com.resolum.intiva.platform.categories.application.internal.queryhandlers;
 
 import com.resolum.intiva.platform.categories.domain.model.aggregates.Category;
-import com.resolum.intiva.platform.categories.domain.model.queries.GetAllCategoriesByOwnerTypeAndOwnerId;
+import com.resolum.intiva.platform.categories.domain.model.queries.GetAllCategoriesByOwnerTypeAndOwnerIdAndTypeQuery;
 import com.resolum.intiva.platform.categories.domain.model.queries.GetCategoryByIdQuery;
 import com.resolum.intiva.platform.categories.domain.model.queries.GetCategoryColorAndIconByIdQuery;
 import com.resolum.intiva.platform.categories.domain.services.CategoryQueryService;
@@ -60,14 +60,14 @@ public class CategoryQueryServiceImpl implements CategoryQueryService {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<Category> handle(GetAllCategoriesByOwnerTypeAndOwnerId query) {
+    public List<Category> handle(GetAllCategoriesByOwnerTypeAndOwnerIdAndTypeQuery query) {
         log.info(
                 "{} - Fetching all categories for owner type {} and owner id {}",
                 query.getClass().getSimpleName(),
                 query.ownerType(),
                 query.ownerId()
         );
-        return categoryRepository.findAllByOwnerTypeAndOwnerId(query.ownerType().toUpperCase(), query.ownerId());
+        return categoryRepository.findAllByOwnerTypeAndOwnerIdAndType(query.ownerType().toUpperCase(), query.ownerId(), query.type());
     }
 
     /**
