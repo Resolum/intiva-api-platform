@@ -48,7 +48,8 @@ public class Category extends AuditableAbstractAggregate<Category> {
     /**
      * Protected no-args constructor for JPA.
      */
-    protected Category() {}
+    protected Category() {
+    }
 
     /**
      * Constructs a new Category instance based on the provided CreateCategoryCommand.
@@ -137,6 +138,60 @@ public class Category extends AuditableAbstractAggregate<Category> {
                         "#607D8B",
                         "more_horiz",
                         CategoryType.INCOME
+                )),
+                new Category(new CreateCategoryCommand(
+                        "Alimentación",
+                        "INDIVIDUAL",
+                        ownerId,
+                        "Compras de comida, supermercado y restaurantes",
+                        "#4CAF50",
+                        "restaurant",
+                        CategoryType.EXPENSE
+                )),
+                new Category(new CreateCategoryCommand(
+                        "Transporte",
+                        "INDIVIDUAL",
+                        ownerId,
+                        "Pasajes, combustible y movilidad",
+                        "#2196F3",
+                        "directions_car",
+                        CategoryType.EXPENSE
+                )),
+                new Category(new CreateCategoryCommand(
+                        "Salud",
+                        "INDIVIDUAL",
+                        ownerId,
+                        "Medicinas, consultas y tratamientos médicos",
+                        "#E91E63",
+                        "local_hospital",
+                        CategoryType.EXPENSE
+                )),
+                new Category(new CreateCategoryCommand(
+                        "Entretenimiento",
+                        "INDIVIDUAL",
+                        ownerId,
+                        "Cine, streaming, juegos y actividades recreativas",
+                        "#FF5722",
+                        "movie",
+                        CategoryType.EXPENSE
+                )),
+                new Category(new CreateCategoryCommand(
+                        "Compras",
+                        "INDIVIDUAL",
+                        ownerId,
+                        "Ropa, tecnología y compras personales",
+                        "#795548",
+                        "shopping_bag",
+                        CategoryType.EXPENSE
+                )),
+                new Category(new CreateCategoryCommand(
+                        "Otros",
+                        "INDIVIDUAL",
+                        ownerId,
+                        "Gastos no clasificados en otras categorías",
+                        "#607D8B",
+                        "more_horiz",
+                        CategoryType.EXPENSE
                 ))
         );
     }

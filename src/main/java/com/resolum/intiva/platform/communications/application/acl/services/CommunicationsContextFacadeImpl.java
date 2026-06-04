@@ -3,7 +3,6 @@ package com.resolum.intiva.platform.communications.application.acl.services;
 import com.resolum.intiva.platform.communications.domain.model.commands.CreateInAppNotificationCommand;
 import com.resolum.intiva.platform.communications.domain.model.commands.SendPushNotificationCommand;
 import com.resolum.intiva.platform.communications.domain.services.NotificationCommandService;
-import com.resolum.intiva.platform.communications.infrastructure.persistence.jpa.repositories.NotificationDeviceRepository;
 import com.resolum.intiva.platform.communications.interfaces.acl.CommunicationsContextFacade;
 import com.resolum.intiva.platform.household.interfaces.acl.HouseholdContextFacade;
 import lombok.extern.slf4j.Slf4j;
@@ -24,11 +23,6 @@ public class CommunicationsContextFacadeImpl implements CommunicationsContextFac
     private final NotificationCommandService notificationCommandService;
 
     /**
-     * Repository used to resolve active device tokens per recipient user.
-     */
-    private final NotificationDeviceRepository notificationDeviceRepository;
-
-    /**
      * Repository used to query family members for group notification targeting.
      */
     private final HouseholdContextFacade householdContextFacade;
@@ -40,16 +34,14 @@ public class CommunicationsContextFacadeImpl implements CommunicationsContextFac
      */
     public CommunicationsContextFacadeImpl(
             NotificationCommandService notificationCommandService,
-            NotificationDeviceRepository notificationDeviceRepository,
             HouseholdContextFacade householdContextFacade
     ) {
         this.notificationCommandService = notificationCommandService;
-        this.notificationDeviceRepository = notificationDeviceRepository;
         this.householdContextFacade = householdContextFacade;
     }
 
     /**
-     * Creates one persisted in-app notification through the communications bounded context.
+     * Creates one persisted in-app notification through the communications-bounded context.
      */
     @Override
     public void createInAppNotification(
@@ -84,24 +76,15 @@ public class CommunicationsContextFacadeImpl implements CommunicationsContextFac
             String title,
             String message
     ) {
-        var activeDevices = notificationDeviceRepository.findByUserIdAndActiveTrueOrderByUpdatedAtDesc(recipientUserId);
-        log.info("Preparing push notifications. recipientUserId={}, activeDeviceCount={}, type={}, source={}, sourceId={}, title={}",
-                recipientUserId, activeDevices.size(), type, source, sourceId, title);
 
-        if (activeDevices.isEmpty()) {
-            log.warn("No active notification devices found. Push notification will not be sent. recipientUserId={}, type={}, sourceId={}",
-                    recipientUserId, type, sourceId);
-        }
-
-        activeDevices.forEach(device -> notificationCommandService.handle(new SendPushNotificationCommand(
+        notificationCommandService.handle(new SendPushNotificationCommand(
                 recipientUserId,
-                device.getDeviceToken(),
                 type,
                 source,
                 sourceId,
                 title,
                 message
-        )));
+        ));
     }
 
     /**
