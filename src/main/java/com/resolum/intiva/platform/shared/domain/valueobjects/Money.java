@@ -1,6 +1,8 @@
 package com.resolum.intiva.platform.shared.domain.valueobjects;
 
 import jakarta.persistence.Embeddable;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 
 import java.math.BigDecimal;
 
@@ -9,7 +11,8 @@ import java.math.BigDecimal;
  * This class is immutable and provides methods for basic arithmetic operations and formatting.
  */
 @Embeddable
-public record Money(BigDecimal amount, CurrencyCodes currencyCode) {
+public record Money(BigDecimal amount, @Enumerated(EnumType.STRING)
+CurrencyCodes currencyCode) {
 
     // Constructor validation to ensure that amount and currency code are not null
     public Money {
@@ -20,6 +23,7 @@ public record Money(BigDecimal amount, CurrencyCodes currencyCode) {
 
     /**
      * Adds the specified amount of money to this money. Both money objects must have the same currency code.
+     *
      * @param other the money to add to this money
      * @return a new Money object representing the result of the addition
      */
@@ -32,6 +36,7 @@ public record Money(BigDecimal amount, CurrencyCodes currencyCode) {
 
     /**
      * Subtracts the specified amount of money from this money. Both money objects must have the same currency code, and the amount to subtract cannot be greater than the current amount.
+     *
      * @param other the money to subtract from this money
      * @return a new Money object representing the result of the subtraction
      */
@@ -47,6 +52,7 @@ public record Money(BigDecimal amount, CurrencyCodes currencyCode) {
 
     /**
      * Formats the money as a string in the format "amount currencyCode", e.g. "100.00 USD".
+     *
      * @return the formatted string representation of the money
      */
     public String toStringFormat() {
@@ -55,6 +61,7 @@ public record Money(BigDecimal amount, CurrencyCodes currencyCode) {
 
     /**
      * Returns the amount of money as a BigDecimal.
+     *
      * @return the amount of money
      */
     public BigDecimal getAmount() {
@@ -63,6 +70,7 @@ public record Money(BigDecimal amount, CurrencyCodes currencyCode) {
 
     /**
      * Returns the currency code of the money as a string.
+     *
      * @return the currency code of the money
      */
     public String getCurrencyCode() {

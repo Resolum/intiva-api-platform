@@ -2,7 +2,7 @@ package com.resolum.intiva.platform.iam.application.internal.commandhandlers;
 
 import com.resolum.intiva.platform.iam.application.internal.outboundservices.HashingService;
 import com.resolum.intiva.platform.iam.application.internal.outboundservices.TokenService;
-import com.resolum.intiva.platform.iam.domain.exceptions.UserWithEmailAlreadyExits;
+import com.resolum.intiva.platform.iam.domain.model.exceptions.UserWithEmailAlreadyExits;
 import com.resolum.intiva.platform.iam.domain.model.aggregates.User;
 import com.resolum.intiva.platform.iam.domain.model.commands.SignInCommand;
 import com.resolum.intiva.platform.iam.domain.model.commands.SignUpCommand;
@@ -63,6 +63,8 @@ public class UserCommandServiceImpl implements UserCommandService {
             var hashedPassword = hashingService.encode(command.password());
             var user = new User(command.email(), new PasswordHash(hashedPassword));
             userRepository.save(user);
+
+            LOGGER.info("User with email {} has been registered", email.getValue());
 
             LOGGER.info("User with email {} has signed-up", email.getValue());
 

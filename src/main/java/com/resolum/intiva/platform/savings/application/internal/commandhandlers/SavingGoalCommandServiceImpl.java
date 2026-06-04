@@ -1,8 +1,12 @@
 package com.resolum.intiva.platform.savings.application.internal.commandhandlers;
 
 import com.resolum.intiva.platform.savings.domain.model.aggregates.SavingGoal;
+import com.resolum.intiva.platform.savings.domain.model.commands.CompleteSavingGoalCommand;
 import com.resolum.intiva.platform.savings.domain.model.commands.ContributeToSavingGoalCommand;
 import com.resolum.intiva.platform.savings.domain.model.commands.CreateSavingGoalCommand;
+import com.resolum.intiva.platform.savings.domain.model.commands.DeleteSavingGoalCommand;
+import com.resolum.intiva.platform.savings.domain.model.commands.UncompleteSavingGoalCommand;
+import com.resolum.intiva.platform.savings.domain.model.commands.UpdateSavingGoalCommand;
 import com.resolum.intiva.platform.savings.domain.model.entities.GoalContribution;
 import com.resolum.intiva.platform.savings.domain.services.SavingGoalCommandService;
 import com.resolum.intiva.platform.savings.infrastructure.persistence.jpa.repositories.GoalContributionRepository;
@@ -61,12 +65,12 @@ public class SavingGoalCommandServiceImpl implements SavingGoalCommandService {
         Long actorUserId = null;
         String ownerId = null;
 
-        if (command.ownerType() == OwnerTypes.Individual) {
+        if (command.ownerType() == OwnerTypes.INDIVIDUAL) {
             if (command.actorUserId() == null) {
-                throw new IllegalArgumentException("actorUserId is required for INDIVIDUAL owner type");
+                throw new IllegalArgumentException("performedByUserId is required for INDIVIDUAL owner type");
             }
             actorUserId = command.actorUserId();
-        } else if (command.ownerType() == OwnerTypes.Family) {
+        } else if (command.ownerType() == OwnerTypes.FAMILY) {
             if (command.ownerId() == null || command.ownerId().trim().isEmpty()) {
                 throw new IllegalArgumentException("ownerId (groupId) is required for FAMILY owner type");
             }
@@ -119,5 +123,105 @@ public class SavingGoalCommandServiceImpl implements SavingGoalCommandService {
         savingGoalRepository.save(savingGoal);
         
         return Optional.of(savingGoal);
+    }
+
+    /**
+     * Handles the completion of an existing saving goal.
+     * Finds the goal, validates it is not already completed, marks it as completed, and persists it.
+     *
+     * @param command the command containing the ID of the saving goal to complete
+     * @return the updated SavingGoal with COMPLETED status
+     * @throws IllegalArgumentException if no saving goal exists with the given ID
+     * @throws IllegalStateException    if the saving goal is already marked as completed
+     */
+    @Override
+    @Transactional
+    public SavingGoal handle(CompleteSavingGoalCommand command) {
+        var savingGoalOpt = savingGoalRepository.findById(command.savingGoalId());
+        if (savingGoalOpt.isEmpty()) {
+            throw new IllegalArgumentException("Saving goal not found with id: " + command.savingGoalId());
+        }
+        var savingGoal = savingGoalOpt.get();
+        savingGoal.completes();
+        return savingGoalRepository.save(savingGoal);
+    }
+
+    /**
+     * Handles reverting an existing saving goal back to uncompleted status.
+     * Finds the goal, validates it is not already uncompleted, marks it as uncompleted, and persists it.
+     *
+     * @param command the command containing the ID of the saving goal to uncomplete
+     * @return the updated SavingGoal with UNCOMPLETED status
+     * @throws IllegalArgumentException if no saving goal exists with the given ID
+     * @throws IllegalStateException    if the saving goal is already marked as uncompleted
+     */
+    @Override
+    @Transactional
+    public SavingGoal handle(UncompleteSavingGoalCommand command) {
+        var savingGoalOpt = savingGoalRepository.findById(command.savingGoalId());
+        if (savingGoalOpt.isEmpty()) {
+            throw new IllegalArgumentException("Saving goal not found with id: " + command.savingGoalId());
+        }
+        var savingGoal = savingGoalOpt.get();
+        savingGoal.uncompletes();
+        return savingGoalRepository.save(savingGoal);
+    }
+
+    /**
+     * Handles updating the title, description, and/or target amount of an existing saving goal.
+     * Only fields provided (non-null) are updated. The operation is rejected if the deadline
+     * has already passed.
+     *
+     * @param command the command containing the ID and the fields to update
+     * @return the updated SavingGoal entity
+     * @throws IllegalArgumentException if no saving goal exists with the given ID
+     * @throws IllegalStateException    if the saving goal's deadline has already passed
+     */
+    @Override
+    @Transactional
+    public SavingGoal handle(UpdateSavingGoalCommand command) {
+        var savingGoalOpt = savingGoalRepository.findById(command.savingGoalId());
+        if (savingGoalOpt.isEmpty()) {
+            throw new IllegalArgumentException("Saving goal not found with id: " + command.savingGoalId());
+        }
+        var savingGoal = savingGoalOpt.get();
+
+        if (command.title() != null || command.description() != null) {
+            String newTitle = command.title() != null ? command.title() : savingGoal.getTitle();
+            String newDescription = command.description() != null ? command.description() : savingGoal.getDescription();
+            savingGoal.editDescriptionOrTitle(newDescription, newTitle);
+        }
+
+        if (command.newTargetAmount() != null) {
+            if (command.newTargetAmount().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new IllegalArgumentException("Target amount must be greater than zero");
+            }
+            var newTargetAmount = new Money(command.newTargetAmount(), savingGoal.getTargetAmount().currencyCode());
+            savingGoal.editTargetAmount(newTargetAmount);
+        }
+
+        return savingGoalRepository.save(savingGoal);
+    }
+
+    /**
+     * Handles deleting an existing saving goal.
+     * The operation is rejected if the saving goal's deadline has already passed.
+     *
+     * @param command the command containing the ID of the saving goal to delete
+     * @throws IllegalArgumentException if no saving goal exists with the given ID
+     * @throws IllegalStateException    if the saving goal's deadline has already passed
+     */
+    @Override
+    @Transactional
+    public void handle(DeleteSavingGoalCommand command) {
+        var savingGoalOpt = savingGoalRepository.findById(command.savingGoalId());
+        if (savingGoalOpt.isEmpty()) {
+            throw new IllegalArgumentException("Saving goal not found with id: " + command.savingGoalId());
+        }
+        var savingGoal = savingGoalOpt.get();
+        if (!savingGoal.isEditable()) {
+            throw new IllegalStateException("Saving goal cannot be deleted after its deadline has passed");
+        }
+        savingGoalRepository.delete(savingGoal);
     }
 }

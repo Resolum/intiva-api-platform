@@ -1,6 +1,7 @@
 package com.resolum.intiva.platform.savings.infrastructure.persistence.jpa.repositories;
 
 import com.resolum.intiva.platform.savings.domain.model.aggregates.SavingGoal;
+import com.resolum.intiva.platform.savings.domain.model.valueobjects.SavingGoalStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -27,4 +28,13 @@ public interface SavingGoalRepository extends JpaRepository<SavingGoal, Long> {
      * @return a list of matching saving goals
      */
     List<SavingGoal> findAllByOwnerId(String ownerId);
+
+    /**
+     * Finds all saving goals belonging to a specific user filtered by status.
+     *
+     * @param actorUserId the user ID to search for
+     * @param status      the desired saving goal status to filter by
+     * @return a list of saving goals matching the user ID and status
+     */
+    List<SavingGoal> findByActorUserIdAndStatus(Long actorUserId, SavingGoalStatus status);
 }

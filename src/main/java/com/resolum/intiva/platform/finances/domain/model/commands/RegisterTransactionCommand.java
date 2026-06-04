@@ -1,10 +1,6 @@
 package com.resolum.intiva.platform.finances.domain.model.commands;
 
-import com.resolum.intiva.platform.finances.domain.model.valueobjects.TransactionTypes;
-import com.resolum.intiva.platform.shared.domain.valueobjects.CategoryId;
-import com.resolum.intiva.platform.shared.domain.valueobjects.FinancialAccountId;
-import com.resolum.intiva.platform.shared.domain.valueobjects.Money;
-import com.resolum.intiva.platform.shared.domain.valueobjects.UserId;
+import com.resolum.intiva.platform.shared.domain.valueobjects.*;
 import jakarta.validation.Valid;
 
 /**
@@ -13,16 +9,17 @@ import jakarta.validation.Valid;
  * @param description A brief description of the transaction. This field is mandatory and must not be null or blank.
  * @param ownerId The identifier of the owner of the transaction, represented as a String. This field is mandatory and must not be null or blank.
  * @param financialAccountId The identifier of the financial account associated with the transaction, represented as a FinancialAccountId value object. This field is mandatory and must be a valid FinancialAccountId instance.
- * @param actorUserId The identifier of the user who is performing the transaction, represented as a UserId value object. This field is mandatory and must be a valid UserId instance.
+ * @param performedByUserId The identifier of the user who is performing the transaction, represented as a UserId value object. This field is mandatory and must be a valid UserId instance.
  * @param transactionType The type of the transaction, indicating whether it is an income or an expense. This field is mandatory and must be a valid TransactionTypes enum value.
  * @param categoryId The identifier of the category associated with the transaction, represented as a CategoryId value object. This field is optional and can be null if the transaction does not belong to any category.
  */
 public record RegisterTransactionCommand(
         @Valid Money amount,
         String description,
-        String ownerId,
+        Long ownerId,
         @Valid FinancialAccountId financialAccountId,
-        @Valid UserId actorUserId,
+        @Valid UserId performedByUserId,
         TransactionTypes transactionType,
-        @Valid CategoryId categoryId) {
+        @Valid CategoryId categoryId,
+        OwnerTypes ownerTypes) {
 }
