@@ -13,10 +13,13 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
  * TransactionEntry represents a financial transaction entry in the system.
- * It contains details about the transaction such as amount, description, owner, associated financial account.
+ * It contains details about the transaction such as amount, description, owner,
+ * associated financial account.
  *
  * @summary
- * It is used for heriting common properties and behaviors for different types of transaction entries in the finances domain (Transaction & Goal Contribution).
+ *          It is used for heriting common properties and behaviors for
+ *          different types of transaction entries in the finances domain
+ *          (Transaction & Goal Contribution).
  */
 @Getter
 @EntityListeners(AuditingEntityListener.class)
@@ -25,7 +28,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 public class TransactionEntry extends AuditableAbstractAggregate<TransactionEntry> {
 
     /**
-     * The amount of the transaction, represented as a Money value object. This field is mandatory and must be valid.
+     * The amount of the transaction, represented as a Money value object. This
+     * field is mandatory and must be valid.
      */
     @Embedded
     @Valid
@@ -33,19 +37,25 @@ public class TransactionEntry extends AuditableAbstractAggregate<TransactionEntr
     protected Money amount;
 
     /**
-     * A brief description of the transaction, providing context and details about the nature of the transaction. This field is mandatory and has a maximum length of 250 characters.
+     * A brief description of the transaction, providing context and details about
+     * the nature of the transaction. This field is mandatory and has a maximum
+     * length of 250 characters.
      */
     @AttributeOverride(name = "description", column = @Column(length = 250, nullable = false))
     protected String description;
 
     /**
-     * The identifier of the owner of the transaction, which could be a user or an entity responsible for the transaction. This field is mandatory and must not be null.
+     * The identifier of the owner of the transaction, which could be a user or an
+     * entity responsible for the transaction. This field is mandatory and must not
+     * be null.
      */
     @AttributeOverride(name = "owner_id", column = @Column(nullable = false))
     protected Long ownerId;
 
     /**
-     * The identifier of the financial account associated with the transaction, represented as a FinancialAccountId value object. This field is mandatory and must be valid.
+     * The identifier of the financial account associated with the transaction,
+     * represented as a FinancialAccountId value object. This field is mandatory and
+     * must be valid.
      */
     @Embedded
     @Valid
@@ -53,7 +63,8 @@ public class TransactionEntry extends AuditableAbstractAggregate<TransactionEntr
     protected FinancialAccountId financialAccountId;
 
     /**
-     * The identifier of the user who performed the transaction, represented as a UserId value object. This field is mandatory and must be valid.
+     * The identifier of the user who performed the transaction, represented as a
+     * UserId value object. This field is mandatory and must be valid.
      */
     @Embedded
     @Valid
@@ -61,14 +72,16 @@ public class TransactionEntry extends AuditableAbstractAggregate<TransactionEntr
     protected UserId performedByUserId;
 
     /**
-     * The type of owner of the transaction, which could be a user or an entity. This field is mandatory and must not be null.
+     * The type of owner of the transaction, which could be a user or an entity.
+     * This field is mandatory and must not be null.
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "owner_type", nullable = false)
     OwnerTypes ownerTypes;
 
     // Constructors, getters, setters, and other methods
-    public TransactionEntry(Money amount, String description, Long ownerId, FinancialAccountId financialAccountId, UserId performedByUserId, OwnerTypes ownerTypes) {
+    public TransactionEntry(Money amount, String description, Long ownerId, FinancialAccountId financialAccountId,
+            UserId performedByUserId, OwnerTypes ownerTypes) {
         this.amount = amount;
         this.description = description;
         this.ownerId = ownerId;

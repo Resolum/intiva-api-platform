@@ -1,5 +1,7 @@
 package com.resolum.intiva.platform.communications.interfaces.acl;
 
+import java.util.List;
+
 /**
  * ACL facade that exposes notification capabilities to other bounded contexts.
  */
@@ -42,4 +44,12 @@ public interface CommunicationsContextFacade {
             String title,
             String message
     );
+
+    /**
+     * Retrieves the user IDs of all active members of a family group.
+     *
+     * @param familyId the family group identifier
+     * @return list of user IDs of active family members
+     */
+    List<Long> getMemberUserIdsByFamilyId(Long familyId);
 }

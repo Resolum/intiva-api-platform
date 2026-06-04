@@ -1,5 +1,6 @@
 package com.resolum.intiva.platform.household.domain.model.aggregates;
 
+import com.resolum.intiva.platform.household.domain.model.events.FamilyInvitationSentEvent;
 import com.resolum.intiva.platform.household.domain.model.events.InvitationAcceptedEvent;
 import com.resolum.intiva.platform.household.domain.model.valueobjects.InvitationStatus;
 import com.resolum.intiva.platform.shared.domain.aggregates.AuditableAbstractAggregate;
@@ -90,6 +91,7 @@ public class Invitation extends AuditableAbstractAggregate<Invitation> {
         this.invitedBy = invitedBy;
         this.invitedForFamily = invitedForFamily;
         this.userInvitedId = userInvitedId;
+        registerEvent(new FamilyInvitationSentEvent(this, invitedForFamily, userInvitedId.getValue(), invitedBy.getValue()));
     }
 
     /**

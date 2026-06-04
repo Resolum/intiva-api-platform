@@ -21,14 +21,14 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
-
 /**
  * REST controller for managing family group members.
- * Exposes endpoints for listing, retrieving, and assigning roles to family members.
+ * All endpoints are scoped under /api/v1/users/{userId}/families/{familyId}/members.
+ * The userId path variable identifies the requesting user for membership validation
+ * and role assignment authorization.
  */
 @RestController
-@RequestMapping(value = "/api/v1/families/{familyId}/members", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/api/v1/users/{userId}/families/{familyId}/members", produces = MediaType.APPLICATION_JSON_VALUE)
 @Tag(name = "Family Members", description = "Endpoints related to family group members management")
 public class FamilyMemberController {
 
@@ -48,26 +48,26 @@ public class FamilyMemberController {
 
     /**
      * Retrieves all active members of the specified family group.
-     * The authenticated user must belong to the group.
+     * The userId path variable is used to validate that the requester belongs to the group.
      *
-     * @param familyId  the ID of the family group
-     * @param principal the authenticated user; their numeric ID is used for membership validation
+     * @param userId   the numeric ID of the requesting user
+     * @param familyId the ID of the family group
      * @return 200 with the member list resource, or 403 if the user does not belong to the group
      */
     @GetMapping
     @Operation(
             summary = "Get family group members",
-            description = "Retrieves all active members of a family group. The authenticated user must belong to the group."
+            description = "Retrieves all active members of a family group. The user must belong to the group."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Members retrieved successfully"),
-            @ApiResponse(responseCode = "403", description = "Authenticated user does not belong to this family group")
+            @ApiResponse(responseCode = "403", description = "User does not belong to this family group")
     })
     public ResponseEntity<?> getMembers(
-            @PathVariable Long familyId,
-            Principal principal) {
+            @PathVariable Long userId,
+            @PathVariable Long familyId) {
         try {
-            var requesterId = new UserId(Long.parseLong(principal.getName()));
+            var requesterId = new UserId(userId);
             var query = new GetMembersByFamilyIdQuery(familyId, requesterId);
             var members = familyMemberQueryService.handle(query);
             var resource = FamilyMembersListResourceFromEntityAssembler.toResourceFromEntityList(familyId, members);
@@ -80,6 +80,7 @@ public class FamilyMemberController {
     /**
      * Retrieves a specific family member by their ID within the given family group.
      *
+     * @param userId   the numeric ID of the requesting user
      * @param familyId the ID of the family group
      * @param memberId the ID of the member to retrieve
      * @return 200 with the member resource, or 404 if not found
@@ -94,6 +95,7 @@ public class FamilyMemberController {
             @ApiResponse(responseCode = "404", description = "Member not found in this family group")
     })
     public ResponseEntity<FamilyMemberResource> getMember(
+            @PathVariable Long userId,
             @PathVariable Long familyId,
             @PathVariable Long memberId) {
         var query = new GetMemberByIdQuery(memberId, familyId);
@@ -107,10 +109,10 @@ public class FamilyMemberController {
      * Assigns a new role to a member of the family group.
      * Only ADMIN members can assign roles. The group must always keep at least one ADMIN.
      *
-     * @param familyId  the ID of the family group
-     * @param memberId  the ID of the target member
-     * @param resource  the new role to assign
-     * @param principal the authenticated user performing the role assignment (must be ADMIN)
+     * @param userId   the numeric ID of the user performing the role assignment (must be ADMIN)
+     * @param familyId the ID of the family group
+     * @param memberId the ID of the target member
+     * @param resource the new role to assign
      * @return 200 with the updated member resource, 400 if the last ADMIN would be demoted,
      *         403 if requester is not ADMIN, 404 if member or family not found
      */
@@ -126,13 +128,12 @@ public class FamilyMemberController {
             @ApiResponse(responseCode = "404", description = "Family group or member not found")
     })
     public ResponseEntity<?> assignRole(
+            @PathVariable Long userId,
             @PathVariable Long familyId,
             @PathVariable Long memberId,
-            @Valid @RequestBody AssignRoleResource resource,
-            Principal principal) {
+            @Valid @RequestBody AssignRoleResource resource) {
         try {
-            var requesterId = Long.parseLong(principal.getName());
-            var command = AssignRoleCommandFromResourceAssembler.toCommandFromResource(familyId, memberId, resource.role(), requesterId);
+            var command = AssignRoleCommandFromResourceAssembler.toCommandFromResource(familyId, memberId, resource.role(), userId);
             var member = familyMemberCommandService.handle(command);
             var memberResource = FamilyMemberResourceFromEntityAssembler.toResourceFromEntity(member);
             return ResponseEntity.ok(memberResource);
