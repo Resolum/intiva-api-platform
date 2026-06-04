@@ -1,6 +1,6 @@
 package com.resolum.intiva.platform.finances.application.internal.outboundservices.acl;
 
-import com.resolum.intiva.platform.paymentmethodsandcategories.interfaces.acl.FinancialAccountContextFacade;
+import com.resolum.intiva.platform.categories.interfaces.acl.FinancialAccountContextFacade;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;

@@ -2,8 +2,8 @@ package com.resolum.intiva.platform.shared.interfaces.rest;
 
 import com.resolum.intiva.platform.household.domain.exceptions.ResourceNotFoundException;
 import com.resolum.intiva.platform.household.domain.exceptions.UnauthorizedException;
-import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.exceptions.InactiveFinancialAccountException;
-import com.resolum.intiva.platform.paymentmethodsandcategories.domain.model.exceptions.InsufficientFundsException;
+import com.resolum.intiva.platform.categories.domain.model.exceptions.InactiveFinancialAccountException;
+import com.resolum.intiva.platform.categories.domain.model.exceptions.InsufficientFundsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
