@@ -3,11 +3,11 @@ package com.resolum.intiva.platform.communications.application.acl.services;
 import com.resolum.intiva.platform.communications.domain.model.commands.CreateInAppNotificationCommand;
 import com.resolum.intiva.platform.communications.domain.model.commands.SendPushNotificationCommand;
 import com.resolum.intiva.platform.communications.domain.services.NotificationCommandService;
+import com.resolum.intiva.platform.communications.infrastructure.persistence.jpa.repositories.NotificationDeviceRepository;
 import com.resolum.intiva.platform.communications.interfaces.acl.CommunicationsContextFacade;
+import com.resolum.intiva.platform.household.interfaces.acl.HouseholdContextFacade;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 /**
  * Default ACL facade implementation that lets external bounded contexts create in-app notifications.
@@ -22,15 +22,6 @@ public class CommunicationsContextFacadeImpl implements CommunicationsContextFac
     private final NotificationCommandService notificationCommandService;
 
     /**
-     * Repository used to resolve active device tokens per recipient user.
-     */
-    private final NotificationDeviceRepository notificationDeviceRepository;
-    /*
-     * Repository used to query family members for group notification targeting.
-     */
-    private final HouseholdContextFacade householdContextFacade;
-
-    /**
      * Creates the ACL facade with the notification command service dependency.
      *
      * @param notificationCommandService in-app notification command service
@@ -41,8 +32,6 @@ public CommunicationsContextFacadeImpl(
         HouseholdContextFacade householdContextFacade
 ) {
     this.notificationCommandService = notificationCommandService;
-    this.notificationDeviceRepository = notificationDeviceRepository;
-    this.householdContextFacade = householdContextFacade;
 }
 
     /**
@@ -91,6 +80,4 @@ public CommunicationsContextFacadeImpl(
                 message
         ));
     }
-
-
 }
