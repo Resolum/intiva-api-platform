@@ -2,6 +2,7 @@ package com.resolum.intiva.platform.categories.domain.model.aggregates;
 
 import com.resolum.intiva.platform.categories.domain.model.commands.CreateCategoryCommand;
 import com.resolum.intiva.platform.categories.domain.model.valueobjects.CategoryDescription;
+import com.resolum.intiva.platform.categories.domain.model.valueobjects.CategoryType;
 import com.resolum.intiva.platform.shared.domain.aggregates.AuditableAbstractAggregate;
 import com.resolum.intiva.platform.shared.domain.valueobjects.Color;
 import com.resolum.intiva.platform.shared.domain.valueobjects.Icon;
@@ -40,11 +41,14 @@ public class Category extends AuditableAbstractAggregate<Category> {
     @Embedded
     private Icon icon;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type", nullable = false)
+    private CategoryType type;
+
     /**
      * Protected no-args constructor for JPA.
      */
     protected Category() {
-
     }
 
     /**
@@ -60,6 +64,7 @@ public class Category extends AuditableAbstractAggregate<Category> {
         this.description = new CategoryDescription(command.description());
         this.color = new Color(command.color());
         this.icon = new Icon(command.icon());
+        this.type = command.type();
     }
 
     public void updateDetails(String name, String description, String color, String icon) {
@@ -87,7 +92,8 @@ public class Category extends AuditableAbstractAggregate<Category> {
                         ownerId,
                         "Ingresos mensuales por empleo",
                         "#4CAF50",
-                        "briefcase"
+                        "briefcase",
+                        CategoryType.INCOME
                 )),
                 new Category(new CreateCategoryCommand(
                         "Freelance",
@@ -95,7 +101,8 @@ public class Category extends AuditableAbstractAggregate<Category> {
                         ownerId,
                         "Ingresos por trabajo independiente",
                         "#2196F3",
-                        "laptop"
+                        "laptop",
+                        CategoryType.INCOME
                 )),
                 new Category(new CreateCategoryCommand(
                         "Negocio",
@@ -103,14 +110,16 @@ public class Category extends AuditableAbstractAggregate<Category> {
                         ownerId,
                         "Ingresos de tu negocio o empresa",
                         "#FF9800",
-                        "store"
+                        "store",
+                        CategoryType.INCOME
                 )),
                 new Category(new CreateCategoryCommand(
                         "Inversión",
                         "INDIVIDUAL", ownerId,
                         "Rendimientos e intereses de inversiones",
                         "#9C27B0",
-                        "trending_up"
+                        "trending_up",
+                        CategoryType.INCOME
                 )),
                 new Category(new CreateCategoryCommand(
                         "Pensión",
@@ -118,7 +127,8 @@ public class Category extends AuditableAbstractAggregate<Category> {
                         ownerId,
                         "Pensión, jubilación o subsidios",
                         "#FF5722",
-                        "shield"
+                        "shield",
+                        CategoryType.INCOME
                 )),
                 new Category(new CreateCategoryCommand(
                         "Otros",
@@ -126,7 +136,62 @@ public class Category extends AuditableAbstractAggregate<Category> {
                         ownerId,
                         "Otros ingresos no clasificados",
                         "#607D8B",
-                        "more_horiz"
+                        "more_horiz",
+                        CategoryType.INCOME
+                )),
+                new Category(new CreateCategoryCommand(
+                        "Alimentación",
+                        "INDIVIDUAL",
+                        ownerId,
+                        "Compras de comida, supermercado y restaurantes",
+                        "#4CAF50",
+                        "food",
+                        CategoryType.EXPENSE
+                )),
+                new Category(new CreateCategoryCommand(
+                        "Transporte",
+                        "INDIVIDUAL",
+                        ownerId,
+                        "Pasajes, combustible y movilidad",
+                        "#2196F3",
+                        "car",
+                        CategoryType.EXPENSE
+                )),
+                new Category(new CreateCategoryCommand(
+                        "Salud",
+                        "INDIVIDUAL",
+                        ownerId,
+                        "Medicinas, consultas y tratamientos médicos",
+                        "#E91E63",
+                        "health",
+                        CategoryType.EXPENSE
+                )),
+                new Category(new CreateCategoryCommand(
+                        "Entretenimiento",
+                        "INDIVIDUAL",
+                        ownerId,
+                        "Cine, streaming, juegos y actividades recreativas",
+                        "#FF5722",
+                        "movie",
+                        CategoryType.EXPENSE
+                )),
+                new Category(new CreateCategoryCommand(
+                        "Compras",
+                        "INDIVIDUAL",
+                        ownerId,
+                        "Ropa, tecnología y compras personales",
+                        "#795548",
+                        "shopping-cart",
+                        CategoryType.EXPENSE
+                )),
+                new Category(new CreateCategoryCommand(
+                        "Otros",
+                        "INDIVIDUAL",
+                        ownerId,
+                        "Gastos no clasificados en otras categorías",
+                        "#607D8B",
+                        "more_horiz",
+                        CategoryType.EXPENSE
                 ))
         );
     }

@@ -11,8 +11,16 @@ import org.springframework.stereotype.Service;
 @ConditionalOnProperty(name = "integrations.fcm.enabled", havingValue = "false", matchIfMissing = true)
 public class DevFirebaseMessagingGatewayStub implements FirebaseMessagingGateway {
     @Override
-    public void send(SendPushNotificationCommand command) {
+    public void send(
+            Long recipientUserId,
+            String deviceToken,
+            String type,
+            String source,
+            Long sourceId,
+            String title,
+            String message
+    ) {
         log.info("FCM integration disabled. Push notification not sent (deviceToken={}, title={} for user={})",
-                command.deviceToken(), command.title(), command.recipientUserId());
+                deviceToken, title, recipientUserId);
     }
 }

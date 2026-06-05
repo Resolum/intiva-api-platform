@@ -1,15 +1,20 @@
 package com.resolum.intiva.platform.categories.interfaces.rest.controllers;
 
-import com.resolum.intiva.platform.categories.domain.model.queries.GetAllCategoriesByOwnerTypeAndOwnerId;
+import com.resolum.intiva.platform.categories.domain.model.queries.GetAllCategoriesByOwnerTypeAndOwnerIdAndTypeQuery;
 import com.resolum.intiva.platform.categories.domain.model.queries.GetCategoryByIdQuery;
+import com.resolum.intiva.platform.categories.domain.model.valueobjects.CategoryType;
 import com.resolum.intiva.platform.categories.domain.services.CategoryCommandService;
 import com.resolum.intiva.platform.categories.domain.services.CategoryQueryService;
+import com.resolum.intiva.platform.categories.interfaces.rest.assemblers.CategoriesValueObjectAssembler;
 import com.resolum.intiva.platform.categories.interfaces.rest.assemblers.CategoryResourceFromEntityAssembler;
 import com.resolum.intiva.platform.categories.interfaces.rest.assemblers.CreateCategoryCommandFromResourceAssembler;
 import com.resolum.intiva.platform.categories.interfaces.rest.resources.requests.CategoryFilterResource;
 import com.resolum.intiva.platform.categories.interfaces.rest.resources.requests.CreateCategoryResource;
 import com.resolum.intiva.platform.categories.interfaces.rest.resources.responses.CategoryResource;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -60,26 +65,33 @@ public class CategoriesController {
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = CreateCategoryResource.class)
                     )
-            ),
-            responses = {
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "201",
-                            description = "Category created successfully",
-                            content = @io.swagger.v3.oas.annotations.media.Content(
-                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
-                                    schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = CategoryResource.class)
-                            )
-                    ),
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "400",
-                            description = "Invalid input data"
-                    )
-            }
+            )
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Category created successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid input data"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Category created successfully",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = CategoryResource.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid input data",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = String.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = String.class)
+                    )
+            ),
     })
     @PostMapping
     public ResponseEntity<CategoryResource> createCategory(@RequestBody CreateCategoryResource resource) {
@@ -99,32 +111,39 @@ public class CategoriesController {
             description = "Retrieves a category by its unique identifier.",
             tags = {"Categories"},
             parameters = {
-                    @io.swagger.v3.oas.annotations.Parameter(
+                    @Parameter(
                             name = "id",
                             description = "Unique identifier of the category",
                             required = true,
                             example = "1"
                     )
-            },
-            responses = {
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "200",
-                            description = "Category retrieved successfully",
-                            content = @io.swagger.v3.oas.annotations.media.Content(
-                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
-                                    schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = CategoryResource.class)
-                            )
-                    ),
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "404",
-                            description = "Category not found"
-                    )
             }
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Category retrieved successfully"),
-            @ApiResponse(responseCode = "404", description = "Category not found"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Category retrieved successfully",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = CategoryResource.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Category not found",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = String.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = String.class)
+                    )
+            ),
     })
     @GetMapping("/{id}")
     public ResponseEntity<CategoryResource> getCategoryById(@PathVariable Long id) {
@@ -144,38 +163,51 @@ public class CategoriesController {
             description = "Retrieves a list of categories based on the specified owner type and owner ID.",
             tags = {"Categories"},
             parameters = {
-                    @io.swagger.v3.oas.annotations.Parameter(
+                    @Parameter(
                             name = "ownerType",
                             description = "The type of user making the request (e.g., 'individual', 'family').",
                             required = true,
                             example = "family"
                     ),
-                    @io.swagger.v3.oas.annotations.Parameter(
+                    @Parameter(
                             name = "ownerId",
                             description = "The unique identifier of the user/family making the request.",
                             required = true,
                             example = "1"
-                    )
-            },
-            responses = {
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "200",
-                            description = "Categories retrieved successfully",
-                            content = @io.swagger.v3.oas.annotations.media.Content(
-                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
-                                    schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = CategoryResource.class)
-                            )
                     ),
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "400",
-                            description = "Invalid input data"
+                    @Parameter(
+                            name = "type",
+                            description = "The type of categories to retrieve (e.g., 'expense', 'income').",
+                            required = false,
+                            example = "expense"
                     )
             }
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Categories retrieved successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid input data"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Categories retrieved successfully",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = CategoryResource.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid input data",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = String.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Unauthorized",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = String.class)
+                    )
+            ),
     })
     @GetMapping
     public ResponseEntity<List<CategoryResource>> getCategories(
@@ -185,7 +217,14 @@ public class CategoriesController {
             return ResponseEntity.badRequest().build();
         }
 
-        var query = new GetAllCategoriesByOwnerTypeAndOwnerId(filter.ownerType(), filter.ownerId());
+        CategoryType type;
+        try {
+            type = CategoriesValueObjectAssembler.toValueObjectFromString(filter.type());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        var query = new GetAllCategoriesByOwnerTypeAndOwnerIdAndTypeQuery(filter.ownerType(), filter.ownerId(), type);
         var categories = categoryQueryService.handle(query);
         var categoryResources = categories
                 .stream()

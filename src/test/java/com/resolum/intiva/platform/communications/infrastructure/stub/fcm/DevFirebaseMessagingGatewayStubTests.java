@@ -1,6 +1,5 @@
 package com.resolum.intiva.platform.communications.infrastructure.stub.fcm;
 
-import com.resolum.intiva.platform.communications.domain.model.commands.SendPushNotificationCommand;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.system.CapturedOutput;
@@ -26,18 +25,15 @@ class DevFirebaseMessagingGatewayStubTests {
     void send_shouldLogSkippedPushDelivery(CapturedOutput output) {
         // Arrange
         var stub = new DevFirebaseMessagingGatewayStub();
-        var command = new SendPushNotificationCommand(
-                7L,
+
+        // Act
+        stub.send(7L,
                 "device-token-123",
                 "PAYMENT_DUE_SOON",
                 "PAYMENT_REMINDER",
                 10L,
                 "Pago proximo a vencer",
-                "Tu pago de Netflix vence manana"
-        );
-
-        // Act
-        stub.send(command);
+                "Tu pago de Netflix vence manana");
 
         // Assert
         assertTrue(output.getOut().contains("FCM integration disabled. Push notification not sent"));

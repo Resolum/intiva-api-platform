@@ -8,6 +8,7 @@ import com.resolum.intiva.platform.communications.domain.model.commands.SendPush
 import com.resolum.intiva.platform.communications.domain.model.valueobject.NotificationSource;
 import com.resolum.intiva.platform.communications.domain.model.valueobject.NotificationType;
 import com.resolum.intiva.platform.communications.domain.services.NotificationCommandService;
+import com.resolum.intiva.platform.communications.infrastructure.persistence.jpa.repositories.NotificationDeviceRepository;
 import com.resolum.intiva.platform.communications.infrastructure.persistence.jpa.repositories.NotificationRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,9 @@ public class NotificationCommandServiceImpl implements NotificationCommandServic
      */
     private final NotificationRepository notificationRepository;
 
+    /** Repository used to query active devices for push notification delivery. */
+    private final NotificationDeviceRepository notificationDeviceRepository;
+
     /**
      * Outbound push gateway used to deliver push notifications to the external provider.
      */
@@ -42,10 +46,12 @@ public class NotificationCommandServiceImpl implements NotificationCommandServic
      */
     public NotificationCommandServiceImpl(
             NotificationRepository notificationRepository,
-            FirebaseMessagingGateway firebaseMessagingGateway
+            FirebaseMessagingGateway firebaseMessagingGateway,
+            NotificationDeviceRepository notificationDeviceRepository
     ) {
         this.notificationRepository = notificationRepository;
         this.firebaseMessagingGateway = firebaseMessagingGateway;
+        this.notificationDeviceRepository = notificationDeviceRepository;
     }
 
     /**
@@ -78,14 +84,39 @@ public class NotificationCommandServiceImpl implements NotificationCommandServic
      */
     @Override
     public void handle(SendPushNotificationCommand command) {
-        log.info("Sending push notification through gateway. recipientUserId={}, tokenPrefix={}, type={}, source={}, sourceId={}, title={}",
+
+        var activeDevices = notificationDeviceRepository.findByUserIdAndActiveTrueOrderByUpdatedAtDesc(command.recipientUserId());
+
+        log.info("Preparing push notifications. recipientUserId={}, activeDeviceCount={}, type={}, source={}, sourceId={}, title={}",
                 command.recipientUserId(),
-                command.deviceToken(),
+                activeDevices.size(),
                 command.type(),
                 command.source(),
                 command.sourceId(),
                 command.title());
-        firebaseMessagingGateway.send(command);
+
+        if (activeDevices.isEmpty()) {
+            log.info("No active devices found for user. recipientUserId={}", command.recipientUserId());
+        }
+
+        log.info("Sending push notification through gateway. recipientUserId={}, type={}, source={}, sourceId={}, title={}",
+                command.recipientUserId(),
+                command.type(),
+                command.source(),
+                command.sourceId(),
+                command.title());
+
+        activeDevices.forEach(device -> firebaseMessagingGateway.send(
+
+                        command.recipientUserId(),
+                        device.getDeviceToken(),
+                        command.type(),
+                        command.source(),
+                        command.sourceId(),
+                        command.title(),
+                        command.message()
+
+        ));
     }
 
     /**

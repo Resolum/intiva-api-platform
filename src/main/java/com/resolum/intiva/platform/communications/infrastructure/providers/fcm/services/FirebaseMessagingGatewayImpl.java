@@ -7,7 +7,6 @@ import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.MessagingErrorCode;
 import com.google.firebase.messaging.Notification;
 import com.resolum.intiva.platform.communications.application.internal.outboundservices.fcm.FirebaseMessagingGateway;
-import com.resolum.intiva.platform.communications.domain.model.commands.SendPushNotificationCommand;
 import com.resolum.intiva.platform.communications.infrastructure.persistence.jpa.repositories.NotificationDeviceRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -30,54 +29,68 @@ public class FirebaseMessagingGatewayImpl implements FirebaseMessagingGateway {
     }
 
     @Override
-    public void send(SendPushNotificationCommand command) {
+    public void send(
+            Long recipientUserId,
+            String deviceToken,
+            String type,
+            String source,
+            Long sourceId,
+            String title,
+            String message
+    ) {
         try {
-            var message = Message.builder()
-                    .setToken(command.deviceToken())
+            var pushNotification = Message.builder()
+                    .setToken(deviceToken)
                     .setNotification(Notification.builder()
-                            .setTitle(command.title())
-                            .setBody(command.message())
+                            .setTitle(title)
+                            .setBody(message)
                             .build())
-                    .putData("type", command.type())
-                    .putData("source", command.source())
-                    .putData("sourceId", String.valueOf(command.sourceId()))
-                    .putData("recipientUserId", String.valueOf(command.recipientUserId()))
+                    .putData("type", type)
+                    .putData("source", source)
+                    .putData("sourceId", String.valueOf(sourceId))
+                    .putData("recipientUserId", String.valueOf(recipientUserId))
                     .build();
 
-            var response = FirebaseMessaging.getInstance(firebaseApp).send(message);
+            var response = FirebaseMessaging.getInstance(firebaseApp).send(pushNotification);
             log.info("Push notification sent successfully. Firebase message id={}", response);
         } catch (FirebaseMessagingException exception) {
             log.error("Failed to send push notification. user={}, tokenPrefix={}, errorCode={}, message={}",
-                    command.recipientUserId(),
-                    maskToken(command.deviceToken()),
+                    recipientUserId,
+                    maskToken(deviceToken),
                     exception.getMessagingErrorCode(),
                     exception.getMessage(),
                     exception);
 
             if (exception.getMessagingErrorCode() == MessagingErrorCode.UNREGISTERED) {
-                deactivateUnregisteredDevice(command);
+                deactivateUnregisteredDevice(
+                        recipientUserId,
+                        deviceToken
+                );
             }
         } catch (Exception exception) {
             log.error("Failed to send push notification to user {} with tokenPrefix={}",
-                    command.recipientUserId(),
-                    maskToken(command.deviceToken()),
+                    recipientUserId,
+                    maskToken(deviceToken),
                     exception);
         }
     }
 
-    private void deactivateUnregisteredDevice(SendPushNotificationCommand command) {
+    private void deactivateUnregisteredDevice(
+            Long recipientUserId,
+            String deviceToken
+    ) {
         notificationDeviceRepository
-                .findByUserIdAndDeviceToken(command.recipientUserId(), command.deviceToken())
+                .findByDeviceToken(deviceToken)
                 .ifPresentOrElse(device -> {
                     device.deactivate();
                     notificationDeviceRepository.save(device);
                     log.warn("Deactivated unregistered FCM device token. user={}, notificationDeviceId={}, tokenPrefix={}",
-                            command.recipientUserId(),
+                            recipientUserId,
                             device.getId(),
-                            maskToken(command.deviceToken()));
+                            maskToken(deviceToken));
                 }, () -> log.warn("UNREGISTERED FCM token was not found in database. user={}, tokenPrefix={}",
-                        command.recipientUserId(),
-                        maskToken(command.deviceToken())));
+                        recipientUserId,
+                        maskToken(deviceToken)));
     }
 
     private String maskToken(String deviceToken) {
