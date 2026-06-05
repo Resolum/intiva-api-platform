@@ -1,6 +1,7 @@
 package com.resolum.intiva.platform.communications.application.internal.eventhandlers;
 
 import com.resolum.intiva.platform.communications.interfaces.acl.CommunicationsContextFacade;
+import com.resolum.intiva.platform.communications.application.internal.outboundservices.acl.CommunicationsExternalHouseholdService;
 import com.resolum.intiva.platform.finances.domain.model.events.FamilyTransactionCreatedEvent;
 import com.resolum.intiva.platform.household.domain.model.events.FamilyInvitationSentEvent;
 import org.slf4j.Logger;
@@ -14,9 +15,14 @@ public class FamilyEventHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(FamilyEventHandler.class);
 
     private final CommunicationsContextFacade communicationsContextFacade;
+    private final CommunicationsExternalHouseholdService communicationsExternalHouseholdService;
 
-    public FamilyEventHandler(CommunicationsContextFacade communicationsContextFacade) {
+    public FamilyEventHandler(
+            CommunicationsContextFacade communicationsContextFacade,
+            CommunicationsExternalHouseholdService communicationsExternalHouseholdService
+    ) {
         this.communicationsContextFacade = communicationsContextFacade;
+        this.communicationsExternalHouseholdService = communicationsExternalHouseholdService;
     }
 
     @EventListener
@@ -24,7 +30,7 @@ public class FamilyEventHandler {
         LOGGER.info("Handling FamilyTransactionCreatedEvent: familyId={}, transactionId={}, actorUserId={}",
                 event.getFamilyId(), event.getTransactionId(), event.getActorUserId());
 
-        var memberUserIds = communicationsContextFacade.getMemberUserIdsByFamilyId(event.getFamilyId());
+        var memberUserIds = communicationsExternalHouseholdService.getActiveFamilyMemberUserIds(event.getFamilyId());
 
         memberUserIds.stream()
                 .filter(userId -> !userId.equals(event.getActorUserId()))

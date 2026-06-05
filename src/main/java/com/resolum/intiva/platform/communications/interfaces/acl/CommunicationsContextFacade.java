@@ -45,11 +45,5 @@ public interface CommunicationsContextFacade {
             String message
     );
 
-    /**
-     * Retrieves the user IDs of all active members of a family group.
-     *
-     * @param familyId the family group identifier
-     * @return list of user IDs of active family members
-     */
-    List<Long> getMemberUserIdsByFamilyId(Long familyId);
+
 }

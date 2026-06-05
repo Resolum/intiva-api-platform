@@ -4,7 +4,6 @@ import com.resolum.intiva.platform.communications.domain.model.commands.CreateIn
 import com.resolum.intiva.platform.communications.domain.model.commands.SendPushNotificationCommand;
 import com.resolum.intiva.platform.communications.domain.services.NotificationCommandService;
 import com.resolum.intiva.platform.communications.interfaces.acl.CommunicationsContextFacade;
-import com.resolum.intiva.platform.household.interfaces.acl.HouseholdContextFacade;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +22,10 @@ public class CommunicationsContextFacadeImpl implements CommunicationsContextFac
     private final NotificationCommandService notificationCommandService;
 
     /**
+     * Repository used to resolve active device tokens per recipient user.
+     */
+    private final NotificationDeviceRepository notificationDeviceRepository;
+    /*
      * Repository used to query family members for group notification targeting.
      */
     private final HouseholdContextFacade householdContextFacade;
@@ -32,13 +35,15 @@ public class CommunicationsContextFacadeImpl implements CommunicationsContextFac
      *
      * @param notificationCommandService in-app notification command service
      */
-    public CommunicationsContextFacadeImpl(
-            NotificationCommandService notificationCommandService,
-            HouseholdContextFacade householdContextFacade
-    ) {
-        this.notificationCommandService = notificationCommandService;
-        this.householdContextFacade = householdContextFacade;
-    }
+public CommunicationsContextFacadeImpl(
+        NotificationCommandService notificationCommandService,
+        NotificationDeviceRepository notificationDeviceRepository,
+        HouseholdContextFacade householdContextFacade
+) {
+    this.notificationCommandService = notificationCommandService;
+    this.notificationDeviceRepository = notificationDeviceRepository;
+    this.householdContextFacade = householdContextFacade;
+}
 
     /**
      * Creates one persisted in-app notification through the communications-bounded context.
@@ -87,11 +92,5 @@ public class CommunicationsContextFacadeImpl implements CommunicationsContextFac
         ));
     }
 
-    /**
-     * Retrieves the user IDs of all active members of a family group.
-     */
-    @Override
-    public List<Long> getMemberUserIdsByFamilyId(Long familyId) {
-        return householdContextFacade.getActiveFamilyMemberUserIds(familyId);
-    }
+
 }
