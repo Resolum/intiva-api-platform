@@ -26,7 +26,7 @@ class NotificationDeviceCommandServiceImplTests {
         var service = new NotificationDeviceCommandServiceImpl(repository);
         var command = new RegisterNotificationDeviceCommand(7L, "token-123", "android");
 
-        when(repository.findByUserIdAndDeviceToken(7L, "token-123")).thenReturn(Optional.empty());
+        when(repository.findByDeviceToken("token-123")).thenReturn(Optional.empty());
         when(repository.save(any(NotificationDevice.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
@@ -52,7 +52,7 @@ class NotificationDeviceCommandServiceImplTests {
         var existingDevice = new NotificationDevice(7L, "token-123", "ios");
         existingDevice.deactivate();
 
-        when(repository.findByUserIdAndDeviceToken(7L, "token-123")).thenReturn(Optional.of(existingDevice));
+        when(repository.findByDeviceToken("token-123")).thenReturn(Optional.of(existingDevice));
         when(repository.save(existingDevice)).thenReturn(existingDevice);
 
         // Act

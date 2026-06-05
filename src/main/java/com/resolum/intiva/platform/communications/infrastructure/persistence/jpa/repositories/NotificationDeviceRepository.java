@@ -14,13 +14,12 @@ import java.util.Optional;
 public interface NotificationDeviceRepository extends JpaRepository<NotificationDevice, Long> {
 
     /**
-     * Finds one token registration by user id and exact device token.
+     * Finds one token registration by exact device token.
      *
-     * @param userId owner of the token
      * @param deviceToken token value
      * @return matching registration when it exists
      */
-    Optional<NotificationDevice> findByUserIdAndDeviceToken(Long userId, String deviceToken);
+    Optional<NotificationDevice> findByDeviceToken(String deviceToken);
 
     /**
      * Finds all token registrations of one user ordered by last update descending.
