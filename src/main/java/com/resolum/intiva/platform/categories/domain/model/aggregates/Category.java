@@ -145,7 +145,7 @@ public class Category extends AuditableAbstractAggregate<Category> {
                         ownerId,
                         "Compras de comida, supermercado y restaurantes",
                         "#4CAF50",
-                        "restaurant",
+                        "food",
                         CategoryType.EXPENSE
                 )),
                 new Category(new CreateCategoryCommand(
@@ -154,7 +154,7 @@ public class Category extends AuditableAbstractAggregate<Category> {
                         ownerId,
                         "Pasajes, combustible y movilidad",
                         "#2196F3",
-                        "directions_car",
+                        "car",
                         CategoryType.EXPENSE
                 )),
                 new Category(new CreateCategoryCommand(
@@ -163,7 +163,7 @@ public class Category extends AuditableAbstractAggregate<Category> {
                         ownerId,
                         "Medicinas, consultas y tratamientos médicos",
                         "#E91E63",
-                        "local_hospital",
+                        "health",
                         CategoryType.EXPENSE
                 )),
                 new Category(new CreateCategoryCommand(
@@ -181,7 +181,7 @@ public class Category extends AuditableAbstractAggregate<Category> {
                         ownerId,
                         "Ropa, tecnología y compras personales",
                         "#795548",
-                        "shopping_bag",
+                        "shopping-cart",
                         CategoryType.EXPENSE
                 )),
                 new Category(new CreateCategoryCommand(

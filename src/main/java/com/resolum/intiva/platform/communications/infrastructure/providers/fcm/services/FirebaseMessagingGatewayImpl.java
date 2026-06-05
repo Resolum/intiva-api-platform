@@ -80,7 +80,7 @@ public class FirebaseMessagingGatewayImpl implements FirebaseMessagingGateway {
             String deviceToken
     ) {
         notificationDeviceRepository
-                .findByUserIdAndDeviceToken(recipientUserId, deviceToken)
+                .findByDeviceToken(deviceToken)
                 .ifPresentOrElse(device -> {
                     device.deactivate();
                     notificationDeviceRepository.save(device);

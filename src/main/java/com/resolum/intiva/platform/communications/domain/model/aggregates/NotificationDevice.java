@@ -4,6 +4,7 @@ import com.resolum.intiva.platform.shared.domain.aggregates.AuditableAbstractAgg
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -27,7 +28,7 @@ public class NotificationDevice extends AuditableAbstractAggregate<NotificationD
     /**
      * Firebase Cloud Messaging token associated with one app installation.
      */
-    @Column(nullable = false, length = 512)
+    @Column(name = "device_token", nullable = false, length = 512, unique = true)
     private String deviceToken;
 
     /**
@@ -68,6 +69,20 @@ public class NotificationDevice extends AuditableAbstractAggregate<NotificationD
         }
         this.platform = platform.toUpperCase();
         this.active = true;
+    }
+
+    /**
+     * Reassigns this app installation token to the currently signed-in user.
+     *
+     * @param userId latest user who owns the app session
+     * @param platform latest platform sent by the client
+     */
+    public void reassignTo(Long userId, String platform) {
+        if (userId == null) {
+            throw new IllegalArgumentException("User id is required.");
+        }
+        this.userId = userId;
+        reactivate(platform);
     }
 
     /**

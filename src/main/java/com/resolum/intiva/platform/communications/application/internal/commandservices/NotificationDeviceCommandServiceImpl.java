@@ -30,18 +30,15 @@ public class NotificationDeviceCommandServiceImpl implements NotificationDeviceC
     }
 
     /**
-     * Registers a new token or reactivates an existing token owned by the same user.
+     * Registers a new token or reassigns/reactivates the app installation token.
      */
     @Override
     public Optional<NotificationDevice> handle(RegisterNotificationDeviceCommand command) {
-        var existingRegistration = notificationDeviceRepository.findByUserIdAndDeviceToken(
-                command.userId(),
-                command.deviceToken()
-        );
+        var existingRegistration = notificationDeviceRepository.findByDeviceToken(command.deviceToken());
 
         if (existingRegistration.isPresent()) {
             var notificationDevice = existingRegistration.get();
-            notificationDevice.reactivate(command.platform());
+            notificationDevice.reassignTo(command.userId(), command.platform());
             return Optional.of(notificationDeviceRepository.save(notificationDevice));
         }
 
