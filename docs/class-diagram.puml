@@ -1,0 +1,392 @@
+@startuml
+
+class User {
+    -id: UserId
+    -email: Email
+    -password_hash: string
+    -roleId: RoleId
+    +changePassword(newPasswordHash: string)
+}
+
+entity Role {
+    -id: RoleId
+    -name: string
+}
+
+class Profile {
+    -id: ProfileId
+    -name: string
+    -age: int
+    -avatarUrl: string
+    -phoneNumber: string
+    -birthDate: DateTime
+    -bio: string
+    -userId: UserId
+    +updateInfo(string bio?, string phoneNumber?, string avatarUrl?): void
+}
+
+class Account {
+    -id: AccountId
+    -status: AccountStatus
+    -subscriptionId: SubscriptionId
+    -ownerId: UserId
+    +activate(): void
+    +suspend(): void
+    +canCreateGroups(): boolean
+    +canSetSpendingLimits(): boolean
+    +canSetSavingsGoals(): boolean
+}
+
+record ResourcesUsage {
+    -groupsCreated: int
+    -spendingLimitsSet: int
+    -savingGoalsSet: int
+}
+
+enum AccountStatus {
+    ACTIVE
+    SUSPENDED
+}
+
+class Plan {
+    -id: PlanId
+    -planName: string
+    -description: string
+    -price: BigDecimal
+    -billingCycle: BillingCycle
+    -status: string
+    -limits: PlanLimits
+    +isActive(): boolean
+    +getLimits(): PlanLimits
+}
+
+record PlanLimits {
+    -maxGroups: int
+    -maxSpendingLimits: int
+    -maxSavingGoals: int
+    -maxMembersPerGroup: int
+}
+
+enum BillingCycle {
+    MONTHLY
+    ANNUAL
+}
+
+class Subscription {
+    -id: SubscriptionId
+    -planId: PlanId
+    -accountId: AccountId
+    -plan: Plan
+    -subscriptionStatus: SubscriptionStatus
+    -startsAt: DateTime
+    -expiresAt: DateTime
+    +activate(): void
+    +expire(): void
+    +cancel(): void
+    +upgradeTo(Plan plan): void
+}
+
+enum SubscriptionStatus {
+    PENDING
+    ACTIVE
+    EXPIRED
+    CANCELLED
+}
+
+class Category {
+    -id: CategoryId
+    -ownerType: OwnerTypes
+    -name: string
+    -color: string
+    -isActive: boolean
+    -ownerId: string
+    -actorUserId: UserId
+    -groupId: string
+    +updateNameOrColor(string name?, string color?): void
+    +deactivate(): void
+}
+
+class FinancialAccount {
+    -id: WalletId
+    -isActive: boolean
+    -name: string
+    -accountType: FinancialAccountTypes
+    -currencyCode: CurrencyCodes
+    -creditLimit: BigDecimal
+    -initialAmount: BigDecimal
+    -currentAmount: BigDecimal
+    -institution: Institutions
+    -ownerId: UserId
+    +deactivate(): void
+    +spend(Money amount): void
+    +changeName(string name): void
+}
+
+enum FinancialAccountTypes {
+    WALLET
+    CREDITCARD
+    DEBITCARD
+}
+
+enum Institutions {
+    BCP
+    YAPE
+    PAYPAL
+    INTERBANK
+    SCOTIA
+}
+
+enum CurrencyCodes {
+    PEN
+    USD
+    EUR
+}
+
+class TransactionEntry {
+    -id: Long
+    -amount: Money
+    -description: String
+    -ownerId: String
+    -actorUserId: UserId
+    -financialAccountId: FinancialAccountId
+}
+
+class Transaction {
+    -transactionType: TransactionTypes
+    -registeredAt: DateTime
+    -categoryId: CategoryId
+    +editAmountRecorded(Money amount): void
+    +editDescription(string description): void
+}
+
+record Money {
+    -amount: BigDecimal
+    -currencyCode: CurrencyCodes
+    +toString(): string
+    +getAmount(): BigDecimal
+    +getCurrencyCode(): string
+}
+
+enum TransactionTypes {
+    EGRESS
+    INCOME
+}
+
+enum OwnerTypes {
+    INDIVIDUAL
+    FAMILY
+}
+
+class RecurringTransaction {
+    -id: RecurringTransactionId
+    -periodType: PeriodTypes
+    -predefinedAmount: BigDecimal
+    -endsAt: DateTime
+    -ownerType: OwnerTypes
+    -actorUserId: UserId
+    -ownerId: string
+    +createTransaction(): Transaction
+}
+
+class SpendingLimit {
+    -id: SpendingLimitId
+    -ownerType: OwnerTypes
+    -userOrGroupId: string
+    -limitAmount: Money
+    -currentAmount: Money
+    -description: string
+    -periodType: PeriodTypes
+    -startsAt: DateTime
+    -endsAt: DateTime
+    -isActive: boolean
+    -categoryId: CategoryId
+    +editLimitAmount(Money amount): void
+    +spend(Money amount): void
+    +editDescription(string description): void
+    +deactivate(): void
+}
+
+enum PeriodTypes {
+    DAILY
+    WEEKLY
+    MONTHLY
+    ANUAL
+}
+
+class Family {
+    -id: FamilyId
+    -name: string
+    -description: string
+    -status: FamilyStatus
+    -resourcesUsage: FamilyResourcesUsage
+    -ownerId: UserId
+    +disolve(): void
+    +canInviteMembers(): boolean
+    +canSetSpendingLimits(): boolean
+    +canSetSavingsGoals(): boolean
+}
+
+record FamilyResourcesUsage {
+    -membersActive: int
+    -spendingLimitsSet: int
+    -savingGoalsSet: int
+}
+
+enum FamilyStatus {
+    ACTIVE
+    DISOLVED
+}
+
+class Invitation {
+    -id: IntivationId
+    -token: string
+    -status: InvitationStatus
+    -sentAt: DateTime
+    -expiresAt: DateTime
+    -respondedAt: DateTime
+    -invitedBy: UserId
+    -invitedForFamily: FamilyId
+    -userInvitedId: UserId
+    +accepts(): void
+    +rejects(): void
+}
+
+enum InvitationStatus {
+    PENDING
+    ACCEPTED
+    REJECTED
+}
+
+class FamilyMember {
+    -id: FamilyMemberId
+    -role: FamilyRole
+    -status: FamilyMemberStatus
+    -joinedAt: DateTime
+    -familyId: FamilyId
+    -userId: UserId
+    +asignRole(FamilyRole role): void
+    +expel(): void
+}
+
+enum FamilyMemberStatus {
+    ACTIVE
+    EXPELLED
+}
+
+enum FamilyRole {
+    ADMIN
+    MEMBER
+}
+
+class Notification {
+    -id: NotificationId
+    -receiverType: OwnerTypes
+    -sentTo: string
+    -type: NotificationTypes
+    -title: string
+    -message: string
+    -sentAt: DateTime
+    -isRead: boolean
+}
+
+enum NotificationTypes {
+    URGENT
+    REMEMBERING
+    INFO
+}
+
+class SavingGoal {
+    -id: SavingGoalId
+    -ownerType: OwnerTypes
+    -actorUserId: UserId
+    -ownerId: string
+    -title: string
+    -currentAmount: Money
+    -targetAmount: Money
+    -description: string
+    -startsAt: DateTime
+    -deadline: DateTime
+    -status: SavingGoalStatus
+    -categoryId: CategoryId
+    +completes(): void
+    +uncompletes(): void
+    +editDescriptionOrTitle(string description, string title): void
+    +editTargetAmount(Money newTargetAmount): void
+    +contribute(GoalContribution contribution): void
+}
+
+enum SavingGoalStatus {
+    INPROGRESS
+    COMPLETED
+    UNCOMPLETED
+}
+
+class GoalContribution {
+    -contributedAt: DateTime
+    -savingGoalId: SavingGoalId
+}
+
+User "1" ..> "1" Role : has
+User "1" --> "1" Profile : composes
+User "1" --> "n" SavingGoal : sets
+User "1" --> "n" FamilyMember : converts
+User "1" --> "n" Invitation : receives
+User "1" --> "n" Transaction : registers
+User "1" --> "n" GoalContribution : makes
+User "1" --> "n" FinancialAccount : has
+
+Plan "1" ..> "1" BillingCycle : has
+Plan "1" ..> "1" PlanLimits : has
+
+Account "1" ..> "1" AccountStatus : has
+Account "1" ..> "1" ResourcesUsage : has
+Account "1" --> "1" User
+
+Subscription "1" o-- "1" Plan : has
+Subscription "1" -- "1" Account : enables
+Subscription "1" ..> "1" SubscriptionStatus : has
+
+FinancialAccount "1" ..> "1" CurrencyCodes : uses
+FinancialAccount "1" ..> "1" Institutions : has
+FinancialAccount "1" ..> "1" FinancialAccountTypes : has
+
+Money "1" ..> "1" CurrencyCodes : uses
+
+Category "1" ..> "1" OwnerTypes : has
+
+TransactionEntry <|-- Transaction : is a
+Transaction "1" ..> "1" OwnerTypes : has
+Transaction "1" o-- "1" Category : uses
+Transaction "1" ..> "1" TransactionTypes : has
+Transaction "1" ..> "1" Money : uses
+Transaction "1" --> "1" FinancialAccount : uses
+
+RecurringTransaction "1" ..> "1" PeriodTypes : has
+RecurringTransaction "1" o-- "n" Transaction : creates
+
+SpendingLimit "1" ..> "1" PeriodTypes : has
+SpendingLimit "1" ..> "1" Money : uses
+
+Family "1" *-- "n" FamilyMember : has
+Family "1" --> "n" Transaction : creates
+Family "1" ..> "1" FamilyStatus : has
+Family "1" --> "n" Invitation : sends
+Family "1" ..> "1" FamilyResourcesUsage : has
+
+SavingGoal "1" o-- "1" Category : has
+SavingGoal "1" ..> "1" SavingGoalStatus : has
+
+TransactionEntry <|-- GoalContribution : is a
+GoalContribution "1" o-- "1" SavingGoal : contributes
+
+Invitation "1" ..> "1" InvitationStatus : has
+
+FamilyMember "1" ..> "1" FamilyRole : has
+FamilyMember "1" ..> "1" FamilyMemberStatus : has
+
+Notification "1" ..> "1" NotificationTypes : has
+Notification "1" ..> "1" OwnerTypes : has
+Notification "n" --> "1" User : alerts
+Notification "n" --> "1" Family : alerts
+
+@enduml
