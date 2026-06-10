@@ -1,4 +1,4 @@
-﻿package com.resolum.intiva.platform.shared.domain.exceptions;
+package com.resolum.intiva.platform.shared.domain.exceptions;
 
 /**
  * Custom exception to indicate errors during image upload operations.

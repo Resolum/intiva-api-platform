@@ -1,4 +1,4 @@
-﻿package com.resolum.intiva.platform.shared.domain.valueobjects;
+package com.resolum.intiva.platform.shared.domain.valueobjects;
 
 /**
  * Value object representing an image URL with its Cloudinary public ID.

@@ -1,4 +1,4 @@
-﻿package com.resolum.intiva.platform.shared.infrastructure.filestorage.cloudinary.services;
+package com.resolum.intiva.platform.shared.infrastructure.filestorage.cloudinary.services;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
