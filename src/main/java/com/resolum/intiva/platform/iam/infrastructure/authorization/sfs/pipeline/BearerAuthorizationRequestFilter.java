@@ -62,7 +62,7 @@ public class BearerAuthorizationRequestFilter extends OncePerRequestFilter {
             }
 
         } catch (Exception e) {
-            LOGGER.error("Cannot set user authentication: {}", e.getMessage());
+            LOGGER.error("Cannot set user authentication: {} - {}", e.getClass().getName(), e.getMessage(), e);
         }
         filterChain.doFilter(request, response);
     }

@@ -4,6 +4,8 @@ import com.resolum.intiva.platform.household.domain.exceptions.ResourceNotFoundE
 import com.resolum.intiva.platform.household.domain.exceptions.UnauthorizedException;
 import com.resolum.intiva.platform.categories.domain.model.exceptions.InactiveFinancialAccountException;
 import com.resolum.intiva.platform.categories.domain.model.exceptions.InsufficientFundsException;
+import com.resolum.intiva.platform.shared.domain.exceptions.ImageSizeExceededException;
+import com.resolum.intiva.platform.shared.domain.exceptions.InvalidImageFormatException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
@@ -123,6 +125,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalStateException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ProblemDetail handleIllegalState(IllegalStateException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidImageFormatException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ProblemDetail handleInvalidImageFormat(InvalidImageFormatException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(ImageSizeExceededException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ProblemDetail handleImageSizeExceeded(ImageSizeExceededException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 }

@@ -1,4 +1,4 @@
-﻿package com.resolum.intiva.platform.shared.application.internal.outboundservices.filestorage;
+package com.resolum.intiva.platform.shared.application.internal.outboundservices.filestorage;
 
 import org.springframework.web.multipart.MultipartFile;
 

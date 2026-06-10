@@ -1,4 +1,4 @@
-﻿package com.resolum.intiva.platform.shared.domain.exceptions;
+package com.resolum.intiva.platform.shared.domain.exceptions;
 
 /**
  * Exception thrown when invalid credentials are provided during authentication.
