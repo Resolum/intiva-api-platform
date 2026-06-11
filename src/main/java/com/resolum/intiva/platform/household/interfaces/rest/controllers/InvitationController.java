@@ -21,6 +21,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -35,6 +36,7 @@ import java.util.List;
  * The userId path variable identifies the acting user for accept/reject operations
  * and filters queries to return only that user's invitations.
  */
+@Slf4j
 @RestController
 @Tag(name = "Invitations", description = "Endpoints related to family group invitation management")
 public class InvitationController {
@@ -84,16 +86,21 @@ public class InvitationController {
     public ResponseEntity<?> acceptInvitation(
             @PathVariable Long userId,
             @PathVariable Long invitationId) {
+        log.info("Accepting invitation {} for user {}", invitationId, userId);
         try {
             var command = AcceptInvitationCommandFromResourceAssembler.toCommandFromResource(invitationId, userId);
             var invitation = invitationCommandService.handle(command);
             var resource = InvitationResourceFromEntityAssembler.toResourceFromEntity(invitation);
+            log.info("Invitation {} accepted successfully by user {}", invitationId, userId);
             return ResponseEntity.ok(resource);
         } catch (ResourceNotFoundException e) {
+            log.warn("Invitation {} not found for user {}", invitationId, userId);
             return ResponseEntity.notFound().build();
         } catch (UnauthorizedException e) {
+            log.warn("User {} unauthorized to accept invitation {}: {}", userId, invitationId, e.getMessage());
             return ResponseEntity.status(403).body(e.getMessage());
         } catch (IllegalStateException e) {
+            log.warn("Invitation {} cannot be accepted by user {}: {}", invitationId, userId, e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
@@ -121,16 +128,21 @@ public class InvitationController {
     public ResponseEntity<?> rejectInvitation(
             @PathVariable Long userId,
             @PathVariable Long invitationId) {
+        log.info("Rejecting invitation {} for user {}", invitationId, userId);
         try {
             var command = RejectInvitationCommandFromResourceAssembler.toCommandFromResource(invitationId, userId);
             var invitation = invitationCommandService.handle(command);
             var resource = InvitationResourceFromEntityAssembler.toResourceFromEntity(invitation);
+            log.info("Invitation {} rejected by user {}", invitationId, userId);
             return ResponseEntity.ok(resource);
         } catch (ResourceNotFoundException e) {
+            log.warn("Invitation {} not found for user {}", invitationId, userId);
             return ResponseEntity.notFound().build();
         } catch (UnauthorizedException e) {
+            log.warn("User {} unauthorized to reject invitation {}: {}", userId, invitationId, e.getMessage());
             return ResponseEntity.status(403).body(e.getMessage());
         } catch (IllegalStateException e) {
+            log.warn("Invitation {} cannot be rejected by user {}: {}", invitationId, userId, e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
@@ -150,11 +162,13 @@ public class InvitationController {
             @ApiResponse(responseCode = "200", description = "Pending invitations retrieved successfully")
     })
     public ResponseEntity<List<InvitationResource>> getMyPendingInvitations(@PathVariable Long userId) {
+        log.debug("Fetching pending invitations for user {}", userId);
         var query = new GetPendingInvitationsByUserIdQuery(new UserId(userId));
         var invitations = invitationQueryService.handle(query);
         var resources = invitations.stream()
                 .map(InvitationResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
+        log.debug("Found {} pending invitation(s) for user {}", resources.size(), userId);
         return ResponseEntity.ok(resources);
     }
 
@@ -173,11 +187,13 @@ public class InvitationController {
             @ApiResponse(responseCode = "200", description = "Invitations retrieved successfully")
     })
     public ResponseEntity<List<InvitationResource>> getMyInvitations(@PathVariable Long userId) {
+        log.debug("Fetching all invitations for user {}", userId);
         var query = new GetInvitationsByUserIdQuery(new UserId(userId));
         var invitations = invitationQueryService.handle(query);
         var resources = invitations.stream()
                 .map(InvitationResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
+        log.debug("Found {} invitation(s) for user {}", resources.size(), userId);
         return ResponseEntity.ok(resources);
     }
 
@@ -196,16 +212,21 @@ public class InvitationController {
             @PathVariable Long userId,
             @PathVariable Long familyId,
             @Valid @RequestBody SendInvitationResource resource) {
+        log.info("Sending invitation to family {} by user {}", familyId, userId);
         try {
             var command = SendInvitationCommandFromResourceAssembler.toCommandFromResource(resource, familyId, userId);
             var invitation = invitationCommandService.handle(command);
             var invitationResource = InvitationResourceFromEntityAssembler.toResourceFromEntity(invitation);
+            log.info("Invitation sent successfully to family {} by user {}", familyId, userId);
             return new ResponseEntity<>(invitationResource, HttpStatus.CREATED);
         } catch (ResourceNotFoundException e) {
+            log.warn("Resource not found while sending invitation: {}", e.getMessage());
             return ResponseEntity.notFound().build();
         } catch (UnauthorizedException e) {
+            log.warn("Unauthorized to send invitation: {}", e.getMessage());
             return ResponseEntity.status(403).body(e.getMessage());
         } catch (IllegalStateException e) {
+            log.warn("Illegal state while sending invitation: {}", e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
@@ -220,6 +241,7 @@ public class InvitationController {
             @ApiResponse(responseCode = "404", description = "No active invitation found for this family")
     })
     public ResponseEntity<?> getInvitationQr(@PathVariable Long familyId) {
+        log.info("Generating QR code for family {}", familyId);
         try {
             var query = new GetActiveInvitationByFamilyIdQuery(familyId);
             var invitation = invitationQueryService.handle(query)
@@ -235,8 +257,10 @@ public class InvitationController {
                     invitation.getExpiresAt().toString()
             );
 
+            log.info("QR code generated for family {} invitation token {}", familyId, invitation.getToken());
             return ResponseEntity.ok(resource);
         } catch (ResourceNotFoundException e) {
+            log.warn("No active invitation found for family {}", familyId);
             return ResponseEntity.notFound().build();
         }
     }

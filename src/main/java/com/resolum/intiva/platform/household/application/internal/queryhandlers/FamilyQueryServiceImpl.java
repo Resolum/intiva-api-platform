@@ -5,6 +5,7 @@ import com.resolum.intiva.platform.household.domain.model.queries.GetFamiliesByO
 import com.resolum.intiva.platform.household.domain.model.queries.GetFamilyByIdQuery;
 import com.resolum.intiva.platform.household.domain.services.FamilyQueryService;
 import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.FamilyRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.Optional;
 /**
  * Implementation of FamilyQueryService that delegates to the JPA repository.
  */
+@Slf4j
 @Service
 public class FamilyQueryServiceImpl implements FamilyQueryService {
 
@@ -29,11 +31,13 @@ public class FamilyQueryServiceImpl implements FamilyQueryService {
 
     @Override
     public Optional<Family> handle(GetFamilyByIdQuery query) {
+        log.debug("Querying family by id: {}", query.familyId());
         return familyRepository.findById(query.familyId());
     }
 
     @Override
     public List<Family> handle(GetFamiliesByOwnerIdQuery query) {
+        log.debug("Querying families for ownerId: {}", query.ownerId().getValue());
         return familyRepository.findByOwnerId(query.ownerId());
     }
 }

@@ -16,8 +16,7 @@ import com.resolum.intiva.platform.household.domain.services.InvitationCommandSe
 import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.FamilyMemberRepository;
 import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.FamilyRepository;
 import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.InvitationRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,10 +25,9 @@ import java.time.LocalDateTime;
 /**
  * Implementation of InvitationCommandService that handles accept and reject commands.
  */
+@Slf4j
 @Service
 public class InvitationCommandServiceImpl implements InvitationCommandService {
-
-    private final Logger LOGGER = LoggerFactory.getLogger(InvitationCommandServiceImpl.class);
 
     private final InvitationRepository invitationRepository;
     private final FamilyMemberRepository familyMemberRepository;
@@ -74,7 +72,7 @@ public class InvitationCommandServiceImpl implements InvitationCommandService {
         familyMemberRepository.save(member);
         invitationRepository.save(invitation);
 
-        LOGGER.info("Invitation {} accepted by user {}", invitation.getId(), command.userId().getValue());
+        log.info("Invitation {} accepted by user {}", invitation.getId(), command.userId().getValue());
 
         return invitation;
     }
@@ -101,7 +99,7 @@ public class InvitationCommandServiceImpl implements InvitationCommandService {
         invitation.rejects();
         invitationRepository.save(invitation);
 
-        LOGGER.info("Invitation {} rejected by user {}", invitation.getId(), command.userId().getValue());
+        log.info("Invitation {} rejected by user {}", invitation.getId(), command.userId().getValue());
 
         return invitation;
     }
@@ -147,7 +145,7 @@ public class InvitationCommandServiceImpl implements InvitationCommandService {
         var invitation = new Invitation(expiresAt, command.invitedBy(), command.familyId(), command.userInvitedId());
         var savedInvitation = invitationRepository.save(invitation);
 
-        LOGGER.info("Invitation sent to family {} by user {}",
+        log.info("Invitation sent to family {} by user {}",
                 command.familyId(), command.invitedBy().getValue());
 
         return savedInvitation;
