@@ -4,6 +4,7 @@ import com.resolum.intiva.platform.profiles.domain.model.aggregates.Profile;
 import com.resolum.intiva.platform.profiles.domain.model.queries.GetProfileByUserIdQuery;
 import com.resolum.intiva.platform.profiles.infrastructure.persistence.jpa.repositories.ProfileRepository;
 import com.resolum.intiva.platform.profiles.domain.model.services.ProfileQueryService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -14,6 +15,7 @@ import java.util.Optional;
  * <p>This service delegates to the ProfileRepository to perform queries and returns
  * the resulting Profile aggregate wrapped in an Optional.</p>
  */
+@Slf4j
 @Service
 public class ProfileQueryServiceImpl implements ProfileQueryService {
 
@@ -31,6 +33,7 @@ public class ProfileQueryServiceImpl implements ProfileQueryService {
      */
     @Override
     public Optional<Profile> handle(GetProfileByUserIdQuery query) {
+        log.debug("Querying profile for userId={}", query.userId());
         return profileRepository.findByUserId_UserId(query.userId());
     }
 }

@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +23,7 @@ import org.springframework.web.server.ResponseStatusException;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 
+@Slf4j
 @RestController
 @RequestMapping(value = "/api/v1/profiles", produces = APPLICATION_JSON_VALUE)
 @Tag(name = "Profiles", description = "User Profiles Management")
@@ -53,11 +55,16 @@ public class UserProfilesController {
     })
     @GetMapping("/{userId}")
     public ResponseEntity<ProfileResource> getProfileByUserId(@PathVariable Long userId) {
+        log.info("Fetching profile for userId={}", userId);
         var profile = profileQueryService.handle(new GetProfileByUserIdQuery(userId))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Profile not found for user: " + userId));
+                .orElseThrow(() -> {
+                    log.warn("Profile not found for userId={}", userId);
+                    return new ResponseStatusException(HttpStatus.NOT_FOUND,
+                            "Profile not found for user: " + userId);
+                });
 
         var email = profilesExternalIamService.getUserEmail(userId);
+        log.info("Profile retrieved for userId={}", userId);
         return ResponseEntity.ok(ProfileResourceFromEntityAssembler.toResourceFromEntity(profile, email));
     }
 
@@ -78,12 +85,17 @@ public class UserProfilesController {
     public ResponseEntity<ProfileResource> updateProfile(
             @PathVariable Long userId,
             @RequestBody @Valid UpdateProfileResource resource) {
+        log.info("Updating profile for userId={}", userId);
         var command = UpdateProfileCommandFromResourceAssembler.toCommandFromResource(userId, resource);
         var profile = profileCommandService.handle(command)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Profile not found for user: " + userId));
+                .orElseThrow(() -> {
+                    log.warn("Profile not found for userId={}", userId);
+                    return new ResponseStatusException(HttpStatus.NOT_FOUND,
+                            "Profile not found for user: " + userId);
+                });
 
         var email = profilesExternalIamService.getUserEmail(userId);
+        log.info("Profile updated for userId={}", userId);
         return ResponseEntity.ok(ProfileResourceFromEntityAssembler.toResourceFromEntity(profile, email));
     }
 
@@ -104,11 +116,16 @@ public class UserProfilesController {
     public ResponseEntity<ProfileResource> updateProfileAvatar(
             @PathVariable Long userId,
             @ModelAttribute UpdateAvatarResource resource) {
+        log.info("Updating avatar for userId={}", userId);
         var profile = profileCommandService.handleAvatarUpdate(userId, resource.file())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Profile not found for user: " + userId));
+                .orElseThrow(() -> {
+                    log.warn("Profile not found for userId={}", userId);
+                    return new ResponseStatusException(HttpStatus.NOT_FOUND,
+                            "Profile not found for user: " + userId);
+                });
 
         var email = profilesExternalIamService.getUserEmail(userId);
+        log.info("Avatar updated for userId={}", userId);
         return ResponseEntity.ok(ProfileResourceFromEntityAssembler.toResourceFromEntity(profile, email));
     }
 }
