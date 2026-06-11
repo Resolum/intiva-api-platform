@@ -22,6 +22,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,6 +35,7 @@ import java.util.stream.Collectors;
  * All endpoints are nested under /api/v1/users/{userId}/saving-goals.
  * The userId is used as the performedByUserId for personal goals and as the contributorId for contributions.
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/users/{userId}/saving-goals")
 @Tag(name = "Accounts", description = "Available Account Endpoints")
@@ -65,6 +67,7 @@ public class AccountSavingGoalsController {
     })
     @GetMapping
     public ResponseEntity<List<SavingGoalResource>> getAllSavingGoalsByUserId(@PathVariable Long userId) {
+        log.debug("Fetching saving goals for userId={}", userId);
         var query = new GetAllSavingGoalsByUserIdQuery(userId);
         var savingGoals = savingGoalQueryService.handle(query);
 
@@ -72,6 +75,7 @@ public class AccountSavingGoalsController {
                 .map(SavingGoalResourceFromEntityAssembler::toResourceFromEntity)
                 .collect(Collectors.toList());
 
+        log.debug("Found {} saving goal(s) for userId={}", resources.size(), userId);
         return ResponseEntity.ok(resources);
     }
 
@@ -92,6 +96,7 @@ public class AccountSavingGoalsController {
     public ResponseEntity<?> createSavingGoal(
             @PathVariable Long userId,
             @RequestBody CreateSavingGoalResource resource) {
+        log.info("Creating saving goal for userId={}", userId);
         try {
             var initialCommand = CreateSavingGoalCommandFromResourceAssembler.toCommandFromResource(resource);
             var command = new CreateSavingGoalCommand(
@@ -109,8 +114,10 @@ public class AccountSavingGoalsController {
 
             var savingGoal = savingGoalCommandService.handle(command);
             var savingGoalResource = SavingGoalResourceFromEntityAssembler.toResourceFromEntity(savingGoal);
+            log.info("Saving goal created with id={} for userId={}", savingGoal.getId(), userId);
             return ResponseEntity.status(HttpStatus.CREATED).body(savingGoalResource);
         } catch (IllegalArgumentException e) {
+            log.warn("Invalid saving goal creation for userId={}: {}", userId, e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
@@ -131,10 +138,12 @@ public class AccountSavingGoalsController {
     public ResponseEntity<SavingGoalResource> getSavingGoalById(
             @PathVariable Long userId,
             @PathVariable Long savingGoalId) {
+        log.debug("Fetching saving goal id={} for userId={}", savingGoalId, userId);
         var query = new GetSavingGoalByIdQuery(savingGoalId);
         var savingGoalOpt = savingGoalQueryService.handle(query);
 
         if (savingGoalOpt.isEmpty() || !userId.equals(savingGoalOpt.get().getActorUserId())) {
+            log.warn("Saving goal id={} not found for userId={}", savingGoalId, userId);
             return ResponseEntity.notFound().build();
         }
 
@@ -162,25 +171,28 @@ public class AccountSavingGoalsController {
             @PathVariable Long userId,
             @PathVariable Long savingGoalId,
             @RequestBody ContributeToSavingGoalResource resource) {
-
+        log.info("Contributing to saving goal id={} by userId={}", savingGoalId, userId);
         try {
             var initialCommand = ContributeToSavingGoalCommandFromResourceAssembler.toCommandFromResource(savingGoalId, resource);
             var command = new ContributeToSavingGoalCommand(
                     initialCommand.savingGoalId(),
                     initialCommand.amount(),
                     initialCommand.currencyCode(),
-                    userId // force contributorId = userId
+                    userId
             );
 
             var savingGoalOpt = savingGoalCommandService.handle(command);
 
             if (savingGoalOpt.isEmpty()) {
+                log.warn("Saving goal not found for contribution: id={}", savingGoalId);
                 return ResponseEntity.notFound().build();
             }
 
             var savingGoalResource = SavingGoalResourceFromEntityAssembler.toResourceFromEntity(savingGoalOpt.get());
+            log.info("Contribution registered to saving goal id={} by userId={}", savingGoalId, userId);
             return ResponseEntity.status(HttpStatus.CREATED).body(savingGoalResource);
         } catch (IllegalArgumentException e) {
+            log.warn("Invalid contribution for saving goal id={}: {}", savingGoalId, e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
@@ -200,6 +212,7 @@ public class AccountSavingGoalsController {
     public ResponseEntity<List<SavingGoalResource>> getAllSavingGoalsByGroupId(
             @PathVariable Long userId,
             @PathVariable String groupId) {
+        log.debug("Fetching saving goals for groupId={} by userId={}", groupId, userId);
         var query = new com.resolum.intiva.platform.savings.domain.model.queries.GetAllSavingGoalsByGroupIdQuery(groupId);
         var savingGoals = savingGoalQueryService.handle(query);
 
@@ -207,6 +220,7 @@ public class AccountSavingGoalsController {
                 .map(SavingGoalResourceFromEntityAssembler::toResourceFromEntity)
                 .collect(Collectors.toList());
 
+        log.debug("Found {} saving goal(s) for groupId={}", resources.size(), groupId);
         return ResponseEntity.ok(resources);
     }
 
@@ -230,14 +244,18 @@ public class AccountSavingGoalsController {
     public ResponseEntity<?> completeSavingGoal(
             @PathVariable Long userId,
             @PathVariable Long savingGoalId) {
+        log.info("Completing saving goal id={} by userId={}", savingGoalId, userId);
         try {
             var command = new CompleteSavingGoalCommand(savingGoalId);
             var savingGoal = savingGoalCommandService.handle(command);
             var savingGoalResource = SavingGoalResourceFromEntityAssembler.toResourceFromEntity(savingGoal);
+            log.info("Saving goal id={} completed by userId={}", savingGoalId, userId);
             return ResponseEntity.ok(savingGoalResource);
         } catch (IllegalArgumentException e) {
+            log.warn("Saving goal not found for complete: id={}", savingGoalId);
             return ResponseEntity.notFound().build();
         } catch (IllegalStateException e) {
+            log.warn("Cannot complete saving goal id={}: {}", savingGoalId, e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
@@ -262,14 +280,18 @@ public class AccountSavingGoalsController {
     public ResponseEntity<?> uncompleteSavingGoal(
             @PathVariable Long userId,
             @PathVariable Long savingGoalId) {
+        log.info("Uncompleting saving goal id={} by userId={}", savingGoalId, userId);
         try {
             var command = new UncompleteSavingGoalCommand(savingGoalId);
             var savingGoal = savingGoalCommandService.handle(command);
             var savingGoalResource = SavingGoalResourceFromEntityAssembler.toResourceFromEntity(savingGoal);
+            log.info("Saving goal id={} uncompleted by userId={}", savingGoalId, userId);
             return ResponseEntity.ok(savingGoalResource);
         } catch (IllegalArgumentException e) {
+            log.warn("Saving goal not found for uncomplete: id={}", savingGoalId);
             return ResponseEntity.notFound().build();
         } catch (IllegalStateException e) {
+            log.warn("Cannot uncomplete saving goal id={}: {}", savingGoalId, e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
@@ -289,6 +311,7 @@ public class AccountSavingGoalsController {
     })
     @GetMapping("/completed")
     public ResponseEntity<List<SavingGoalResource>> getCompletedSavingGoals(@PathVariable Long userId) {
+        log.debug("Fetching completed saving goals for userId={}", userId);
         var query = new GetAllCompletedSavingGoalsByUserIdQuery(userId);
         var savingGoals = savingGoalQueryService.handle(query);
 
@@ -296,6 +319,7 @@ public class AccountSavingGoalsController {
                 .map(SavingGoalResourceFromEntityAssembler::toResourceFromEntity)
                 .collect(Collectors.toList());
 
+        log.debug("Found {} completed saving goal(s) for userId={}", resources.size(), userId);
         return ResponseEntity.ok(resources);
     }
 
@@ -323,19 +347,24 @@ public class AccountSavingGoalsController {
             @PathVariable Long userId,
             @PathVariable Long savingGoalId,
             @RequestBody UpdateSavingGoalResource resource) {
+        log.info("Updating saving goal id={} by userId={}", savingGoalId, userId);
         try {
             var query = new GetSavingGoalByIdQuery(savingGoalId);
             var savingGoalOpt = savingGoalQueryService.handle(query);
             if (savingGoalOpt.isEmpty() || !userId.equals(savingGoalOpt.get().getActorUserId())) {
+                log.warn("Saving goal id={} not found for userId={}", savingGoalId, userId);
                 return ResponseEntity.notFound().build();
             }
             var command = UpdateSavingGoalCommandFromResourceAssembler.toCommandFromResource(savingGoalId, resource);
             var savingGoal = savingGoalCommandService.handle(command);
             var savingGoalResource = SavingGoalResourceFromEntityAssembler.toResourceFromEntity(savingGoal);
+            log.info("Saving goal id={} updated by userId={}", savingGoalId, userId);
             return ResponseEntity.ok(savingGoalResource);
         } catch (IllegalArgumentException e) {
+            log.warn("Saving goal not found for update: id={}", savingGoalId);
             return ResponseEntity.notFound().build();
         } catch (IllegalStateException e) {
+            log.warn("Cannot update saving goal id={}: {}", savingGoalId, e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
@@ -362,18 +391,23 @@ public class AccountSavingGoalsController {
     public ResponseEntity<?> deleteSavingGoal(
             @PathVariable Long userId,
             @PathVariable Long savingGoalId) {
+        log.info("Deleting saving goal id={} by userId={}", savingGoalId, userId);
         try {
             var query = new GetSavingGoalByIdQuery(savingGoalId);
             var savingGoalOpt = savingGoalQueryService.handle(query);
             if (savingGoalOpt.isEmpty() || !userId.equals(savingGoalOpt.get().getActorUserId())) {
+                log.warn("Saving goal id={} not found for userId={}", savingGoalId, userId);
                 return ResponseEntity.notFound().build();
             }
             var command = new DeleteSavingGoalCommand(savingGoalId);
             savingGoalCommandService.handle(command);
+            log.info("Saving goal id={} deleted by userId={}", savingGoalId, userId);
             return ResponseEntity.noContent().build();
         } catch (IllegalArgumentException e) {
+            log.warn("Saving goal not found for delete: id={}", savingGoalId);
             return ResponseEntity.notFound().build();
         } catch (IllegalStateException e) {
+            log.warn("Cannot delete saving goal id={}: {}", savingGoalId, e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
