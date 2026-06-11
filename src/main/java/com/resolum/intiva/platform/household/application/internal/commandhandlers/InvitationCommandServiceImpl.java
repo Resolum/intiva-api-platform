@@ -120,14 +120,12 @@ public class InvitationCommandServiceImpl implements InvitationCommandService {
             throw new UnauthorizedException("Only ADMIN can send invitations");
         }
 
-        if (command.userInvitedId() != null) {
-            var existingPending = invitationRepository.findByInvitedForFamilyAndUserInvitedIdAndStatus(
-                    command.familyId(), command.userInvitedId(), InvitationStatus.PENDING);
-            existingPending.forEach(invitation -> {
-                invitation.revoke();
-                invitationRepository.save(invitation);
-            });
-        }
+        var existingPending = invitationRepository.findByInvitedForFamilyAndStatus(
+                command.familyId(), InvitationStatus.PENDING);
+        existingPending.forEach(invitation -> {
+            invitation.revoke();
+            invitationRepository.save(invitation);
+        });
 
         var expiresAt = LocalDateTime.now().plusDays(7);
         var invitation = new Invitation(expiresAt, command.invitedBy(), command.familyId(), command.userInvitedId());

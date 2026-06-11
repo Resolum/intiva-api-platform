@@ -1,7 +1,9 @@
 package com.resolum.intiva.platform.household.interfaces.rest.controllers;
 
+import com.resolum.intiva.platform.household.application.internal.outboundservices.QrCodeGeneratorService;
 import com.resolum.intiva.platform.household.domain.exceptions.ResourceNotFoundException;
 import com.resolum.intiva.platform.household.domain.exceptions.UnauthorizedException;
+import com.resolum.intiva.platform.household.domain.model.queries.GetActiveInvitationByFamilyIdQuery;
 import com.resolum.intiva.platform.household.domain.model.queries.GetInvitationsByUserIdQuery;
 import com.resolum.intiva.platform.household.domain.model.queries.GetPendingInvitationsByUserIdQuery;
 import com.resolum.intiva.platform.household.domain.services.InvitationCommandService;
@@ -11,6 +13,7 @@ import com.resolum.intiva.platform.household.interfaces.rest.assemblers.Invitati
 import com.resolum.intiva.platform.household.interfaces.rest.assemblers.RejectInvitationCommandFromResourceAssembler;
 import com.resolum.intiva.platform.household.interfaces.rest.assemblers.SendInvitationCommandFromResourceAssembler;
 import com.resolum.intiva.platform.household.interfaces.rest.resources.requests.SendInvitationResource;
+import com.resolum.intiva.platform.household.interfaces.rest.resources.responses.InvitationQrResource;
 import com.resolum.intiva.platform.household.interfaces.rest.resources.responses.InvitationResource;
 import com.resolum.intiva.platform.shared.domain.valueobjects.UserId;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,6 +21,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -37,16 +41,24 @@ public class InvitationController {
 
     private final InvitationCommandService invitationCommandService;
     private final InvitationQueryService invitationQueryService;
+    private final QrCodeGeneratorService qrCodeGeneratorService;
+
+    @Value("${app.invitation.base-url}")
+    private String invitationBaseUrl;
 
     /**
-     * Creates the controller with the required command and query services.
+     * Creates the controller with the required services.
      *
      * @param invitationCommandService command service dependency
      * @param invitationQueryService   query service dependency
+     * @param qrCodeGeneratorService   QR code generator service dependency
      */
-    public InvitationController(InvitationCommandService invitationCommandService, InvitationQueryService invitationQueryService) {
+    public InvitationController(InvitationCommandService invitationCommandService,
+                                InvitationQueryService invitationQueryService,
+                                QrCodeGeneratorService qrCodeGeneratorService) {
         this.invitationCommandService = invitationCommandService;
         this.invitationQueryService = invitationQueryService;
+        this.qrCodeGeneratorService = qrCodeGeneratorService;
     }
 
     /**
@@ -195,6 +207,37 @@ public class InvitationController {
             return ResponseEntity.status(403).body(e.getMessage());
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/api/v1/families/{familyId}/invitations/qr")
+    @Operation(
+            summary = "Get QR code for an active family invitation",
+            description = "Finds the active PENDING invitation for the specified family and returns its invitation link as a QR code in Base64-encoded PNG format. The invitation link is valid for 7 days."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "QR code generated successfully"),
+            @ApiResponse(responseCode = "404", description = "No active invitation found for this family")
+    })
+    public ResponseEntity<?> getInvitationQr(@PathVariable Long familyId) {
+        try {
+            var query = new GetActiveInvitationByFamilyIdQuery(familyId);
+            var invitation = invitationQueryService.handle(query)
+                    .orElseThrow(() -> new ResourceNotFoundException("No active invitation found for family: " + familyId));
+
+            var link = invitationBaseUrl + "?token=" + invitation.getToken();
+            var qrBase64 = qrCodeGeneratorService.generateQrBase64(link, 250, 250);
+
+            var resource = new InvitationQrResource(
+                    invitation.getToken(),
+                    qrBase64,
+                    link,
+                    invitation.getExpiresAt().toString()
+            );
+
+            return ResponseEntity.ok(resource);
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.notFound().build();
         }
     }
 }
