@@ -1,40 +1,49 @@
 package com.resolum.intiva.platform.household.application.internal.commandhandlers;
 
+import com.resolum.intiva.platform.household.domain.exceptions.InvitationAlreadyPendingException;
 import com.resolum.intiva.platform.household.domain.exceptions.ResourceNotFoundException;
 import com.resolum.intiva.platform.household.domain.exceptions.UnauthorizedException;
+import com.resolum.intiva.platform.household.domain.exceptions.UserAlreadyMemberException;
 import com.resolum.intiva.platform.household.domain.model.aggregates.FamilyMember;
 import com.resolum.intiva.platform.household.domain.model.aggregates.Invitation;
 import com.resolum.intiva.platform.household.domain.model.commands.AcceptInvitationCommand;
 import com.resolum.intiva.platform.household.domain.model.commands.RejectInvitationCommand;
+import com.resolum.intiva.platform.household.domain.model.commands.SendInvitationCommand;
+import com.resolum.intiva.platform.household.domain.model.valueobjects.FamilyMemberStatus;
 import com.resolum.intiva.platform.household.domain.model.valueobjects.FamilyRole;
+import com.resolum.intiva.platform.household.domain.model.valueobjects.InvitationStatus;
 import com.resolum.intiva.platform.household.domain.services.InvitationCommandService;
 import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.FamilyMemberRepository;
+import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.FamilyRepository;
 import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.InvitationRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 /**
  * Implementation of InvitationCommandService that handles accept and reject commands.
  */
+@Slf4j
 @Service
 public class InvitationCommandServiceImpl implements InvitationCommandService {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(InvitationCommandServiceImpl.class);
-
     private final InvitationRepository invitationRepository;
     private final FamilyMemberRepository familyMemberRepository;
+    private final FamilyRepository familyRepository;
 
     /**
      * Creates the command service with the required repository dependencies.
      *
      * @param invitationRepository   the invitation repository
      * @param familyMemberRepository the family member repository
+     * @param familyRepository       the family repository
      */
-    public InvitationCommandServiceImpl(InvitationRepository invitationRepository, FamilyMemberRepository familyMemberRepository) {
+    public InvitationCommandServiceImpl(InvitationRepository invitationRepository, FamilyMemberRepository familyMemberRepository, FamilyRepository familyRepository) {
         this.invitationRepository = invitationRepository;
         this.familyMemberRepository = familyMemberRepository;
+        this.familyRepository = familyRepository;
     }
 
     /**
@@ -63,7 +72,7 @@ public class InvitationCommandServiceImpl implements InvitationCommandService {
         familyMemberRepository.save(member);
         invitationRepository.save(invitation);
 
-        LOGGER.info("Invitation {} accepted by user {}", invitation.getId(), command.userId().getValue());
+        log.info("Invitation {} accepted by user {}", invitation.getId(), command.userId().getValue());
 
         return invitation;
     }
@@ -90,8 +99,55 @@ public class InvitationCommandServiceImpl implements InvitationCommandService {
         invitation.rejects();
         invitationRepository.save(invitation);
 
-        LOGGER.info("Invitation {} rejected by user {}", invitation.getId(), command.userId().getValue());
+        log.info("Invitation {} rejected by user {}", invitation.getId(), command.userId().getValue());
 
         return invitation;
+    }
+
+    @Override
+    @Transactional
+    public Invitation handle(SendInvitationCommand command) {
+        var family = familyRepository.findById(command.familyId())
+                .orElseThrow(() -> new ResourceNotFoundException("Family not found with id: " + command.familyId()));
+
+        if (!family.canInviteMembers()) {
+            throw new IllegalStateException("Family cannot accept new members");
+        }
+
+        var inviterMember = familyMemberRepository.findByFamilyIdAndUserId(command.familyId(), command.invitedBy())
+                .orElseThrow(() -> new UnauthorizedException("User is not a member of this family"));
+
+        if (inviterMember.getRole() != FamilyRole.ADMIN) {
+            throw new UnauthorizedException("Only ADMIN can send invitations");
+        }
+
+        if (command.userInvitedId() != null) {
+            var existingMember = familyMemberRepository.findByFamilyIdAndUserId(command.familyId(), command.userInvitedId());
+            if (existingMember.isPresent() && existingMember.get().getStatus() == FamilyMemberStatus.ACTIVE) {
+                throw new UserAlreadyMemberException("El usuario ya pertenece al grupo familiar");
+            }
+
+            var hasPendingInvitation = invitationRepository.existsByInvitedForFamilyAndUserInvitedIdAndStatusAndExpiresAtAfter(
+                    command.familyId(), command.userInvitedId(), InvitationStatus.PENDING, LocalDateTime.now());
+            if (hasPendingInvitation) {
+                throw new InvitationAlreadyPendingException("El usuario ya tiene una invitación pendiente");
+            }
+        }
+
+        var existingPending = invitationRepository.findByInvitedForFamilyAndStatus(
+                command.familyId(), InvitationStatus.PENDING);
+        existingPending.forEach(invitation -> {
+            invitation.revoke();
+            invitationRepository.save(invitation);
+        });
+
+        var expiresAt = LocalDateTime.now().plusDays(7);
+        var invitation = new Invitation(expiresAt, command.invitedBy(), command.familyId(), command.userInvitedId());
+        var savedInvitation = invitationRepository.save(invitation);
+
+        log.info("Invitation sent to family {} by user {}",
+                command.familyId(), command.invitedBy().getValue());
+
+        return savedInvitation;
     }
 }

@@ -43,6 +43,6 @@ public class UserQueryServiceImpl implements UserQueryService {
      */
     @Override
     public Optional<User> handle(GetUserByEmailQuery query) {
-        return userRepository.findUserByEmail(query.email());
+        return userRepository.findUserByEmail_Email(query.email().getValue());
     }
 }

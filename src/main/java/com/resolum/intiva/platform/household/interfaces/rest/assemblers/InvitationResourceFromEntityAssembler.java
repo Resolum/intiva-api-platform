@@ -26,7 +26,7 @@ public class InvitationResourceFromEntityAssembler {
                 entity.getRespondedAt() != null ? entity.getRespondedAt().toString() : null,
                 entity.getInvitedBy().getValue(),
                 entity.getInvitedForFamily(),
-                entity.getUserInvitedId().getValue(),
+                entity.getUserInvitedId() != null ? entity.getUserInvitedId().getValue() : null,
                 entity.getExpiresAt().isBefore(LocalDateTime.now())
         );
     }

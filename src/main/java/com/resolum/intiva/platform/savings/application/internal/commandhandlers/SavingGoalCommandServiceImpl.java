@@ -13,6 +13,7 @@ import com.resolum.intiva.platform.savings.infrastructure.persistence.jpa.reposi
 import com.resolum.intiva.platform.savings.infrastructure.persistence.jpa.repositories.SavingGoalRepository;
 import com.resolum.intiva.platform.shared.domain.valueobjects.Money;
 import com.resolum.intiva.platform.shared.domain.valueobjects.OwnerTypes;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,7 @@ import java.util.Optional;
  * Implementation of the SavingGoalCommandService.
  * Handles commands related to creating and contributing to saving goals.
  */
+@Slf4j
 @Service
 public class SavingGoalCommandServiceImpl implements SavingGoalCommandService {
 
@@ -52,6 +54,7 @@ public class SavingGoalCommandServiceImpl implements SavingGoalCommandService {
     @Override
     @Transactional
     public SavingGoal handle(CreateSavingGoalCommand command) {
+        log.info("Creating saving goal: title='{}'", command.title());
         if (command.title() == null || command.title().trim().isEmpty()) {
             throw new IllegalArgumentException("Title must not be null or empty");
         }
@@ -93,7 +96,9 @@ public class SavingGoalCommandServiceImpl implements SavingGoalCommandService {
                 command.categoryId()
         );
 
-        return savingGoalRepository.save(savingGoal);
+        var saved = savingGoalRepository.save(savingGoal);
+        log.info("Saving goal created with id={}", saved.getId());
+        return saved;
     }
 
     /**
@@ -106,9 +111,11 @@ public class SavingGoalCommandServiceImpl implements SavingGoalCommandService {
     @Override
     @Transactional
     public Optional<SavingGoal> handle(ContributeToSavingGoalCommand command) {
+        log.info("Contributing to saving goal id={}", command.savingGoalId());
         var savingGoalOpt = savingGoalRepository.findById(command.savingGoalId());
         
         if (savingGoalOpt.isEmpty()) {
+            log.warn("Saving goal not found for contribution: id={}", command.savingGoalId());
             return Optional.empty(); 
         }
 
@@ -122,6 +129,7 @@ public class SavingGoalCommandServiceImpl implements SavingGoalCommandService {
         goalContributionRepository.save(contribution);
         savingGoalRepository.save(savingGoal);
         
+        log.info("Contribution of {} registered to saving goal id={}", command.amount(), command.savingGoalId());
         return Optional.of(savingGoal);
     }
 
@@ -137,13 +145,17 @@ public class SavingGoalCommandServiceImpl implements SavingGoalCommandService {
     @Override
     @Transactional
     public SavingGoal handle(CompleteSavingGoalCommand command) {
+        log.info("Completing saving goal id={}", command.savingGoalId());
         var savingGoalOpt = savingGoalRepository.findById(command.savingGoalId());
         if (savingGoalOpt.isEmpty()) {
+            log.warn("Saving goal not found for complete: id={}", command.savingGoalId());
             throw new IllegalArgumentException("Saving goal not found with id: " + command.savingGoalId());
         }
         var savingGoal = savingGoalOpt.get();
         savingGoal.completes();
-        return savingGoalRepository.save(savingGoal);
+        var saved = savingGoalRepository.save(savingGoal);
+        log.info("Saving goal id={} completed", saved.getId());
+        return saved;
     }
 
     /**
@@ -158,13 +170,17 @@ public class SavingGoalCommandServiceImpl implements SavingGoalCommandService {
     @Override
     @Transactional
     public SavingGoal handle(UncompleteSavingGoalCommand command) {
+        log.info("Uncompleting saving goal id={}", command.savingGoalId());
         var savingGoalOpt = savingGoalRepository.findById(command.savingGoalId());
         if (savingGoalOpt.isEmpty()) {
+            log.warn("Saving goal not found for uncomplete: id={}", command.savingGoalId());
             throw new IllegalArgumentException("Saving goal not found with id: " + command.savingGoalId());
         }
         var savingGoal = savingGoalOpt.get();
         savingGoal.uncompletes();
-        return savingGoalRepository.save(savingGoal);
+        var saved = savingGoalRepository.save(savingGoal);
+        log.info("Saving goal id={} uncompleted", saved.getId());
+        return saved;
     }
 
     /**
@@ -180,8 +196,10 @@ public class SavingGoalCommandServiceImpl implements SavingGoalCommandService {
     @Override
     @Transactional
     public SavingGoal handle(UpdateSavingGoalCommand command) {
+        log.info("Updating saving goal id={}", command.savingGoalId());
         var savingGoalOpt = savingGoalRepository.findById(command.savingGoalId());
         if (savingGoalOpt.isEmpty()) {
+            log.warn("Saving goal not found for update: id={}", command.savingGoalId());
             throw new IllegalArgumentException("Saving goal not found with id: " + command.savingGoalId());
         }
         var savingGoal = savingGoalOpt.get();
@@ -200,7 +218,9 @@ public class SavingGoalCommandServiceImpl implements SavingGoalCommandService {
             savingGoal.editTargetAmount(newTargetAmount);
         }
 
-        return savingGoalRepository.save(savingGoal);
+        var saved = savingGoalRepository.save(savingGoal);
+        log.info("Saving goal id={} updated", saved.getId());
+        return saved;
     }
 
     /**
@@ -214,8 +234,10 @@ public class SavingGoalCommandServiceImpl implements SavingGoalCommandService {
     @Override
     @Transactional
     public void handle(DeleteSavingGoalCommand command) {
+        log.info("Deleting saving goal id={}", command.savingGoalId());
         var savingGoalOpt = savingGoalRepository.findById(command.savingGoalId());
         if (savingGoalOpt.isEmpty()) {
+            log.warn("Saving goal not found for delete: id={}", command.savingGoalId());
             throw new IllegalArgumentException("Saving goal not found with id: " + command.savingGoalId());
         }
         var savingGoal = savingGoalOpt.get();
@@ -223,5 +245,6 @@ public class SavingGoalCommandServiceImpl implements SavingGoalCommandService {
             throw new IllegalStateException("Saving goal cannot be deleted after its deadline has passed");
         }
         savingGoalRepository.delete(savingGoal);
+        log.info("Saving goal id={} deleted", command.savingGoalId());
     }
 }

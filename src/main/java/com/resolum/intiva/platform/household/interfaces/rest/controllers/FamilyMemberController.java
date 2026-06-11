@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
  * The userId path variable identifies the requesting user for membership validation
  * and role assignment authorization.
  */
+@Slf4j
 @RestController
 @RequestMapping(value = "/api/v1/users/{userId}/families/{familyId}/members", produces = MediaType.APPLICATION_JSON_VALUE)
 @Tag(name = "Family Members", description = "Endpoints related to family group members management")
@@ -66,13 +68,16 @@ public class FamilyMemberController {
     public ResponseEntity<?> getMembers(
             @PathVariable Long userId,
             @PathVariable Long familyId) {
+        log.info("Fetching members for family {} by user {}", familyId, userId);
         try {
             var requesterId = new UserId(userId);
             var query = new GetMembersByFamilyIdQuery(familyId, requesterId);
             var members = familyMemberQueryService.handle(query);
             var resource = FamilyMembersListResourceFromEntityAssembler.toResourceFromEntityList(familyId, members);
+            log.info("Retrieved {} member(s) for family {}", members.size(), familyId);
             return ResponseEntity.ok(resource);
         } catch (UnauthorizedException e) {
+            log.warn("User {} not authorized to view members of family {}: {}", userId, familyId, e.getMessage());
             return ResponseEntity.status(403).body(e.getMessage());
         }
     }
@@ -98,11 +103,15 @@ public class FamilyMemberController {
             @PathVariable Long userId,
             @PathVariable Long familyId,
             @PathVariable Long memberId) {
+        log.debug("Fetching member {} in family {} by user {}", memberId, familyId, userId);
         var query = new GetMemberByIdQuery(memberId, familyId);
         var member = familyMemberQueryService.handle(query);
-        return member
-                .map(m -> ResponseEntity.ok(FamilyMemberResourceFromEntityAssembler.toResourceFromEntity(m)))
-                .orElse(ResponseEntity.notFound().build());
+        if (member.isPresent()) {
+            log.debug("Member {} found in family {}", memberId, familyId);
+            return ResponseEntity.ok(FamilyMemberResourceFromEntityAssembler.toResourceFromEntity(member.get()));
+        }
+        log.warn("Member {} not found in family {}", memberId, familyId);
+        return ResponseEntity.notFound().build();
     }
 
     /**
@@ -132,16 +141,21 @@ public class FamilyMemberController {
             @PathVariable Long familyId,
             @PathVariable Long memberId,
             @Valid @RequestBody AssignRoleResource resource) {
+        log.info("Assigning role {} to member {} in family {} by user {}", resource.role(), memberId, familyId, userId);
         try {
             var command = AssignRoleCommandFromResourceAssembler.toCommandFromResource(familyId, memberId, resource.role(), userId);
             var member = familyMemberCommandService.handle(command);
             var memberResource = FamilyMemberResourceFromEntityAssembler.toResourceFromEntity(member);
+            log.info("Role {} assigned to member {} in family {} by user {}", resource.role(), memberId, familyId, userId);
             return ResponseEntity.ok(memberResource);
         } catch (ResourceNotFoundException e) {
+            log.warn("Resource not found while assigning role: {}", e.getMessage());
             return ResponseEntity.notFound().build();
         } catch (UnauthorizedException e) {
+            log.warn("Unauthorized to assign role: {}", e.getMessage());
             return ResponseEntity.status(403).body(e.getMessage());
         } catch (IllegalStateException e) {
+            log.warn("Illegal state while assigning role: {}", e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }

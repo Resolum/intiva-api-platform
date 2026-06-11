@@ -1,9 +1,13 @@
 package com.resolum.intiva.platform.shared.interfaces.rest;
 
+import com.resolum.intiva.platform.household.domain.exceptions.InvitationAlreadyPendingException;
 import com.resolum.intiva.platform.household.domain.exceptions.ResourceNotFoundException;
 import com.resolum.intiva.platform.household.domain.exceptions.UnauthorizedException;
+import com.resolum.intiva.platform.household.domain.exceptions.UserAlreadyMemberException;
 import com.resolum.intiva.platform.categories.domain.model.exceptions.InactiveFinancialAccountException;
 import com.resolum.intiva.platform.categories.domain.model.exceptions.InsufficientFundsException;
+import com.resolum.intiva.platform.shared.domain.exceptions.ImageSizeExceededException;
+import com.resolum.intiva.platform.shared.domain.exceptions.InvalidImageFormatException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
@@ -124,5 +128,29 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ProblemDetail handleIllegalState(IllegalStateException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidImageFormatException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ProblemDetail handleInvalidImageFormat(InvalidImageFormatException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(ImageSizeExceededException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ProblemDetail handleImageSizeExceeded(ImageSizeExceededException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(UserAlreadyMemberException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ProblemDetail handleUserAlreadyMember(UserAlreadyMemberException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(InvitationAlreadyPendingException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ProblemDetail handleInvitationAlreadyPending(InvitationAlreadyPendingException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
     }
 }

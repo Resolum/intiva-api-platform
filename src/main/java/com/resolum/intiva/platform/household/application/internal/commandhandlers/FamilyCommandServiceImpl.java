@@ -8,18 +8,16 @@ import com.resolum.intiva.platform.household.domain.model.valueobjects.FamilyRol
 import com.resolum.intiva.platform.household.domain.services.FamilyCommandService;
 import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.FamilyMemberRepository;
 import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.FamilyRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Implementation of FamilyCommandService that handles family group creation.
  */
+@Slf4j
 @Service
 public class FamilyCommandServiceImpl implements FamilyCommandService {
-
-    private final Logger LOGGER = LoggerFactory.getLogger(FamilyCommandServiceImpl.class);
 
     private final FamilyRepository familyRepository;
     private final FamilyMemberRepository familyMemberRepository;
@@ -59,7 +57,7 @@ public class FamilyCommandServiceImpl implements FamilyCommandService {
         var member = new FamilyMember(addMemberCommand.familyId(), addMemberCommand.userId(), addMemberCommand.role());
         familyMemberRepository.save(member);
 
-        LOGGER.info("Family group created successfully with id: {}", savedFamily.getId());
+        log.info("Family group created successfully with id: {}", savedFamily.getId());
 
         return savedFamily;
     }

@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
  * REST controller for managing family groups.
  * Exposes endpoints for creating and retrieving family groups.
  */
+@Slf4j
 @RestController
 @RequestMapping(value = "/api/v1/users/{userId}/group-families", produces = MediaType.APPLICATION_JSON_VALUE)
 @Tag(name = "Family Group", description = "Endpoints related to family group management and member administration")
@@ -59,12 +61,15 @@ public class FamilyController {
     public ResponseEntity<?> createFamily(
             @PathVariable Long userId,
             @Valid @RequestBody CreateFamilyResource resource) {
+        log.info("Creating family group by user {}", userId);
         try {
             var command = CreateFamilyCommandFromResourceAssembler.toCommandFromResource(resource, userId);
             var family = familyCommandService.handle(command);
             var familyResource = FamilyResourceFromEntityAssembler.toResourceFromEntity(family);
+            log.info("Family group created successfully with id {} by user {}", family.getId(), userId);
             return new ResponseEntity<>(familyResource, HttpStatus.CREATED);
         } catch (IllegalArgumentException e) {
+            log.warn("Invalid input for family creation by user {}: {}", userId, e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
@@ -88,10 +93,14 @@ public class FamilyController {
     public ResponseEntity<FamilyResource> getFamilyById(
             @PathVariable Long userId,
             @PathVariable Long id) {
+        log.debug("Fetching family by id {} for user {}", id, userId);
         var query = new GetFamilyByIdQuery(id);
         var family = familyQueryService.handle(query);
-        return family
-                .map(f -> ResponseEntity.ok(FamilyResourceFromEntityAssembler.toResourceFromEntity(f)))
-                .orElse(ResponseEntity.notFound().build());
+        if (family.isPresent()) {
+            log.debug("Family {} found", id);
+            return ResponseEntity.ok(FamilyResourceFromEntityAssembler.toResourceFromEntity(family.get()));
+        }
+        log.warn("Family {} not found", id);
+        return ResponseEntity.notFound().build();
     }
 }

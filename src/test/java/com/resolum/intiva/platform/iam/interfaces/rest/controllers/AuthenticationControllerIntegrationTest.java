@@ -1,6 +1,5 @@
 package com.resolum.intiva.platform.iam.interfaces.rest.controllers;
 
-import com.resolum.intiva.platform.iam.domain.model.valueobjects.Email;
 import com.resolum.intiva.platform.iam.infrastructure.hashing.bcrypt.services.HashingServiceImpl;
 import com.resolum.intiva.platform.iam.infrastructure.persistence.jpa.repositories.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,6 +57,6 @@ public class AuthenticationControllerIntegrationTest {
                 .andExpect(jsonPath("$.id").isNotEmpty());
 
         // Assert
-        assertTrue(userRepository.existsUserByEmail(new Email("test@email.com")));
+        assertTrue(userRepository.existsUserByEmail_Email("test@email.com"));
     }
 }
