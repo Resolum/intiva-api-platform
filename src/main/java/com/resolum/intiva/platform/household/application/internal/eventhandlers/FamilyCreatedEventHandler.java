@@ -1,8 +1,7 @@
 package com.resolum.intiva.platform.household.application.internal.eventhandlers;
 
 import com.resolum.intiva.platform.household.domain.model.events.FamilyCreatedEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -10,10 +9,9 @@ import org.springframework.transaction.event.TransactionalEventListener;
 /**
  * Event handler that reacts to family group creation events.
  */
+@Slf4j
 @Service
 public class FamilyCreatedEventHandler {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(FamilyCreatedEventHandler.class);
 
     /**
      * Handles the FamilyCreatedEvent by logging the creation details.
@@ -22,7 +20,7 @@ public class FamilyCreatedEventHandler {
      */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void on(FamilyCreatedEvent event) {
-        LOGGER.info("Family group created successfully - name: {}, ownerId: {}",
+        log.info("Family group created successfully - name: {}, ownerId: {}",
                 event.getFamilyName(), event.getOwnerId());
     }
 }
