@@ -1,12 +1,15 @@
 package com.resolum.intiva.platform.household.application.internal.commandhandlers;
 
+import com.resolum.intiva.platform.household.domain.exceptions.InvitationAlreadyPendingException;
 import com.resolum.intiva.platform.household.domain.exceptions.ResourceNotFoundException;
 import com.resolum.intiva.platform.household.domain.exceptions.UnauthorizedException;
+import com.resolum.intiva.platform.household.domain.exceptions.UserAlreadyMemberException;
 import com.resolum.intiva.platform.household.domain.model.aggregates.FamilyMember;
 import com.resolum.intiva.platform.household.domain.model.aggregates.Invitation;
 import com.resolum.intiva.platform.household.domain.model.commands.AcceptInvitationCommand;
 import com.resolum.intiva.platform.household.domain.model.commands.RejectInvitationCommand;
 import com.resolum.intiva.platform.household.domain.model.commands.SendInvitationCommand;
+import com.resolum.intiva.platform.household.domain.model.valueobjects.FamilyMemberStatus;
 import com.resolum.intiva.platform.household.domain.model.valueobjects.FamilyRole;
 import com.resolum.intiva.platform.household.domain.model.valueobjects.InvitationStatus;
 import com.resolum.intiva.platform.household.domain.services.InvitationCommandService;
@@ -118,6 +121,19 @@ public class InvitationCommandServiceImpl implements InvitationCommandService {
 
         if (inviterMember.getRole() != FamilyRole.ADMIN) {
             throw new UnauthorizedException("Only ADMIN can send invitations");
+        }
+
+        if (command.userInvitedId() != null) {
+            var existingMember = familyMemberRepository.findByFamilyIdAndUserId(command.familyId(), command.userInvitedId());
+            if (existingMember.isPresent() && existingMember.get().getStatus() == FamilyMemberStatus.ACTIVE) {
+                throw new UserAlreadyMemberException("El usuario ya pertenece al grupo familiar");
+            }
+
+            var hasPendingInvitation = invitationRepository.existsByInvitedForFamilyAndUserInvitedIdAndStatusAndExpiresAtAfter(
+                    command.familyId(), command.userInvitedId(), InvitationStatus.PENDING, LocalDateTime.now());
+            if (hasPendingInvitation) {
+                throw new InvitationAlreadyPendingException("El usuario ya tiene una invitación pendiente");
+            }
         }
 
         var existingPending = invitationRepository.findByInvitedForFamilyAndStatus(
