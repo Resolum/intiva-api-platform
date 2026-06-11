@@ -1,4 +1,4 @@
-package com.resolum.intiva.platform.profiles.application.acl;
+package com.resolum.intiva.platform.profiles.application.acl.services;
 
 import com.resolum.intiva.platform.profiles.domain.model.queries.GetProfileByUserIdQuery;
 import com.resolum.intiva.platform.profiles.domain.model.services.ProfileQueryService;

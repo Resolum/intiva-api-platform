@@ -9,12 +9,16 @@ import com.resolum.intiva.platform.household.domain.services.InvitationQueryServ
 import com.resolum.intiva.platform.household.interfaces.rest.assemblers.AcceptInvitationCommandFromResourceAssembler;
 import com.resolum.intiva.platform.household.interfaces.rest.assemblers.InvitationResourceFromEntityAssembler;
 import com.resolum.intiva.platform.household.interfaces.rest.assemblers.RejectInvitationCommandFromResourceAssembler;
+import com.resolum.intiva.platform.household.interfaces.rest.assemblers.SendInvitationCommandFromResourceAssembler;
+import com.resolum.intiva.platform.household.interfaces.rest.resources.requests.SendInvitationResource;
 import com.resolum.intiva.platform.household.interfaces.rest.resources.responses.InvitationResource;
 import com.resolum.intiva.platform.shared.domain.valueobjects.UserId;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,7 +32,6 @@ import java.util.List;
  * and filters queries to return only that user's invitations.
  */
 @RestController
-@RequestMapping(value = "/api/v1/users/{userId}/invitations", produces = MediaType.APPLICATION_JSON_VALUE)
 @Tag(name = "Invitations", description = "Endpoints related to family group invitation management")
 public class InvitationController {
 
@@ -55,7 +58,7 @@ public class InvitationController {
      * @return 200 with the updated invitation resource, 400 if already responded or expired,
      *         403 if the user is not the invited user, 404 if not found
      */
-    @PatchMapping("/{invitationId}/accept")
+    @PatchMapping("/api/v1/users/{userId}/invitations/{invitationId}/accept")
     @Operation(
             summary = "Accept a family group invitation",
             description = "Accepts a pending and valid invitation. Adds the user as a MEMBER of the family group."
@@ -92,7 +95,7 @@ public class InvitationController {
      * @return 200 with the updated invitation resource, 400 if already responded or expired,
      *         403 if the user is not the invited user, 404 if not found
      */
-    @PatchMapping("/{invitationId}/reject")
+    @PatchMapping("/api/v1/users/{userId}/invitations/{invitationId}/reject")
     @Operation(
             summary = "Reject a family group invitation",
             description = "Rejects a pending invitation. The user is not added to the family group."
@@ -126,7 +129,7 @@ public class InvitationController {
      * @param userId the numeric ID of the user
      * @return 200 with the list of pending invitations
      */
-    @GetMapping("/pending")
+    @GetMapping("/api/v1/users/{userId}/invitations/pending")
     @Operation(
             summary = "Get pending invitations for a user",
             description = "Retrieves all invitations with PENDING status that have not yet expired for the specified user."
@@ -149,7 +152,7 @@ public class InvitationController {
      * @param userId the numeric ID of the user
      * @return 200 with the list of all invitations
      */
-    @GetMapping
+    @GetMapping("/api/v1/users/{userId}/invitations")
     @Operation(
             summary = "Get all invitations for a user",
             description = "Retrieves all invitations (PENDING, ACCEPTED, REJECTED) for the specified user."
@@ -164,5 +167,34 @@ public class InvitationController {
                 .map(InvitationResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
         return ResponseEntity.ok(resources);
+    }
+
+    @PostMapping("/api/v1/users/{userId}/families/{familyId}/invitations")
+    @Operation(
+            summary = "Send a family group invitation",
+            description = "Sends a new invitation to join the family group. If a PENDING invitation already exists for the same user, it is revoked first."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Invitation sent successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data or family cannot accept new members"),
+            @ApiResponse(responseCode = "403", description = "User is not an ADMIN of this family"),
+            @ApiResponse(responseCode = "404", description = "Family not found")
+    })
+    public ResponseEntity<?> sendInvitation(
+            @PathVariable Long userId,
+            @PathVariable Long familyId,
+            @Valid @RequestBody SendInvitationResource resource) {
+        try {
+            var command = SendInvitationCommandFromResourceAssembler.toCommandFromResource(resource, familyId, userId);
+            var invitation = invitationCommandService.handle(command);
+            var invitationResource = InvitationResourceFromEntityAssembler.toResourceFromEntity(invitation);
+            return new ResponseEntity<>(invitationResource, HttpStatus.CREATED);
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (UnauthorizedException e) {
+            return ResponseEntity.status(403).body(e.getMessage());
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

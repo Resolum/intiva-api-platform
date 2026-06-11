@@ -72,7 +72,7 @@ public class Invitation extends AuditableAbstractAggregate<Invitation> {
      * The user who is being invited.
      */
     @Embedded
-    @AttributeOverride(name = "userId", column = @Column(name = "user_invited_id", nullable = false))
+    @AttributeOverride(name = "userId", column = @Column(name = "user_invited_id", nullable = true))
     private UserId userInvitedId;
 
     /**
@@ -81,7 +81,7 @@ public class Invitation extends AuditableAbstractAggregate<Invitation> {
      * @param expiresAt        the date and time when the invitation expires
      * @param invitedBy        the UserId of the person sending the invitation
      * @param invitedForFamily the ID of the family group the invitation is for
-     * @param userInvitedId    the UserId of the person being invited
+     * @param userInvitedId    the UserId of the person being invited (nullable)
      */
     public Invitation(LocalDateTime expiresAt, UserId invitedBy, Long invitedForFamily, UserId userInvitedId) {
         this.token = UUID.randomUUID().toString();
@@ -91,7 +91,8 @@ public class Invitation extends AuditableAbstractAggregate<Invitation> {
         this.invitedBy = invitedBy;
         this.invitedForFamily = invitedForFamily;
         this.userInvitedId = userInvitedId;
-        registerEvent(new FamilyInvitationSentEvent(this, invitedForFamily, userInvitedId.getValue(), invitedBy.getValue()));
+        var invitedUserId = userInvitedId != null ? userInvitedId.getValue() : null;
+        registerEvent(new FamilyInvitationSentEvent(this, invitedForFamily, invitedUserId, invitedBy.getValue()));
     }
 
     /**
@@ -109,7 +110,9 @@ public class Invitation extends AuditableAbstractAggregate<Invitation> {
         }
         this.status = InvitationStatus.ACCEPTED;
         this.respondedAt = LocalDateTime.now();
-        registerEvent(new InvitationAcceptedEvent(this, this.getId(), this.invitedForFamily, this.userInvitedId.getValue()));
+        if (this.userInvitedId != null) {
+            registerEvent(new InvitationAcceptedEvent(this, this.getId(), this.invitedForFamily, this.userInvitedId.getValue()));
+        }
     }
 
     /**
@@ -123,6 +126,21 @@ public class Invitation extends AuditableAbstractAggregate<Invitation> {
         }
         if (isExpired()) {
             throw new IllegalStateException("Invitation has expired");
+        }
+        this.status = InvitationStatus.REJECTED;
+        this.respondedAt = LocalDateTime.now();
+    }
+
+    /**
+     * Revokes a pending invitation. Unlike {@link #rejects()}, this method does
+     * <b>not</b> check whether the invitation has expired, making it suitable for
+     * admin-initiated invalidation.
+     *
+     * @throws IllegalStateException if the invitation has already been responded to
+     */
+    public void revoke() {
+        if (!isPending()) {
+            throw new IllegalStateException("Can only revoke pending invitations");
         }
         this.status = InvitationStatus.REJECTED;
         this.respondedAt = LocalDateTime.now();
