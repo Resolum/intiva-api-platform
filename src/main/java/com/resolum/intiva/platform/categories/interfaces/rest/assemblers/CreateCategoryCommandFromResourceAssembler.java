@@ -10,7 +10,7 @@ import com.resolum.intiva.platform.categories.interfaces.rest.resources.requests
 public class CreateCategoryCommandFromResourceAssembler {
 
     /**
-     * Converts a CreateCategoryResource to CreateCategoryCommand.
+     * Converts a CreateCategoryResource to a CreateCategoryCommand.
      *
      * @param resource the CreateCategoryResource to convert.
      * @return a CreateCategoryCommand containing the data from the resource.

@@ -1,5 +1,6 @@
 package com.resolum.intiva.platform.iam.domain.model.aggregates;
 
+import com.resolum.intiva.platform.iam.domain.model.events.UserRegisteredEvent;
 import com.resolum.intiva.platform.iam.domain.model.valueobjects.Email;
 import com.resolum.intiva.platform.iam.domain.model.valueobjects.PasswordHash;
 import com.resolum.intiva.platform.shared.domain.aggregates.AuditableAbstractAggregate;
@@ -43,6 +44,7 @@ public class User extends AuditableAbstractAggregate<User> {
     public User(Email email, PasswordHash passwordHash) {
         this.email = email;
         this.passwordHash = passwordHash;
+        addDomainEvent(new UserRegisteredEvent(this));
     }
 
     /**

@@ -1,6 +1,5 @@
 package com.resolum.intiva.platform.savings.interfaces.rest.resources.responses;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 
 /**

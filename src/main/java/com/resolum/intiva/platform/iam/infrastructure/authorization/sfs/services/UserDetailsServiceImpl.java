@@ -1,6 +1,5 @@
 package com.resolum.intiva.platform.iam.infrastructure.authorization.sfs.services;
 
-import com.resolum.intiva.platform.iam.domain.model.valueobjects.Email;
 import com.resolum.intiva.platform.iam.infrastructure.authorization.sfs.model.UserDetailsImpl;
 import com.resolum.intiva.platform.iam.infrastructure.persistence.jpa.repositories.UserRepository;
 import org.jspecify.annotations.NonNull;
@@ -35,7 +34,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
      */
     @Override
     public UserDetails loadUserByUsername(@NonNull String username) throws UsernameNotFoundException {
-        var user = userRepository.findUserByEmail(new Email(username))
+        var user = userRepository.findUserByEmail_Email(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
         return UserDetailsImpl.build(user);
     }

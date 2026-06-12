@@ -2,7 +2,7 @@ package com.resolum.intiva.platform.iam.application.internal.commandhandlers;
 
 import com.resolum.intiva.platform.iam.application.internal.outboundservices.HashingService;
 import com.resolum.intiva.platform.iam.application.internal.outboundservices.TokenService;
-import com.resolum.intiva.platform.iam.domain.exceptions.UserWithEmailAlreadyExits;
+import com.resolum.intiva.platform.iam.domain.model.exceptions.UserWithEmailAlreadyExits;
 import com.resolum.intiva.platform.iam.domain.model.aggregates.User;
 import com.resolum.intiva.platform.iam.domain.model.commands.SignInCommand;
 import com.resolum.intiva.platform.iam.domain.model.commands.SignUpCommand;
@@ -50,7 +50,7 @@ public class UserCommandServiceImpl implements UserCommandService {
      */
     @Override
     public Optional<User> handle(SignUpCommand command) {
-        if(userRepository.existsUserByEmail(command.email())) {
+        if(userRepository.existsUserByEmail_Email(command.email().getValue())) {
             throw new UserWithEmailAlreadyExits(command.email().getValue());
         }
 
@@ -64,9 +64,11 @@ public class UserCommandServiceImpl implements UserCommandService {
             var user = new User(command.email(), new PasswordHash(hashedPassword));
             userRepository.save(user);
 
+            LOGGER.info("User with email {} has been registered", email.getValue());
+
             LOGGER.info("User with email {} has signed-up", email.getValue());
 
-            return userRepository.findUserByEmail(email);
+            return userRepository.findUserByEmail_Email(email.getValue());
         } catch (Exception e) {
             LOGGER.error("Error occurred while signing up user with email {}: {}", command.email(), e.getMessage());
             return Optional.empty();
@@ -80,7 +82,7 @@ public class UserCommandServiceImpl implements UserCommandService {
      */
     @Override
     public Optional<ImmutablePair<User, String>> handle(SignInCommand command) {
-        var user = userRepository.findUserByEmail(command.email());
+        var user = userRepository.findUserByEmail_Email(command.email().getValue());
         if (user.isEmpty())
             throw new RuntimeException("User not found");
         if (!hashingService.matches(command.password().getValue(), user.get().getPasswordHash().getValue()))

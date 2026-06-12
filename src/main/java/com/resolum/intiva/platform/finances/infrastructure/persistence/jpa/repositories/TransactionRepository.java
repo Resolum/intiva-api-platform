@@ -1,12 +1,11 @@
 package com.resolum.intiva.platform.finances.infrastructure.persistence.jpa.repositories;
 
 import com.resolum.intiva.platform.finances.domain.model.aggregates.Transaction;
-import com.resolum.intiva.platform.finances.domain.model.valueobjects.TransactionTypes;
+import com.resolum.intiva.platform.shared.domain.valueobjects.TransactionTypes;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Repository interface for managing Transaction entities in the database.
@@ -20,7 +19,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
      * @param ownerId The ID of the owner of the transaction.
      * @return An Optional containing the Transaction if found, or empty if not found.
      */
-    List<Transaction> findTransactionByOwnerId(String ownerId);
+    List<Transaction> findTransactionByOwnerId(Long ownerId);
 
     /**
      * Finds a transaction list by its owner ID and transaction type.
@@ -28,5 +27,12 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
      * @param transactionType The type of the transaction (e.g., EXPENSE, INCOME).
      * @return An Optional containing the Transaction if found, or empty if not found.
      */
-    List<Transaction> findTransactionByOwnerIdAndTransactionType(String ownerId, TransactionTypes transactionType);
+    List<Transaction> findTransactionByOwnerIdAndTransactionType(Long ownerId, TransactionTypes transactionType);
+
+    /**
+     * Finds the top 5 transactions by owner ID, ordered by creation date in descending order.
+     * @param ownerId The ID of the owner of the transactions.
+     * @return A list of the top 5 transactions for the specified owner, ordered by creation date.
+     */
+    List<Transaction> findTop5ByOwnerIdOrderByCreatedAtDesc(Long ownerId);
 }

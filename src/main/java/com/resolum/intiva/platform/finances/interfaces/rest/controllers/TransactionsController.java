@@ -1,13 +1,16 @@
 package com.resolum.intiva.platform.finances.interfaces.rest.controllers;
 
+import com.resolum.intiva.platform.finances.domain.model.queries.GetLastTransactionsByOwnerIdQuery;
 import com.resolum.intiva.platform.finances.domain.model.queries.GetTransactionByIdQuery;
-import com.resolum.intiva.platform.finances.domain.services.TransactionCommandService;
+import com.resolum.intiva.platform.finances.domain.model.queries.GetTransactionsByOwnerIdAndTransactionTypeQuery;
+import com.resolum.intiva.platform.finances.domain.model.queries.GetTransactionsByOwnerIdQuery;
 import com.resolum.intiva.platform.finances.domain.services.TransactionQueryService;
-import com.resolum.intiva.platform.finances.interfaces.rest.assemblers.RegisterTransactionCommandFromResourceAssembler;
 import com.resolum.intiva.platform.finances.interfaces.rest.assemblers.TransactionResourceFromEntityAssembler;
-import com.resolum.intiva.platform.finances.interfaces.rest.resources.requests.RegisterTransactionResource;
+import com.resolum.intiva.platform.finances.interfaces.rest.resources.responses.TransactionGroupByDateResource;
 import com.resolum.intiva.platform.finances.interfaces.rest.resources.responses.TransactionResource;
+import com.resolum.intiva.platform.finances.domain.model.valueobjects.TransactionWithCategoryDesign;
 import com.resolum.intiva.platform.shared.domain.valueobjects.TransactionEntryId;
+import com.resolum.intiva.platform.shared.interfaces.rest.resource.MessageWrapperResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -17,67 +20,33 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
- * TransactionsController is a REST controller that handles endpoints related to financial transactions. It defines the API endpoints for managing transactions, such as registering a new transaction and retrieving transaction details by ID. The controller uses the TransactionCommandService to perform business logic for transaction registration and the TransactionQueryService for transaction retrieval operations.
+ * TransactionsController is a REST controller that manages financial transactions.
+ * It provides endpoints for retrieving transaction details and filtered transaction lists.
  */
 @RestController
-@RequestMapping(value = "/api/v1/transactions", produces = MediaType.APPLICATION_JSON_VALUE)
-@Tag(name = "Transactions", description = "Endpoints for managing financial transactions")
+@RequestMapping(value = "api/v1/transactions", produces = MediaType.APPLICATION_JSON_VALUE)
+@Tag(name = "Transactions", description = "Endpoints related to financial transactions management")
 public class TransactionsController {
 
-    // TransactionCommandService is a service that handles commands related to transactions, such as registering a new transaction. It is injected into the controller to perform the necessary business logic for transaction registration operations.
-    private final TransactionCommandService transactionCommandService;
-
-    // TransactionQueryService is a service that handles queries related to transactions, such as retrieving transaction details by ID. It is injected into the controller to perform the necessary business logic for transaction retrieval operations.
     private final TransactionQueryService transactionQueryService;
 
-    // Constructor injection for the TransactionCommandService and TransactionQueryService dependencies
-    public TransactionsController(TransactionCommandService transactionCommandService, TransactionQueryService transactionQueryService) {
-        this.transactionCommandService = transactionCommandService;
+    public TransactionsController(TransactionQueryService transactionQueryService) {
         this.transactionQueryService = transactionQueryService;
     }
 
     /**
-     * Endpoint to register a new financial transaction. It accepts transaction details and creates a new transaction record if the provided information is valid. If the registration is successful, it returns a 201 Created response with the created TransactionResource. If the input data is invalid, it returns a 400 Bad Request response.
-     * @param resource The RegisterTransactionResource object containing the transaction details sent in the request body (e.g., amount, description, date).
-     * @return A ResponseEntity containing the created TransactionResource if the registration is successful, or an appropriate error response if the registration fails (e.g., due to invalid input data).
-     */
-    @PostMapping
-    @Operation(
-            summary = "Register a new financial transaction",
-            description = "Endpoint to register a new financial transaction. It accepts transaction details and creates a new transaction record if the provided information is valid."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "201",
-                    description = "Transaction registered successfully"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Invalid input data for transaction registration"
-            )
-    })
-    public ResponseEntity<TransactionResource> registerTransaction(
-            @RequestBody RegisterTransactionResource resource
-    ) {
-        var registerTransactionCommand = RegisterTransactionCommandFromResourceAssembler.toCommandFromResource(resource);
-        var transaction = transactionCommandService.handle(registerTransactionCommand);
-        if (transaction.isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
-        var transactionResource = TransactionResourceFromEntityAssembler.toResourceFromEntity(transaction.get());
-        return new ResponseEntity<>(transactionResource, HttpStatus.CREATED);
-    }
-
-    /**
-     * Endpoint to retrieve a financial transaction by its ID. It returns the transaction details if a transaction with the provided ID exists, or a 404 Not Found response if no such transaction is found.
-     * @param id The ID of the transaction to retrieve, provided as a path variable in the URL.
-     * @return A ResponseEntity containing the TransactionResource if the transaction is found, or a 404 Not Found response if no transaction with the provided ID exists.
+     * Retrieves a transaction by its ID.
+     *
+     * @param id transaction identifier
+     * @return transaction resource if found
      */
     @GetMapping("/{id}")
     @Operation(
             summary = "Get transaction by ID",
-            description = "Endpoint to retrieve a financial transaction by its ID. It returns the transaction details"
+            description = "Endpoint to retrieve a financial transaction by its ID."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -86,17 +55,157 @@ public class TransactionsController {
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "Transaction not found with the provided ID"
+                    description = "Transaction not found"
             )
     })
     public ResponseEntity<TransactionResource> getTransactionById(@PathVariable Long id) {
+
         var transactionId = new TransactionEntryId(id);
-        var getTransactionByIdQuery = new GetTransactionByIdQuery(transactionId);
-        var transaction = transactionQueryService.handle(getTransactionByIdQuery);
+
+        var query = new GetTransactionByIdQuery(transactionId);
+
+        var transaction = transactionQueryService.handle(query);
+
         if (transaction.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        var transactionResource = TransactionResourceFromEntityAssembler.toResourceFromEntity(transaction.get());
-        return ResponseEntity.ok(transactionResource);
+
+        var resource = TransactionResourceFromEntityAssembler
+                .toResourceFromEntity(transaction.get());
+
+        return ResponseEntity.ok(resource);
+    }
+
+    /**
+     * Retrieves transactions using optional filters.
+     * Available filters:
+     * - ownerId
+     * - transactionType
+     * Transactions are grouped by creation date.
+     * Examples:
+     * - /api/v1/transactions?ownerId=1
+     * - /api/v1/transactions?ownerId=1&transactionType=EXPENSE
+     *
+     * @param ownerId owner identifier
+     * @param transactionType transaction type filter
+     * @return grouped transactions
+     */
+    @GetMapping
+    @Operation(
+            summary = "Get transactions by owner or transaction type.",
+            description = """
+                    Endpoint to retrieve financial transactions using optional filters.
+                    
+                    Available filters:
+                    - ownerId → Retrieves all transactions for a specific owner.
+                    - transactionType → Filters transactions by type (INCOME or EXPENSE).
+                    
+                    Transactions are grouped by creation date.
+                    
+                    Examples:
+                    - /api/v1/transactions?ownerId=1
+                    - /api/v1/transactions?ownerId=1&transactionType=EXPENSE
+                    """
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Transactions retrieved successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid request parameters"
+            )
+    })
+    public ResponseEntity<MessageWrapperResponse<List<TransactionGroupByDateResource>>> getTransactions(
+            @RequestParam(required = false) Long ownerId,
+            @RequestParam(required = false) String transactionType
+    ) {
+
+        List<TransactionWithCategoryDesign> transactions;
+
+        if (ownerId != null && transactionType != null) {
+
+            var query = new GetTransactionsByOwnerIdAndTransactionTypeQuery(ownerId, transactionType);
+
+            transactions = transactionQueryService.handle(query);
+
+        } else if (ownerId != null) {
+
+            var query = new GetTransactionsByOwnerIdQuery(ownerId);
+
+            transactions = transactionQueryService.handle(query);
+
+        } else {
+
+            return ResponseEntity.badRequest().build();
+        }
+        var resources = TransactionResourceFromEntityAssembler
+                .toGroupedResourcesFromEntities(transactions);
+
+        if (transactions.isEmpty()) {
+
+            return ResponseEntity.status(HttpStatus.OK).body(
+                    new MessageWrapperResponse<>(
+                            "No transactions found for the provided criteria.",
+                            resources
+                    )
+            );
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                new MessageWrapperResponse<>(
+                        "Transactions retrieved successfully.",
+                        resources
+                )
+        );
+    }
+
+    /**
+     * Retrieves the last 5 transactions by owner ID.
+     *
+     * @param ownerId owner identifier
+     * @return last 5 transactions
+     */
+    @GetMapping("/lastest")
+    @Operation(
+            summary = "Get last 5 transactions by owner ID",
+            description = "Endpoint to retrieve the last 5 financial transactions for a specific owner."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Transactions retrieved successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid request parameters"
+            )
+    })
+    public ResponseEntity<MessageWrapperResponse<List<TransactionGroupByDateResource>>> getLastTransactions(
+            @RequestParam Long ownerId
+    ) {
+        var query = new GetLastTransactionsByOwnerIdQuery(ownerId);
+
+        var transactions = transactionQueryService.handle(query);
+
+        var resources = TransactionResourceFromEntityAssembler
+                .toGroupedResourcesFromEntities(transactions);
+
+        if (transactions.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.OK).body(
+                    new MessageWrapperResponse<>(
+                            "No transactions found for the provided owner.",
+                            resources
+                    )
+            );
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(
+                new MessageWrapperResponse<>(
+                        "Last transactions retrieved successfully.",
+                        resources
+                )
+        );
     }
 }

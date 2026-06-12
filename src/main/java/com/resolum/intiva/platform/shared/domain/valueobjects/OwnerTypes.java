@@ -5,6 +5,6 @@ package com.resolum.intiva.platform.shared.domain.valueobjects;
  * This enum can be used to differentiate between individual owners and family owners.
  */
 public enum OwnerTypes {
-    Individual,
-    Family
+    INDIVIDUAL,
+    FAMILY
 }

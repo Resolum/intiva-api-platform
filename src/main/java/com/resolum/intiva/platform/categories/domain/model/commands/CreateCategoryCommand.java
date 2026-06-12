@@ -1,13 +1,15 @@
 package com.resolum.intiva.platform.categories.domain.model.commands;
 
-import java.util.UUID;
+import com.resolum.intiva.platform.categories.domain.model.valueobjects.CategoryType;
 
 public record CreateCategoryCommand(
     String name,
-    String color,
     String ownerType,
-    Long userId,
-    Long groupId
+    Long ownerId,
+    String description,
+    String color,
+    String icon,
+    CategoryType type
 ) {
     public CreateCategoryCommand {
         if (name == null || name.isBlank()) {

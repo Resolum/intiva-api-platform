@@ -30,3 +30,12 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Environment variables - never commit
+.env
+.env.*
+!.env.example
+
+# Firebase Json
+src/main/resources/firebase/*.json
+firebase-service-account.json
