@@ -6,8 +6,10 @@ import com.resolum.intiva.platform.finances.domain.model.aggregates.RecurringTra
 import com.resolum.intiva.platform.finances.domain.model.commands.ActivateRecurringTransactionCommand;
 import com.resolum.intiva.platform.finances.domain.model.commands.CreateRecurringTransactionCommand;
 import com.resolum.intiva.platform.finances.domain.model.commands.DeactivateRecurringTransactionCommand;
+import com.resolum.intiva.platform.finances.domain.model.commands.UpdatePaymentReminderCommand;
 import com.resolum.intiva.platform.finances.domain.services.RecurringTransactionCommandService;
 import com.resolum.intiva.platform.finances.infrastructure.persistence.jpa.repositories.RecurringTransactionRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -19,6 +21,7 @@ import java.util.Optional;
  * to the recurring transaction aggregate.</p>
  */
 @Service
+@Slf4j
 public class RecurringTransactionCommandServiceImpl implements RecurringTransactionCommandService {
 
     /**
@@ -61,9 +64,13 @@ public class RecurringTransactionCommandServiceImpl implements RecurringTransact
      */
     @Override
     public Optional<RecurringTransaction> handle(CreateRecurringTransactionCommand command) {
+        log.info("Creating recurring transaction. description={}, ownerId={}, ownerType={}, frequency={}",
+                command.description(), command.ownerId(), command.ownerType(), command.frequency());
         validateReferences(command);
         var recurringTransaction = new RecurringTransaction(command);
-        return Optional.of(recurringTransactionRepository.save(recurringTransaction));
+        var saved = recurringTransactionRepository.save(recurringTransaction);
+        log.info("Recurring transaction created with ID={}", saved.getId());
+        return Optional.of(saved);
     }
 
     /**
@@ -74,9 +81,12 @@ public class RecurringTransactionCommandServiceImpl implements RecurringTransact
      */
     @Override
     public Optional<RecurringTransaction> handle(ActivateRecurringTransactionCommand command) {
+        log.info("Activating recurring transaction. recurringTransactionId={}", command.recurringTransactionId());
         var recurringTransaction = findRecurringTransaction(command.recurringTransactionId());
         recurringTransaction.activate();
-        return Optional.of(recurringTransactionRepository.save(recurringTransaction));
+        var saved = recurringTransactionRepository.save(recurringTransaction);
+        log.info("Recurring transaction activated. recurringTransactionId={}", saved.getId());
+        return Optional.of(saved);
     }
 
     /**
@@ -87,9 +97,24 @@ public class RecurringTransactionCommandServiceImpl implements RecurringTransact
      */
     @Override
     public Optional<RecurringTransaction> handle(DeactivateRecurringTransactionCommand command) {
+        log.info("Deactivating recurring transaction. recurringTransactionId={}", command.recurringTransactionId());
         var recurringTransaction = findRecurringTransaction(command.recurringTransactionId());
         recurringTransaction.deactivate();
-        return Optional.of(recurringTransactionRepository.save(recurringTransaction));
+        var saved = recurringTransactionRepository.save(recurringTransaction);
+        log.info("Recurring transaction deactivated. recurringTransactionId={}", saved.getId());
+        return Optional.of(saved);
+    }
+
+    @Override
+    public Optional<RecurringTransaction> handle(UpdatePaymentReminderCommand command) {
+        log.info("Updating payment reminder. recurringTransactionId={}, reminderDaysBefore={}",
+                command.recurringTransactionId(), command.reminderDaysBefore());
+        var recurringTransaction = findRecurringTransaction(command.recurringTransactionId());
+        recurringTransaction.updateReminderDays(command.reminderDaysBefore());
+        var saved = recurringTransactionRepository.save(recurringTransaction);
+        log.info("Payment reminder updated. recurringTransactionId={}, reminderDaysBefore={}",
+                saved.getId(), saved.getReminderDaysBefore());
+        return Optional.of(saved);
     }
 
     /**

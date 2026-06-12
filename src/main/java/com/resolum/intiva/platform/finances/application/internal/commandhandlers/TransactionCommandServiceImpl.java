@@ -2,6 +2,7 @@ package com.resolum.intiva.platform.finances.application.internal.commandhandler
 
 import com.resolum.intiva.platform.finances.application.internal.outboundservices.acl.FinancesExternalFinancialAccountService;
 import com.resolum.intiva.platform.finances.domain.model.commands.RegisterExpenseAgainstSpendingLimitsCommand;
+import com.resolum.intiva.platform.finances.domain.model.events.FamilyTransactionCreatedEvent;
 import com.resolum.intiva.platform.finances.domain.model.events.RegisteredTransactionDetectedEvent;
 import com.resolum.intiva.platform.finances.application.internal.outboundservices.acl.FinancesExternalCategoriesService;
 import com.resolum.intiva.platform.finances.domain.model.aggregates.Transaction;
@@ -11,6 +12,7 @@ import com.resolum.intiva.platform.finances.domain.model.commands.UpdateTransact
 import com.resolum.intiva.platform.finances.domain.services.SpendingLimitCommandService;
 import com.resolum.intiva.platform.finances.domain.services.TransactionCommandService;
 import com.resolum.intiva.platform.finances.infrastructure.persistence.jpa.repositories.TransactionRepository;
+import com.resolum.intiva.platform.shared.domain.valueobjects.OwnerTypes;
 import com.resolum.intiva.platform.shared.domain.valueobjects.TransactionTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,6 +91,17 @@ public class TransactionCommandServiceImpl implements TransactionCommandService 
             var transaction = new Transaction(command);
 
             var savedTransaction = transactionRepository.save(transaction);
+
+            if (command.ownerTypes() == OwnerTypes.FAMILY) {
+                eventPublisher.publishEvent(new FamilyTransactionCreatedEvent(
+                        this,
+                        command.ownerId(),
+                        savedTransaction.getId(),
+                        command.amount().getAmount(),
+                        command.description(),
+                        command.performedByUserId().getValue()
+                ));
+            }
 
             if (command.transactionType() == TransactionTypes.EXPENSE) {
                 spendingLimitCommandService.handle(new RegisterExpenseAgainstSpendingLimitsCommand(

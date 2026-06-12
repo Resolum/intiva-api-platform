@@ -5,6 +5,7 @@ import com.resolum.intiva.platform.household.domain.model.valueobjects.FamilyMem
 import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.FamilyMemberRepository;
 import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.FamilyRepository;
 import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.InvitationRepository;
+import com.resolum.intiva.platform.shared.domain.valueobjects.UserId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -60,21 +61,21 @@ public class InvitationControllerIntegrationTest {
         var body = result.getResponse().getContentAsString();
         return Long.parseLong(body.replaceAll(".*\"id\":(\\d+).*", "$1"));
     }
-    private Invitation savePendingInvitation(Long familyId, String userInvitedId) {
+    private Invitation savePendingInvitation(Long familyId, Long userInvitedId) {
         var invitation = new Invitation(
                 LocalDateTime.now().plusDays(7),
-                "user-owner",
+                new UserId(12312343L),
                 familyId,
-                userInvitedId
+                new UserId(userInvitedId)
         );
         return invitationRepository.save(invitation);
     }
-    private Invitation saveExpiredInvitation(Long familyId, String userInvitedId) {
+    private Invitation saveExpiredInvitation(Long familyId, Long userInvitedId) {
         var invitation = new Invitation(
                 LocalDateTime.now().minusDays(1),
-                "user-owner",
+                new UserId(12312343L),
                 familyId,
-                userInvitedId
+                new UserId(userInvitedId)
         );
         return invitationRepository.save(invitation);
     }
@@ -82,7 +83,7 @@ public class InvitationControllerIntegrationTest {
     void acceptInvitation_shouldReturn200AndCreateMember_whenInvitationIsValid() throws Exception {
         // Arrange
         var familyId = createFamilyAndGetId();
-        var invitation = savePendingInvitation(familyId, "anonymousUser");
+        var invitation = savePendingInvitation(familyId, 125445345L);
 
         // Act & Assert
         mockMvc.perform(patch("/api/v1/invitations/" + invitation.getId() + "/accept"))
@@ -104,7 +105,7 @@ public class InvitationControllerIntegrationTest {
     void acceptInvitation_shouldReturn400_whenInvitationIsExpired() throws Exception {
         // Arrange
         var familyId = createFamilyAndGetId();
-        var invitation = saveExpiredInvitation(familyId, "anonymousUser");
+        var invitation = saveExpiredInvitation(familyId, 125445345L);
 
         // Act & Assert
         mockMvc.perform(patch("/api/v1/invitations/" + invitation.getId() + "/accept"))
@@ -114,7 +115,7 @@ public class InvitationControllerIntegrationTest {
     void acceptInvitation_shouldReturn400_whenInvitationAlreadyAccepted() throws Exception {
         // Arrange
         var familyId = createFamilyAndGetId();
-        var invitation = savePendingInvitation(familyId, "anonymousUser");
+        var invitation = savePendingInvitation(familyId, 125445345L);
 
         mockMvc.perform(patch("/api/v1/invitations/" + invitation.getId() + "/accept"))
                 .andExpect(status().isOk());
@@ -128,7 +129,7 @@ public class InvitationControllerIntegrationTest {
     void acceptInvitation_shouldReturn403_whenUserIsNotTheInvitedUser() throws Exception {
         // Arrange
         var familyId = createFamilyAndGetId();
-        var invitation = savePendingInvitation(familyId, "other-user");
+        var invitation = savePendingInvitation(familyId, 1254453234234L);
 
         // Act & Assert
         mockMvc.perform(patch("/api/v1/invitations/" + invitation.getId() + "/accept"))
@@ -139,7 +140,7 @@ public class InvitationControllerIntegrationTest {
     void rejectInvitation_shouldReturn200WithRejectedStatus_whenInvitationIsValid() throws Exception {
         // Arrange
         var familyId = createFamilyAndGetId();
-        var invitation = savePendingInvitation(familyId, "anonymousUser");
+        var invitation = savePendingInvitation(familyId, 125445345L);
         var membersBeforeReject = familyMemberRepository.findByFamilyId(familyId).size();
 
         // Act & Assert
@@ -162,7 +163,7 @@ public class InvitationControllerIntegrationTest {
     void rejectInvitation_shouldReturn400_whenInvitationIsExpired() throws Exception {
         // Arrange
         var familyId = createFamilyAndGetId();
-        var invitation = saveExpiredInvitation(familyId, "anonymousUser");
+        var invitation = saveExpiredInvitation(familyId, 125445345L);
 
         // Act & Assert
         mockMvc.perform(patch("/api/v1/invitations/" + invitation.getId() + "/reject"))
@@ -173,7 +174,7 @@ public class InvitationControllerIntegrationTest {
     void rejectInvitation_shouldReturn400_whenInvitationAlreadyRejected() throws Exception {
         // Arrange
         var familyId = createFamilyAndGetId();
-        var invitation = savePendingInvitation(familyId, "anonymousUser");
+        var invitation = savePendingInvitation(familyId, 125445345L);
 
         mockMvc.perform(patch("/api/v1/invitations/" + invitation.getId() + "/reject"))
                 .andExpect(status().isOk());
@@ -187,7 +188,7 @@ public class InvitationControllerIntegrationTest {
     void rejectInvitation_shouldReturn403_whenUserIsNotTheInvitedUser() throws Exception {
         // Arrange
         var familyId = createFamilyAndGetId();
-        var invitation = savePendingInvitation(familyId, "other-user");
+        var invitation = savePendingInvitation(familyId, 125445345L);
 
         // Act & Assert
         mockMvc.perform(patch("/api/v1/invitations/" + invitation.getId() + "/reject"))
@@ -198,8 +199,8 @@ public class InvitationControllerIntegrationTest {
     void getMyPendingInvitations_shouldReturn200WithPendingInvitations() throws Exception {
         // Arrange
         var familyId = createFamilyAndGetId();
-        savePendingInvitation(familyId, "anonymousUser");
-        saveExpiredInvitation(familyId, "anonymousUser");
+        savePendingInvitation(familyId, 125445345L);
+        saveExpiredInvitation(familyId, 125445345L);
 
         // Act & Assert
         mockMvc.perform(get("/api/v1/invitations/me/pending"))
@@ -227,8 +228,8 @@ public class InvitationControllerIntegrationTest {
     void getMyInvitations_shouldReturn200WithAllInvitations() throws Exception {
         // Arrange
         var familyId = createFamilyAndGetId();
-        var pending = savePendingInvitation(familyId, "anonymousUser");
-        var toAccept = savePendingInvitation(familyId, "anonymousUser");
+        var pending = savePendingInvitation(familyId, 125445345L);
+        var toAccept = savePendingInvitation(familyId, 125445345L);
 
         mockMvc.perform(patch("/api/v1/invitations/" + toAccept.getId() + "/accept"))
                 .andExpect(status().isOk());

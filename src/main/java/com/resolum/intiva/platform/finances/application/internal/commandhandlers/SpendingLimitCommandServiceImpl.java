@@ -56,6 +56,19 @@ public class SpendingLimitCommandServiceImpl implements SpendingLimitCommandServ
     public Optional<SpendingLimit> handle(CreateSpendingLimitCommand command) {
         validateTarget(command.targetType(), command.targetId());
 
+        var conflictingActiveLimits = spendingLimitRepository.findByOwnerIdAndOwnerTypeAndTargetTypeAndTargetIdAndActiveTrue(
+                command.ownerId(),
+                command.ownerType(),
+                command.targetType(),
+                command.targetId()
+        );
+
+        if (!conflictingActiveLimits.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "An active spending limit already exists for the same target and an overlapping period."
+            );
+        }
+
         var spendingLimit = new SpendingLimit(command);
         return Optional.of(spendingLimitRepository.save(spendingLimit));
     }

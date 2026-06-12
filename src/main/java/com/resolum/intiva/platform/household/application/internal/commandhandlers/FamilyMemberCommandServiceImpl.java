@@ -9,18 +9,16 @@ import com.resolum.intiva.platform.household.domain.model.valueobjects.FamilyRol
 import com.resolum.intiva.platform.household.domain.services.FamilyMemberCommandService;
 import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.FamilyMemberRepository;
 import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.FamilyRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Implementation of FamilyMemberCommandService that handles role assignment.
  */
+@Slf4j
 @Service
 public class FamilyMemberCommandServiceImpl implements FamilyMemberCommandService {
-
-    private final Logger LOGGER = LoggerFactory.getLogger(FamilyMemberCommandServiceImpl.class);
 
     private final FamilyRepository familyRepository;
     private final FamilyMemberRepository familyMemberRepository;
@@ -78,7 +76,7 @@ public class FamilyMemberCommandServiceImpl implements FamilyMemberCommandServic
         targetMember.asignRole(command.newRole());
         var savedMember = familyMemberRepository.save(targetMember);
 
-        LOGGER.info("Role {} assigned to member {} in family {} by user {}",
+        log.info("Role {} assigned to member {} in family {} by user {}",
                 command.newRole(), command.targetMemberId(), command.familyId(), command.requesterId().getValue());
 
         return savedMember;

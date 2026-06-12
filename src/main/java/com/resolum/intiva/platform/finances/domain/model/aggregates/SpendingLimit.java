@@ -1,6 +1,8 @@
 package com.resolum.intiva.platform.finances.domain.model.aggregates;
 
 import com.resolum.intiva.platform.finances.domain.model.commands.CreateSpendingLimitCommand;
+import com.resolum.intiva.platform.finances.domain.model.events.SpendingLimitExceededEvent;
+import com.resolum.intiva.platform.finances.domain.model.events.SpendingLimitWarningReachedEvent;
 import com.resolum.intiva.platform.finances.domain.model.valueobjects.SpendingLimitStatus;
 import com.resolum.intiva.platform.finances.domain.model.valueobjects.SpendingLimitTargetType;
 import com.resolum.intiva.platform.shared.domain.aggregates.AuditableAbstractAggregate;
@@ -177,8 +179,10 @@ public class SpendingLimit extends AuditableAbstractAggregate<SpendingLimit> {
             throw new IllegalArgumentException("Expense amount is required");
         }
 
+        var previousStatus = this.status;
         this.spentAmount = this.spentAmount.add(amount);
         updateStatus();
+        registerThresholdNotification(previousStatus);
     }
 
     /**
@@ -256,5 +260,60 @@ public class SpendingLimit extends AuditableAbstractAggregate<SpendingLimit> {
         if (endDate.isBefore(startDate)) {
             throw new IllegalArgumentException("End date cannot be before start date");
         }
+    }
+
+    /**
+     * Registers one domain event when the consumption status crosses a meaningful threshold.
+     *
+     * @param previousStatus status before applying the latest expense
+     */
+    private void registerThresholdNotification(SpendingLimitStatus previousStatus) {
+        if (previousStatus == this.status) {
+            return;
+        }
+        if (this.status == SpendingLimitStatus.WARNING) {
+            addDomainEvent(new SpendingLimitWarningReachedEvent(this));
+            return;
+        }
+        if (this.status == SpendingLimitStatus.EXCEEDED) {
+            addDomainEvent(new SpendingLimitExceededEvent(this));
+        }
+    }
+
+
+    /**
+     * Builds the warning message shown to the recipient user.
+     *
+     * @param spendingLimit spending limit that reached the warning threshold
+     * @return warning message body
+     */
+    public String buildWarningMessage(SpendingLimit spendingLimit, String targetName) {
+        return "Tu limite de gasto de " + describeTarget(spendingLimit)
+                + " de " + targetName
+                + " esta proximo a excederse.";
+    }
+
+
+    /**
+     * Builds the exceeded message shown to the recipient user.
+     *
+     * @param spendingLimit spending limit that became exceeded
+     * @return exceeded message body
+     */
+    public String buildExceededMessage(SpendingLimit spendingLimit, String targetName) {
+        return "Has excedido tu limite de gasto de " + describeTarget(spendingLimit)
+                + " de " + targetName;
+    }
+
+    /**
+     * Describes the spending-limit target in user-facing text.
+     *
+     * @param spendingLimit spending limit whose target will be described
+     * @return target description
+     */
+    public String describeTarget(SpendingLimit spendingLimit) {
+        return spendingLimit.getTargetType() == SpendingLimitTargetType.CATEGORY
+                ? "categoria"
+                : "cuenta financiera";
     }
 }

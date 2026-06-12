@@ -1,6 +1,6 @@
 package com.resolum.intiva.platform.iam.application.internal.outboundservices.acl;
 
-import com.resolum.intiva.platform.paymentmethodsandcategories.interfaces.acl.CategoriesContextFacade;
+import com.resolum.intiva.platform.categories.interfaces.acl.CategoriesContextFacade;
 import org.springframework.stereotype.Service;
 
 /**

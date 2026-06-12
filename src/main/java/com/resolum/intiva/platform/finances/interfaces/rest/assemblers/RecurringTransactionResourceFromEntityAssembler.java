@@ -32,6 +32,7 @@ public class RecurringTransactionResourceFromEntityAssembler {
                 entity.getLastExecutionDate() == null ? null : entity.getLastExecutionDate().toString(),
                 entity.getEndDate() == null ? null : entity.getEndDate().toString(),
                 entity.getActive(),
+                entity.getReminderDaysBefore(),
                 entity.getCreatedAt() == null ? null : entity.getCreatedAt().toString()
         );
     }

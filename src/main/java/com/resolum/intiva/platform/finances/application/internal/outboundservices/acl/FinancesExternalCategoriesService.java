@@ -1,11 +1,8 @@
 package com.resolum.intiva.platform.finances.application.internal.outboundservices.acl;
 
-import com.resolum.intiva.platform.paymentmethodsandcategories.interfaces.acl.CategoriesContextFacade;
-import com.resolum.intiva.platform.shared.domain.valueobjects.CategoryId;
+import com.resolum.intiva.platform.categories.interfaces.acl.CategoriesContextFacade;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
 
 /**
  * Service class for interacting with external categories services.
@@ -43,5 +40,14 @@ public class FinancesExternalCategoriesService {
      */
     public ImmutablePair<String, String> getCategoryColorAndNameById(Long categoryId) {
         return categoriesContextFacade.getCategoryColorAndIconById(categoryId);
+    }
+
+    /**
+     * Retrieves the name of a category by its ID.
+     * @param categoryId the ID of the category to retrieve
+     * @return the name of the category
+     */
+    public String getCategoryNameById(Long categoryId) {
+        return categoriesContextFacade.getCategoryNameById(categoryId);
     }
 }

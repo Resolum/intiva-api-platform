@@ -60,4 +60,35 @@ public interface InvitationRepository extends JpaRepository<Invitation, Long> {
      * @return true if a matching invitation exists
      */
     boolean existsByInvitedForFamilyAndUserInvitedIdAndStatus(Long invitedForFamily, UserId userInvitedId, InvitationStatus status);
+
+    /**
+     * Finds all invitations for a specific family group filtered by status.
+     *
+     * @param invitedForFamily the family group identifier
+     * @param status           the invitation status to filter by
+     * @return a list of matching invitations
+     */
+    List<Invitation> findByInvitedForFamilyAndStatus(Long invitedForFamily, InvitationStatus status);
+
+    /**
+     * Finds all invitations for a specific user in a family group filtered by status.
+     *
+     * @param invitedForFamily the family group identifier
+     * @param userInvitedId    the UserId of the invited person
+     * @param status           the invitation status to filter by
+     * @return a list of matching invitations
+     */
+    List<Invitation> findByInvitedForFamilyAndUserInvitedIdAndStatus(Long invitedForFamily, UserId userInvitedId, InvitationStatus status);
+
+    /**
+     * Checks whether a non-expired pending invitation exists for a user in a family group.
+     *
+     * @param invitedForFamily the family group identifier
+     * @param userInvitedId    the UserId of the invited person
+     * @param status           the invitation status to check
+     * @param now              the current date-time used as the expiry cutoff
+     * @return true if a matching non-expired invitation exists
+     */
+    boolean existsByInvitedForFamilyAndUserInvitedIdAndStatusAndExpiresAtAfter(
+            Long invitedForFamily, UserId userInvitedId, InvitationStatus status, LocalDateTime now);
 }

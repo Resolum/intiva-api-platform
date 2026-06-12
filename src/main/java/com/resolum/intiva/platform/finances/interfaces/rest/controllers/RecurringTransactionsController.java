@@ -2,6 +2,7 @@ package com.resolum.intiva.platform.finances.interfaces.rest.controllers;
 
 import com.resolum.intiva.platform.finances.domain.model.commands.ActivateRecurringTransactionCommand;
 import com.resolum.intiva.platform.finances.domain.model.commands.DeactivateRecurringTransactionCommand;
+import com.resolum.intiva.platform.finances.domain.model.commands.UpdatePaymentReminderCommand;
 import com.resolum.intiva.platform.finances.domain.model.queries.GetRecurringTransactionByIdQuery;
 import com.resolum.intiva.platform.finances.domain.model.queries.GetRecurringTransactionsByOwnerIdAndOwnerTypeQuery;
 import com.resolum.intiva.platform.finances.domain.model.queries.GetRecurringTransactionsByOwnerIdQuery;
@@ -10,11 +11,13 @@ import com.resolum.intiva.platform.finances.domain.services.RecurringTransaction
 import com.resolum.intiva.platform.finances.interfaces.rest.assemblers.CreateRecurringTransactionCommandFromResourceAssembler;
 import com.resolum.intiva.platform.finances.interfaces.rest.assemblers.RecurringTransactionResourceFromEntityAssembler;
 import com.resolum.intiva.platform.finances.interfaces.rest.resources.requests.CreateRecurringTransactionResource;
+import com.resolum.intiva.platform.finances.interfaces.rest.resources.requests.UpdateRecurringTransactionReminderResource;
 import com.resolum.intiva.platform.finances.interfaces.rest.resources.responses.RecurringTransactionResource;
 import com.resolum.intiva.platform.shared.domain.valueobjects.OwnerTypes;
 import com.resolum.intiva.platform.shared.interfaces.rest.resource.MessageResource;
 import com.resolum.intiva.platform.shared.interfaces.rest.resource.MessageWrapperResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import lombok.extern.slf4j.Slf4j;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -39,6 +42,7 @@ import java.util.List;
 @RestController
 @RequestMapping(value = "/api/v1/recurring-transactions", produces = MediaType.APPLICATION_JSON_VALUE)
 @Tag(name = "Recurring Transactions", description = "Endpoints related to recurring incomes and recurring expenses")
+@Slf4j
 public class RecurringTransactionsController {
 
     /**
@@ -139,15 +143,19 @@ public class RecurringTransactionsController {
             )
             @RequestBody CreateRecurringTransactionResource resource
     ) {
+        log.info("POST /api/v1/recurring-transactions - Creating recurring transaction. description={}", resource.description());
         try {
             var command = CreateRecurringTransactionCommandFromResourceAssembler.toCommandFromResource(resource);
             var recurringTransaction = recurringTransactionCommandService.handle(command);
+            log.info("Recurring transaction created successfully. id={}", recurringTransaction.get().getId());
             return ResponseEntity
                     .status(HttpStatus.CREATED)
                     .body(RecurringTransactionResourceFromEntityAssembler.toResourceFromEntity(recurringTransaction.get()));
         } catch (IllegalArgumentException exception) {
+            log.warn("Bad request creating recurring transaction: {}", exception.getMessage());
             return ResponseEntity.badRequest().body(new MessageResource(exception.getMessage()));
         } catch (Exception exception) {
+            log.error("Unexpected error creating recurring transaction", exception);
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new MessageResource("Unexpected server error."));
@@ -169,10 +177,14 @@ public class RecurringTransactionsController {
     public ResponseEntity<RecurringTransactionResource> getRecurringTransactionById(
             @PathVariable Long recurringTransactionId
     ) {
+        log.info("GET /api/v1/recurring-transactions/{}", recurringTransactionId);
         var recurringTransaction = recurringTransactionQueryService.handle(new GetRecurringTransactionByIdQuery(recurringTransactionId));
-        return recurringTransaction
-                .map(definition -> ResponseEntity.ok(RecurringTransactionResourceFromEntityAssembler.toResourceFromEntity(definition)))
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        if (recurringTransaction.isPresent()) {
+            log.info("Recurring transaction found. id={}", recurringTransactionId);
+            return ResponseEntity.ok(RecurringTransactionResourceFromEntityAssembler.toResourceFromEntity(recurringTransaction.get()));
+        }
+        log.warn("Recurring transaction not found. id={}", recurringTransactionId);
+        return ResponseEntity.notFound().build();
     }
 
     /**
@@ -202,6 +214,7 @@ public class RecurringTransactionsController {
             @Parameter(in = ParameterIn.QUERY, description = "Optional owner scope filter.", example = "INDIVIDUAL", schema = @Schema(allowableValues = {"INDIVIDUAL", "FAMILY"}))
             @RequestParam(name = "ownerType", required = false) String ownerType
     ) {
+        log.info("GET /api/v1/recurring-transactions?ownerId={}&ownerType={}", ownerId, ownerType);
         try {
             var recurringTransactions = ownerType == null
                     ? recurringTransactionQueryService.handle(new GetRecurringTransactionsByOwnerIdQuery(ownerId))
@@ -214,6 +227,7 @@ public class RecurringTransactionsController {
                     .map(RecurringTransactionResourceFromEntityAssembler::toResourceFromEntity)
                     .toList();
 
+            log.info("Found {} recurring transactions for ownerId={}", resources.size(), ownerId);
             return ResponseEntity.ok(new MessageWrapperResponse<>(
                     recurringTransactions.isEmpty()
                             ? "No recurring transactions found for the provided criteria."
@@ -221,6 +235,7 @@ public class RecurringTransactionsController {
                     resources
             ));
         } catch (IllegalArgumentException exception) {
+            log.warn("Bad request querying recurring transactions: {}", exception.getMessage());
             return ResponseEntity.badRequest().body(new MessageWrapperResponse<>(
                     exception.getMessage(),
                     List.of()
@@ -241,12 +256,15 @@ public class RecurringTransactionsController {
             @ApiResponse(responseCode = "400", description = "Invalid recurring transaction id")
     })
     public ResponseEntity<?> activateRecurringTransaction(@PathVariable Long recurringTransactionId) {
+        log.info("PATCH /api/v1/recurring-transactions/{}/activate", recurringTransactionId);
         try {
             var recurringTransaction = recurringTransactionCommandService.handle(
                     new ActivateRecurringTransactionCommand(recurringTransactionId)
             );
+            log.info("Recurring transaction activated. id={}", recurringTransactionId);
             return ResponseEntity.ok(RecurringTransactionResourceFromEntityAssembler.toResourceFromEntity(recurringTransaction.get()));
         } catch (IllegalArgumentException exception) {
+            log.warn("Bad request activating recurring transaction {}: {}", recurringTransactionId, exception.getMessage());
             return ResponseEntity.badRequest().body(new MessageResource(exception.getMessage()));
         }
     }
@@ -264,12 +282,47 @@ public class RecurringTransactionsController {
             @ApiResponse(responseCode = "400", description = "Invalid recurring transaction id")
     })
     public ResponseEntity<?> deactivateRecurringTransaction(@PathVariable Long recurringTransactionId) {
+        log.info("PATCH /api/v1/recurring-transactions/{}/deactivate", recurringTransactionId);
         try {
             var recurringTransaction = recurringTransactionCommandService.handle(
                     new DeactivateRecurringTransactionCommand(recurringTransactionId)
             );
+            log.info("Recurring transaction deactivated. id={}", recurringTransactionId);
             return ResponseEntity.ok(RecurringTransactionResourceFromEntityAssembler.toResourceFromEntity(recurringTransaction.get()));
         } catch (IllegalArgumentException exception) {
+            log.warn("Bad request deactivating recurring transaction {}: {}", recurringTransactionId, exception.getMessage());
+            return ResponseEntity.badRequest().body(new MessageResource(exception.getMessage()));
+        }
+    }
+
+    /**
+     * Updates the payment reminder configuration for a recurring transaction definition.
+     *
+     * @param recurringTransactionId recurring transaction identifier
+     * @param resource               request payload with the new reminder days value
+     * @return updated recurring transaction resource
+     */
+    @PatchMapping("/{recurringTransactionId}/reminder")
+    @Operation(summary = "Update payment reminder", description = "Updates how many days before the end date a payment reminder is sent. Allowed values: 1, 3, 7.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Reminder configuration updated successfully", content = @Content(schema = @Schema(implementation = RecurringTransactionResource.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid recurring transaction id or reminder value")
+    })
+    public ResponseEntity<?> updateRecurringTransactionReminder(
+            @PathVariable Long recurringTransactionId,
+            @RequestBody UpdateRecurringTransactionReminderResource resource
+    ) {
+        log.info("PATCH /api/v1/recurring-transactions/{}/reminder - reminderDaysBefore={}",
+                recurringTransactionId, resource.reminderDaysBefore());
+        try {
+            var recurringTransaction = recurringTransactionCommandService.handle(
+                    new UpdatePaymentReminderCommand(recurringTransactionId, resource.reminderDaysBefore())
+            );
+            log.info("Payment reminder updated. id={}, reminderDaysBefore={}",
+                    recurringTransactionId, resource.reminderDaysBefore());
+            return ResponseEntity.ok(RecurringTransactionResourceFromEntityAssembler.toResourceFromEntity(recurringTransaction.get()));
+        } catch (IllegalArgumentException exception) {
+            log.warn("Bad request updating reminder for recurring transaction {}: {}", recurringTransactionId, exception.getMessage());
             return ResponseEntity.badRequest().body(new MessageResource(exception.getMessage()));
         }
     }
