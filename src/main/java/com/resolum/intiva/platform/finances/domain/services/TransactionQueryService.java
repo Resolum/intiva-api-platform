@@ -1,11 +1,11 @@
 package com.resolum.intiva.platform.finances.domain.services;
 
-import com.resolum.intiva.platform.finances.domain.model.aggregates.Transaction;
 import com.resolum.intiva.platform.finances.domain.model.queries.GetLastTransactionsByOwnerIdQuery;
 import com.resolum.intiva.platform.finances.domain.model.queries.GetTransactionByIdQuery;
 import com.resolum.intiva.platform.finances.domain.model.queries.GetTransactionsByOwnerIdAndTransactionTypeQuery;
 import com.resolum.intiva.platform.finances.domain.model.queries.GetTransactionsByOwnerIdQuery;
 import com.resolum.intiva.platform.finances.domain.model.valueobjects.TransactionWithCategoryDesign;
+import com.resolum.intiva.platform.finances.domain.model.valueobjects.TransactionWithFinancialAccountName;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,7 +21,7 @@ public interface TransactionQueryService {
      * @param query The query containing the transaction ID to be retrieved.
      * @return An Optional containing the Transaction if found, or empty if no transaction with the specified ID exists.
      */
-    Optional<Transaction> handle(GetTransactionByIdQuery query);
+    Optional<TransactionWithFinancialAccountName> handle(GetTransactionByIdQuery query);
 
     /**
      * Handles the query to retrieve transactions by the owner's unique identifier.
