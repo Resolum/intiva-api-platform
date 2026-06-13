@@ -52,6 +52,11 @@ public class FamilyEventHandler {
         LOGGER.info("Handling FamilyInvitationSentEvent: familyId={}, invitedUserId={}, invitedByUserId={}",
                 event.getFamilyId(), event.getInvitedUserId(), event.getInvitedByUserId());
 
+        if (event.getInvitedUserId() == null) {
+            LOGGER.warn("Invitation {} has no invited user (external invite). Skipping in-app notification.", event.getFamilyId());
+            return;
+        }
+
         communicationsContextFacade.createInAppNotification(
                 event.getInvitedUserId(),
                 "FAMILY_GROUP_INVITATION",

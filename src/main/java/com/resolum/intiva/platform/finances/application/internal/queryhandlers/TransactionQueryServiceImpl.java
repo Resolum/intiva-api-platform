@@ -1,6 +1,7 @@
 package com.resolum.intiva.platform.finances.application.internal.queryhandlers;
 
 import com.resolum.intiva.platform.finances.application.internal.outboundservices.acl.FinancesExternalCategoriesService;
+import com.resolum.intiva.platform.finances.application.internal.outboundservices.acl.FinancesExternalFinancialAccountService;
 import com.resolum.intiva.platform.finances.domain.model.aggregates.Transaction;
 import com.resolum.intiva.platform.finances.domain.model.queries.GetLastTransactionsByOwnerIdQuery;
 import com.resolum.intiva.platform.finances.domain.model.queries.GetTransactionByIdQuery;
@@ -9,6 +10,7 @@ import com.resolum.intiva.platform.finances.domain.model.queries.GetTransactions
 import com.resolum.intiva.platform.finances.domain.services.TransactionQueryService;
 import com.resolum.intiva.platform.finances.infrastructure.persistence.jpa.repositories.TransactionRepository;
 import com.resolum.intiva.platform.finances.domain.model.valueobjects.TransactionWithCategoryDesign;
+import com.resolum.intiva.platform.finances.domain.model.valueobjects.TransactionWithFinancialAccountName;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,11 +28,17 @@ public class TransactionQueryServiceImpl implements TransactionQueryService {
     private final TransactionRepository transactionRepository;
 
     private final FinancesExternalCategoriesService financesExternalCategoriesService;
+    private final FinancesExternalFinancialAccountService financesExternalFinancialAccountService;
 
     // Constructor for dependency injection of the TransactionRepository
-    public TransactionQueryServiceImpl(TransactionRepository transactionRepository, FinancesExternalCategoriesService financesExternalCategoriesService) {
+    public TransactionQueryServiceImpl(
+            TransactionRepository transactionRepository,
+            FinancesExternalCategoriesService financesExternalCategoriesService,
+            FinancesExternalFinancialAccountService financesExternalFinancialAccountService
+    ) {
         this.transactionRepository = transactionRepository;
         this.financesExternalCategoriesService = financesExternalCategoriesService;
+        this.financesExternalFinancialAccountService = financesExternalFinancialAccountService;
     }
 
     /**
@@ -40,8 +48,14 @@ public class TransactionQueryServiceImpl implements TransactionQueryService {
      * @return An Optional containing the Transaction if found, or empty if no transaction with the specified ID exists.
      */
     @Override
-    public Optional<Transaction> handle(GetTransactionByIdQuery query) {
-        return transactionRepository.findById(query.transactionId().transactionId());
+    public Optional<TransactionWithFinancialAccountName> handle(GetTransactionByIdQuery query) {
+        return transactionRepository.findById(query.transactionId().transactionId())
+                .map(transaction -> {
+                    var financialAccountName = financesExternalFinancialAccountService
+                            .getFinancialAccountNameById(transaction.getFinancialAccountId().getValue());
+
+                    return new TransactionWithFinancialAccountName(transaction, financialAccountName);
+                });
     }
 
     /**

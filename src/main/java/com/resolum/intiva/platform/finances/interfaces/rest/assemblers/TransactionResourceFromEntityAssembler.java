@@ -5,6 +5,7 @@ import com.resolum.intiva.platform.finances.interfaces.rest.resources.responses.
 import com.resolum.intiva.platform.finances.interfaces.rest.resources.responses.TransactionGroupByDateResource;
 import com.resolum.intiva.platform.finances.interfaces.rest.resources.responses.TransactionResource;
 import com.resolum.intiva.platform.finances.domain.model.valueobjects.TransactionWithCategoryDesign;
+import com.resolum.intiva.platform.finances.domain.model.valueobjects.TransactionWithFinancialAccountName;
 import com.resolum.intiva.platform.finances.interfaces.rest.resources.responses.TransactionWithCategoryDesignResource;
 
 import java.time.ZoneId;
@@ -50,6 +51,27 @@ public class TransactionResourceFromEntityAssembler {
      * @return A TransactionResource object that represents the data of the Transaction entity in a format suitable for API responses. The TransactionResource includes fields that are directly mapped from the Transaction entity.
      */
     public static TransactionResource toResourceFromEntity(Transaction entity) {
+        return toResourceFromEntity(entity, null);
+    }
+
+    /**
+     * Converts a transaction with its financial account name into a TransactionResource.
+     *
+     * @param entity transaction data enriched by the application layer
+     * @return A TransactionResource object that represents the enriched transaction data.
+     */
+    public static TransactionResource toResourceFromEntity(TransactionWithFinancialAccountName entity) {
+        return toResourceFromEntity(entity.transaction(), entity.financialAccountName());
+    }
+
+    /**
+     * Converts a Transaction entity into a TransactionResource including the financial account name.
+     *
+     * @param entity A Transaction entity that contains all the details of a financial transaction.
+     * @param financialAccountName The name of the financial account associated with the transaction.
+     * @return A TransactionResource object that represents the data of the Transaction entity in a format suitable for API responses.
+     */
+    public static TransactionResource toResourceFromEntity(Transaction entity, String financialAccountName) {
         return new TransactionResource(
                 entity.getId(),
                 entity.getAmount().amount().toString(),
@@ -57,6 +79,7 @@ public class TransactionResourceFromEntityAssembler {
                 entity.getDescription(),
                 entity.getOwnerId(),
                 entity.getFinancialAccountId().getValue(),
+                financialAccountName,
                 entity.getPerformedByUserId().getValue(),
                 entity.getTransactionType().name(),
                 entity.getCategoryId().getValue(),
