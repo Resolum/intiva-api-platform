@@ -1,15 +1,24 @@
 package com.resolum.intiva.platform.household.domain.model.commands;
 
-import com.resolum.intiva.platform.shared.domain.valueobjects.UserId;
-
 /**
- * Command to reject a pending family group invitation.
+ * Command to reject a pending family group invitation by token.
+ * The rejectorId is nullable for cases where the user rejects without being authenticated.
  *
- * @param invitationId the ID of the invitation to reject
- * @param userId       the UserId of the user rejecting the invitation
+ * @param token        the unique token of the invitation to reject
+ * @param rejectorId   the user ID of the person rejecting (nullable for unauthenticated rejection)
+ * @param rejectorName the display name of the person rejecting (nullable, defaults to "Un usuario")
  */
 public record RejectInvitationCommand(
-        Long invitationId,
-        UserId userId
+        String token,
+        Long rejectorId,
+        String rejectorName
 ) {
+
+    public RejectInvitationCommand(String token, Long rejectorId) {
+        this(token, rejectorId, null);
+    }
+
+    public String rejectorName() {
+        return rejectorName != null ? rejectorName : "Un usuario";
+    }
 }

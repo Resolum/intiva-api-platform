@@ -1,20 +1,33 @@
 package com.resolum.intiva.platform.household.interfaces.rest.controllers;
 
 import com.resolum.intiva.platform.household.application.internal.outboundservices.QrCodeGeneratorService;
+import com.resolum.intiva.platform.household.domain.exceptions.InvitationAlreadyPendingException;
+import com.resolum.intiva.platform.household.domain.exceptions.InvitationExpiredException;
 import com.resolum.intiva.platform.household.domain.exceptions.ResourceNotFoundException;
 import com.resolum.intiva.platform.household.domain.exceptions.UnauthorizedException;
 import com.resolum.intiva.platform.household.domain.model.queries.GetActiveInvitationByFamilyIdQuery;
+import com.resolum.intiva.platform.household.domain.model.queries.GetInvitationByTokenQuery;
 import com.resolum.intiva.platform.household.domain.model.queries.GetInvitationsByUserIdQuery;
 import com.resolum.intiva.platform.household.domain.model.queries.GetPendingInvitationsByUserIdQuery;
 import com.resolum.intiva.platform.household.domain.services.InvitationCommandService;
 import com.resolum.intiva.platform.household.domain.services.InvitationQueryService;
+import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.DeferredDeepLinkEntity;
+import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.DeferredDeepLinkRepository;
 import com.resolum.intiva.platform.household.interfaces.rest.assemblers.AcceptInvitationCommandFromResourceAssembler;
+import com.resolum.intiva.platform.household.interfaces.rest.assemblers.InvitationLinkResourceFromEntityAssembler;
+import com.resolum.intiva.platform.household.interfaces.rest.assemblers.InvitationPublicInfoResourceFromEntityAssembler;
 import com.resolum.intiva.platform.household.interfaces.rest.assemblers.InvitationResourceFromEntityAssembler;
 import com.resolum.intiva.platform.household.interfaces.rest.assemblers.RejectInvitationCommandFromResourceAssembler;
 import com.resolum.intiva.platform.household.interfaces.rest.assemblers.SendInvitationCommandFromResourceAssembler;
+import com.resolum.intiva.platform.household.interfaces.rest.assemblers.SendInvitationLinkCommandFromResourceAssembler;
+import com.resolum.intiva.platform.household.interfaces.rest.resources.requests.DeferredInviteResource;
+import com.resolum.intiva.platform.household.interfaces.rest.resources.requests.SendInvitationLinkResource;
 import com.resolum.intiva.platform.household.interfaces.rest.resources.requests.SendInvitationResource;
+import com.resolum.intiva.platform.household.interfaces.rest.resources.responses.InvitationLinkResource;
+import com.resolum.intiva.platform.household.interfaces.rest.resources.responses.InvitationPublicInfoResource;
 import com.resolum.intiva.platform.household.interfaces.rest.resources.responses.InvitationQrResource;
 import com.resolum.intiva.platform.household.interfaces.rest.resources.responses.InvitationResource;
+import com.resolum.intiva.platform.iam.infrastructure.authorization.sfs.model.UserDetailsImpl;
 import com.resolum.intiva.platform.shared.domain.valueobjects.UserId;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -26,9 +39,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * REST controller for managing family group invitations.
@@ -44,6 +60,7 @@ public class InvitationController {
     private final InvitationCommandService invitationCommandService;
     private final InvitationQueryService invitationQueryService;
     private final QrCodeGeneratorService qrCodeGeneratorService;
+    private final DeferredDeepLinkRepository deferredDeepLinkRepository;
 
     @Value("${app.invitation.base-url}")
     private String invitationBaseUrl;
@@ -51,16 +68,19 @@ public class InvitationController {
     /**
      * Creates the controller with the required services.
      *
-     * @param invitationCommandService command service dependency
-     * @param invitationQueryService   query service dependency
-     * @param qrCodeGeneratorService   QR code generator service dependency
+     * @param invitationCommandService   command service dependency
+     * @param invitationQueryService     query service dependency
+     * @param qrCodeGeneratorService     QR code generator service dependency
+     * @param deferredDeepLinkRepository deferred deep link repository
      */
     public InvitationController(InvitationCommandService invitationCommandService,
                                 InvitationQueryService invitationQueryService,
-                                QrCodeGeneratorService qrCodeGeneratorService) {
+                                QrCodeGeneratorService qrCodeGeneratorService,
+                                DeferredDeepLinkRepository deferredDeepLinkRepository) {
         this.invitationCommandService = invitationCommandService;
         this.invitationQueryService = invitationQueryService;
         this.qrCodeGeneratorService = qrCodeGeneratorService;
+        this.deferredDeepLinkRepository = deferredDeepLinkRepository;
     }
 
     /**
@@ -106,44 +126,41 @@ public class InvitationController {
     }
 
     /**
-     * Rejects a pending invitation for the specified user.
-     * Marks the invitation as REJECTED without adding the user to the family group.
+     * Rejects a pending invitation by token.
+     * The endpoint is public; if the user is authenticated, their userId is passed as a query param.
      *
-     * @param userId       the numeric ID of the user rejecting the invitation
-     * @param invitationId the ID of the invitation to reject
-     * @return 200 with the updated invitation resource, 400 if already responded or expired,
-     *         403 if the user is not the invited user, 404 if not found
+     * @param token      the unique token of the invitation to reject
+     * @param rejectorId the numeric ID of the user rejecting (optional, null if unauthenticated)
+     * @return 200 with confirmation message, 404 if not found, 409 if already responded
      */
-    @PatchMapping("/api/v1/users/{userId}/invitations/{invitationId}/reject")
+    @PatchMapping("/api/v1/invitations/{token}/reject")
     @Operation(
-            summary = "Reject a family group invitation",
-            description = "Rejects a pending invitation. The user is not added to the family group."
+            summary = "Reject a family group invitation by token",
+            description = "Rejects a pending invitation using its token. Authentication is optional."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Invitation rejected successfully"),
-            @ApiResponse(responseCode = "400", description = "Invitation already responded or expired"),
-            @ApiResponse(responseCode = "403", description = "User is not the invited user"),
-            @ApiResponse(responseCode = "404", description = "Invitation not found")
+            @ApiResponse(responseCode = "404", description = "Invitation not found"),
+            @ApiResponse(responseCode = "409", description = "Invitation is not pending")
     })
     public ResponseEntity<?> rejectInvitation(
-            @PathVariable Long userId,
-            @PathVariable Long invitationId) {
-        log.info("Rejecting invitation {} for user {}", invitationId, userId);
+            @PathVariable String token,
+            @RequestParam(value = "userId", required = false) Long rejectorId) {
+        log.info("Rejecting invitation with token: {} by user: {}", token, rejectorId);
+
+        var rejectorName = extractRejectorName();
+
         try {
-            var command = RejectInvitationCommandFromResourceAssembler.toCommandFromResource(invitationId, userId);
-            var invitation = invitationCommandService.handle(command);
-            var resource = InvitationResourceFromEntityAssembler.toResourceFromEntity(invitation);
-            log.info("Invitation {} rejected by user {}", invitationId, userId);
-            return ResponseEntity.ok(resource);
+            var command = RejectInvitationCommandFromResourceAssembler.toCommandFromResource(token, rejectorId, rejectorName);
+            invitationCommandService.handle(command);
+            log.info("Invitation with token {} rejected successfully", token);
+            return ResponseEntity.ok(Map.of("message", "Invitation rejected"));
         } catch (ResourceNotFoundException e) {
-            log.warn("Invitation {} not found for user {}", invitationId, userId);
+            log.warn("Invitation not found for token: {}", token);
             return ResponseEntity.notFound().build();
-        } catch (UnauthorizedException e) {
-            log.warn("User {} unauthorized to reject invitation {}: {}", userId, invitationId, e.getMessage());
-            return ResponseEntity.status(403).body(e.getMessage());
-        } catch (IllegalStateException e) {
-            log.warn("Invitation {} cannot be rejected by user {}: {}", invitationId, userId, e.getMessage());
-            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (InvitationAlreadyPendingException e) {
+            log.warn("Invitation with token {} is not pending: {}", token, e.getMessage());
+            return ResponseEntity.status(409).body(Map.of("error", e.getMessage()));
         }
     }
 
@@ -263,5 +280,141 @@ public class InvitationController {
             log.warn("No active invitation found for family {}", familyId);
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @PostMapping("/api/v1/users/{userId}/invitations/link")
+    @Operation(
+            summary = "Send a family group invitation link",
+            description = "Creates a link-based invitation for the specified family group. Requires ADMIN role."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Invitation link created successfully"),
+            @ApiResponse(responseCode = "403", description = "User is not an ADMIN of this family"),
+            @ApiResponse(responseCode = "404", description = "Family not found")
+    })
+    public ResponseEntity<?> sendInvitationLink(
+            @PathVariable Long userId,
+            @Valid @RequestBody SendInvitationLinkResource resource) {
+        log.info("Sending invitation link for family {} by user {} with email {}",
+                resource.familyId(), userId, resource.inviteeEmail());
+        try {
+            var command = SendInvitationLinkCommandFromResourceAssembler.toCommandFromResource(resource, userId);
+            var result = invitationCommandService.sendInvitationLink(command);
+            var linkResource = InvitationLinkResourceFromEntityAssembler.toResourceFromResult(result);
+            log.info("Invitation link created for family {} with token {}", resource.familyId(), result.token());
+            return new ResponseEntity<>(linkResource, HttpStatus.CREATED);
+        } catch (ResourceNotFoundException e) {
+            log.warn("Resource not found while sending invitation link: {}", e.getMessage());
+            return ResponseEntity.notFound().build();
+        } catch (UnauthorizedException e) {
+            log.warn("Unauthorized to send invitation link: {}", e.getMessage());
+            return ResponseEntity.status(403).body(e.getMessage());
+        } catch (IllegalStateException e) {
+            log.warn("Illegal state while sending invitation link: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/api/v1/invitations/public/{token}")
+    @Operation(
+            summary = "Get public invitation information by token",
+            description = "Retrieves public information about an invitation using its token. No authentication required."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Invitation found"),
+            @ApiResponse(responseCode = "404", description = "Invitation not found"),
+            @ApiResponse(responseCode = "410", description = "Invitation has expired"),
+            @ApiResponse(responseCode = "409", description = "Invitation has already been used")
+    })
+    public ResponseEntity<?> getInvitationByToken(@PathVariable String token) {
+        log.info("Getting public invitation info for token: {}", token);
+        try {
+            var query = new GetInvitationByTokenQuery(token);
+            var info = invitationQueryService.getInvitationByToken(query);
+            var resource = InvitationPublicInfoResourceFromEntityAssembler.toResourceFromInfo(info);
+            log.info("Public invitation info retrieved for token: {}", token);
+            return ResponseEntity.ok(resource);
+        } catch (ResourceNotFoundException e) {
+            log.warn("Invitation not found for token: {}", token);
+            return ResponseEntity.notFound().build();
+        } catch (InvitationExpiredException e) {
+            log.warn("Invitation expired for token: {}", token);
+            return ResponseEntity.status(410).body(Map.of("error", e.getMessage()));
+        } catch (InvitationAlreadyPendingException e) {
+            log.warn("Invitation already responded for token: {}", token);
+            return ResponseEntity.status(409).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/api/v1/invitations/deferred")
+    @Operation(
+            summary = "Persist a deferred deep link invitation",
+            description = "Stores a deferred deep link for later claiming. No authentication required."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Deferred deep link persisted successfully")
+    })
+    public ResponseEntity<?> saveDeferredInvite(@Valid @RequestBody DeferredInviteResource resource) {
+        log.info("Saving deferred deep link for installId: {}, token: {}", resource.installId(), resource.token());
+        var entity = new DeferredDeepLinkEntity(resource.installId(), resource.token());
+        deferredDeepLinkRepository.save(entity);
+        log.info("Deferred deep link saved for installId: {}", resource.installId());
+        return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    @GetMapping("/api/v1/invitations/deferred")
+    @Operation(
+            summary = "Get deferred deep link by installId",
+            description = "Retrieves and claims a pending deferred deep link for the given installId. No authentication required."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Deferred deep link found and claimed"),
+            @ApiResponse(responseCode = "204", description = "No deferred deep link found for this installId")
+    })
+    public ResponseEntity<?> getDeferredInvite(@RequestParam String installId) {
+        log.info("Getting deferred deep link for installId: {}", installId);
+        var deferredLink = deferredDeepLinkRepository.findByInstallIdAndClaimedFalse(installId);
+        if (deferredLink.isPresent()) {
+            var link = deferredLink.get();
+            var token = link.getInviteToken();
+
+            try {
+                var query = new GetInvitationByTokenQuery(token);
+                var info = invitationQueryService.getInvitationByToken(query);
+
+                link.markClaimed();
+                deferredDeepLinkRepository.save(link);
+
+                log.info("Deferred deep link claimed for installId: {}", installId);
+                return ResponseEntity.ok(Map.of(
+                        "token", token,
+                        "groupName", info.groupName(),
+                        "inviterName", info.inviterName()
+                ));
+            } catch (ResourceNotFoundException | InvitationExpiredException | InvitationAlreadyPendingException e) {
+                log.warn("Invitation for deferred link is no longer valid: {}", e.getMessage());
+                return ResponseEntity.ok(Map.of(
+                        "token", token,
+                        "groupName", "",
+                        "inviterName", ""
+                ));
+            }
+        }
+        log.info("No deferred deep link found for installId: {}", installId);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Extracts the display name of the authenticated user from the security context.
+     *
+     * @return the username (email) from the JWT, or null if not authenticated
+     */
+    private String extractRejectorName() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()
+                && authentication.getPrincipal() instanceof UserDetailsImpl userDetails) {
+            return userDetails.getUsername();
+        }
+        return null;
     }
 }

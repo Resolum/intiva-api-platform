@@ -2,6 +2,7 @@ package com.resolum.intiva.platform.household.domain.model.aggregates;
 
 import com.resolum.intiva.platform.household.domain.model.events.FamilyInvitationSentEvent;
 import com.resolum.intiva.platform.household.domain.model.events.InvitationAcceptedEvent;
+import com.resolum.intiva.platform.household.domain.model.valueobjects.InvitationSource;
 import com.resolum.intiva.platform.household.domain.model.valueobjects.InvitationStatus;
 import com.resolum.intiva.platform.shared.domain.aggregates.AuditableAbstractAggregate;
 import com.resolum.intiva.platform.shared.domain.valueobjects.UserId;
@@ -76,6 +77,19 @@ public class Invitation extends AuditableAbstractAggregate<Invitation> {
     private UserId userInvitedId;
 
     /**
+     * Public URL of the invitation link. Only set when source is LINK or QR.
+     */
+    @Column(name = "invite_url", nullable = true)
+    private String inviteUrl;
+
+    /**
+     * Source channel that originated this invitation.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private InvitationSource source;
+
+    /**
      * Creates a new invitation with a generated token and PENDING status.
      *
      * @param expiresAt        the date and time when the invitation expires
@@ -91,8 +105,30 @@ public class Invitation extends AuditableAbstractAggregate<Invitation> {
         this.invitedBy = invitedBy;
         this.invitedForFamily = invitedForFamily;
         this.userInvitedId = userInvitedId;
+        this.source = InvitationSource.DIRECT;
         var invitedUserId = userInvitedId != null ? userInvitedId.getValue() : null;
         registerEvent(new FamilyInvitationSentEvent(this, invitedForFamily, invitedUserId, invitedBy.getValue()));
+    }
+
+    /**
+     * Creates a new link-based invitation with a generated token, PENDING status,
+     * and source set to LINK.
+     *
+     * @param expiresAt        the date and time when the invitation expires
+     * @param invitedBy        the UserId of the person sending the invitation
+     * @param invitedForFamily the ID of the family group the invitation is for
+     * @param inviteUrl        the public URL of the invitation link
+     */
+    public Invitation(LocalDateTime expiresAt, UserId invitedBy, Long invitedForFamily, String inviteUrl) {
+        this.token = UUID.randomUUID().toString();
+        this.status = InvitationStatus.PENDING;
+        this.sentAt = LocalDateTime.now();
+        this.expiresAt = expiresAt;
+        this.invitedBy = invitedBy;
+        this.invitedForFamily = invitedForFamily;
+        this.inviteUrl = inviteUrl;
+        this.source = InvitationSource.LINK;
+        registerEvent(new FamilyInvitationSentEvent(this, invitedForFamily, null, invitedBy.getValue()));
     }
 
     /**
@@ -162,5 +198,16 @@ public class Invitation extends AuditableAbstractAggregate<Invitation> {
      */
     public boolean isPending() {
         return this.status == InvitationStatus.PENDING;
+    }
+
+    /**
+     * Marks this invitation as expired.
+     */
+    public void expire() {
+        if (!isPending()) {
+            throw new IllegalStateException("Can only expire pending invitations");
+        }
+        this.status = InvitationStatus.EXPIRED;
+        this.respondedAt = LocalDateTime.now();
     }
 }
