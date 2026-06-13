@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.Optional;
@@ -65,8 +66,16 @@ public class TransactionCommandServiceImpl implements TransactionCommandService 
      * @return An Optional containing the created Transaction if successful, or empty if the operation failed (e.g., due to validation errors or issues with the associated account).
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Optional<Transaction> handle(RegisterTransactionCommand command) {
         try {
+
+            if (command.clientOperationId() != null && !command.clientOperationId().isBlank()) {
+                var existingTransaction = transactionRepository.findByClientOperationId(command.clientOperationId());
+                if (existingTransaction.isPresent()) {
+                    return existingTransaction;
+                }
+            }
 
             if (!financesExternalCategoriesService.existsCategoryById(command.categoryId().getValue())) {
                 throw new IllegalArgumentException("Category with ID " + command.categoryId().getValue() + " does not exist.");
@@ -85,7 +94,8 @@ public class TransactionCommandServiceImpl implements TransactionCommandService 
                     command.categoryId(),
                     command.transactionType().name(),
                     command.amount().getAmount(),
-                    command.amount().getCurrencyCode()
+                    command.amount().getCurrencyCode(),
+                    command.baseAccountVersion()
             ));
 
             var transaction = new Transaction(command);
@@ -116,6 +126,8 @@ public class TransactionCommandServiceImpl implements TransactionCommandService 
             }
 
             return Optional.of(savedTransaction);
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
             throw new IllegalArgumentException("Error while registering transaction: " + e.getMessage());
         }

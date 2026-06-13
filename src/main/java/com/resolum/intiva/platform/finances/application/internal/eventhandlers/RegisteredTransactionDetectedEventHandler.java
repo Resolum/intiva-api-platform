@@ -34,7 +34,9 @@ public class RegisteredTransactionDetectedEventHandler {
                 event.getFinancialAccountId(),
                 event.getTransactionType(),
                 event.getAmount(),
-                event.getCurrencyCode()
+                event.getCurrencyCode(),
+                event.getOwnerType(),
+                event.getBaseAccountVersion()
         );
     }
 }
