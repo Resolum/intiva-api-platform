@@ -12,7 +12,7 @@ import com.resolum.intiva.platform.household.domain.model.queries.GetPendingInvi
 import com.resolum.intiva.platform.household.domain.services.InvitationCommandService;
 import com.resolum.intiva.platform.household.domain.services.InvitationQueryService;
 import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.DeferredDeepLinkEntity;
-import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.DeferredDeepLinkRepository;
+import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.DeferredDeepLinkRepository;
 import com.resolum.intiva.platform.household.interfaces.rest.assemblers.AcceptInvitationCommandFromResourceAssembler;
 import com.resolum.intiva.platform.household.interfaces.rest.assemblers.InvitationLinkResourceFromEntityAssembler;
 import com.resolum.intiva.platform.household.interfaces.rest.assemblers.InvitationPublicInfoResourceFromEntityAssembler;
@@ -23,8 +23,6 @@ import com.resolum.intiva.platform.household.interfaces.rest.assemblers.SendInvi
 import com.resolum.intiva.platform.household.interfaces.rest.resources.requests.DeferredInviteResource;
 import com.resolum.intiva.platform.household.interfaces.rest.resources.requests.SendInvitationLinkResource;
 import com.resolum.intiva.platform.household.interfaces.rest.resources.requests.SendInvitationResource;
-import com.resolum.intiva.platform.household.interfaces.rest.resources.responses.InvitationLinkResource;
-import com.resolum.intiva.platform.household.interfaces.rest.resources.responses.InvitationPublicInfoResource;
 import com.resolum.intiva.platform.household.interfaces.rest.resources.responses.InvitationQrResource;
 import com.resolum.intiva.platform.household.interfaces.rest.resources.responses.InvitationResource;
 import com.resolum.intiva.platform.iam.infrastructure.authorization.sfs.model.UserDetailsImpl;
@@ -37,7 +35,6 @@ import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;

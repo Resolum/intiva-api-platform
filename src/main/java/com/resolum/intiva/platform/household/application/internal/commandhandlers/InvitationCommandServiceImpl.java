@@ -18,7 +18,7 @@ import com.resolum.intiva.platform.household.domain.model.valueobjects.FamilyMem
 import com.resolum.intiva.platform.household.domain.model.valueobjects.FamilyRole;
 import com.resolum.intiva.platform.household.domain.model.valueobjects.InvitationStatus;
 import com.resolum.intiva.platform.household.domain.services.InvitationCommandService;
-import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.DeferredDeepLinkRepository;
+import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.DeferredDeepLinkRepository;
 import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.FamilyMemberRepository;
 import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.FamilyRepository;
 import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.InvitationRepository;
