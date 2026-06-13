@@ -4,6 +4,7 @@ import com.resolum.intiva.platform.household.domain.exceptions.InvitationAlready
 import com.resolum.intiva.platform.household.domain.exceptions.ResourceNotFoundException;
 import com.resolum.intiva.platform.household.domain.exceptions.UnauthorizedException;
 import com.resolum.intiva.platform.household.domain.exceptions.UserAlreadyMemberException;
+import com.resolum.intiva.platform.categories.domain.model.exceptions.FinancialAccountSyncConflictException;
 import com.resolum.intiva.platform.categories.domain.model.exceptions.InactiveFinancialAccountException;
 import com.resolum.intiva.platform.categories.domain.model.exceptions.InsufficientFundsException;
 import com.resolum.intiva.platform.shared.domain.exceptions.ImageSizeExceededException;
@@ -87,6 +88,27 @@ public class GlobalExceptionHandler {
                 );
 
         problem.setTitle("Insufficient Funds");
+
+        return problem;
+    }
+
+    /**
+     * Handles family/offline financial account synchronization conflicts.
+     * @param ex the exception
+     * @return a ProblemDetail with CONFLICT status and the exception message
+     */
+    @ExceptionHandler(FinancialAccountSyncConflictException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ProblemDetail handleFinancialAccountSyncConflict(
+            FinancialAccountSyncConflictException ex) {
+
+        ProblemDetail problem =
+                ProblemDetail.forStatusAndDetail(
+                        HttpStatus.CONFLICT,
+                        ex.getMessage()
+                );
+
+        problem.setTitle("Financial Account Sync Conflict");
 
         return problem;
     }

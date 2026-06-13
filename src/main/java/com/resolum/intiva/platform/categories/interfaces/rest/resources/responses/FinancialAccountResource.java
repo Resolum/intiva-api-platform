@@ -12,6 +12,7 @@ import java.math.BigDecimal;
  * @param institution the institution associated with the financial account
  * @param creditLimit the credit limit of the financial account
  * @param isActive the status of the financial account
+ * @param version version used by offline clients to detect stale account state
  */
 public record FinancialAccountResource(
         Long id,
@@ -21,5 +22,6 @@ public record FinancialAccountResource(
         BigDecimal currentAmount,
         String institution,
         BigDecimal creditLimit,
-        Boolean isActive
+        Boolean isActive,
+        Long version
 ) {}

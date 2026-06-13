@@ -1,5 +1,7 @@
 package com.resolum.intiva.platform.categories.interfaces.acl;
 
+import com.resolum.intiva.platform.shared.domain.valueobjects.OwnerTypes;
+
 import java.math.BigDecimal;
 
 /**
@@ -27,7 +29,7 @@ public interface FinancialAccountContextFacade {
      * @param amount the amount of the transaction
      * @param currencyCode the currency code of the transaction
      */
-    void createFinancialAccountTransaction(Long financialAccountId, String transactionType, BigDecimal amount, String currencyCode);
+    void createFinancialAccountTransaction(Long financialAccountId, String transactionType, BigDecimal amount, String currencyCode, OwnerTypes ownerType, Long baseAccountVersion);
 
     /**
      * Get the current amount of a financial account
