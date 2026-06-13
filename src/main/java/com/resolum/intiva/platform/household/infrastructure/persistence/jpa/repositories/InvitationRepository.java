@@ -4,6 +4,8 @@ import com.resolum.intiva.platform.household.domain.model.aggregates.Invitation;
 import com.resolum.intiva.platform.household.domain.model.valueobjects.InvitationStatus;
 import com.resolum.intiva.platform.shared.domain.valueobjects.UserId;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -91,4 +93,7 @@ public interface InvitationRepository extends JpaRepository<Invitation, Long> {
      */
     boolean existsByInvitedForFamilyAndUserInvitedIdAndStatusAndExpiresAtAfter(
             Long invitedForFamily, UserId userInvitedId, InvitationStatus status, LocalDateTime now);
+
+    @Query("SELECT i FROM Invitation i WHERE i.status = :status AND i.expiresAt < :now")
+    List<Invitation> findByStatusAndExpiresAtBefore(@Param("status") InvitationStatus status, @Param("now") LocalDateTime now);
 }

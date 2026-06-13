@@ -1,22 +1,29 @@
 package com.resolum.intiva.platform.household.application.internal.commandhandlers;
 
+import com.resolum.intiva.platform.communications.interfaces.acl.CommunicationsContextFacade;
+import com.resolum.intiva.platform.household.application.internal.InvitationLinkResult;
 import com.resolum.intiva.platform.household.domain.exceptions.InvitationAlreadyPendingException;
 import com.resolum.intiva.platform.household.domain.exceptions.ResourceNotFoundException;
 import com.resolum.intiva.platform.household.domain.exceptions.UnauthorizedException;
 import com.resolum.intiva.platform.household.domain.exceptions.UserAlreadyMemberException;
+import com.resolum.intiva.platform.household.domain.model.aggregates.Family;
 import com.resolum.intiva.platform.household.domain.model.aggregates.FamilyMember;
 import com.resolum.intiva.platform.household.domain.model.aggregates.Invitation;
 import com.resolum.intiva.platform.household.domain.model.commands.AcceptInvitationCommand;
+import com.resolum.intiva.platform.household.domain.model.commands.ClaimDeferredInviteCommand;
 import com.resolum.intiva.platform.household.domain.model.commands.RejectInvitationCommand;
 import com.resolum.intiva.platform.household.domain.model.commands.SendInvitationCommand;
+import com.resolum.intiva.platform.household.domain.model.commands.SendInvitationLinkCommand;
 import com.resolum.intiva.platform.household.domain.model.valueobjects.FamilyMemberStatus;
 import com.resolum.intiva.platform.household.domain.model.valueobjects.FamilyRole;
 import com.resolum.intiva.platform.household.domain.model.valueobjects.InvitationStatus;
 import com.resolum.intiva.platform.household.domain.services.InvitationCommandService;
+import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.DeferredDeepLinkRepository;
 import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.FamilyMemberRepository;
 import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.FamilyRepository;
 import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.InvitationRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,18 +39,31 @@ public class InvitationCommandServiceImpl implements InvitationCommandService {
     private final InvitationRepository invitationRepository;
     private final FamilyMemberRepository familyMemberRepository;
     private final FamilyRepository familyRepository;
+    private final DeferredDeepLinkRepository deferredDeepLinkRepository;
+    private final CommunicationsContextFacade communicationsContextFacade;
+
+    @Value("${app.invitation.base-url}")
+    private String invitationBaseUrl;
 
     /**
      * Creates the command service with the required repository dependencies.
      *
-     * @param invitationRepository   the invitation repository
-     * @param familyMemberRepository the family member repository
-     * @param familyRepository       the family repository
+     * @param invitationRepository         the invitation repository
+     * @param familyMemberRepository       the family member repository
+     * @param familyRepository             the family repository
+     * @param deferredDeepLinkRepository   the deferred deep link repository
+     * @param communicationsContextFacade  the communications context facade for push notifications
      */
-    public InvitationCommandServiceImpl(InvitationRepository invitationRepository, FamilyMemberRepository familyMemberRepository, FamilyRepository familyRepository) {
+    public InvitationCommandServiceImpl(InvitationRepository invitationRepository,
+                                        FamilyMemberRepository familyMemberRepository,
+                                        FamilyRepository familyRepository,
+                                        DeferredDeepLinkRepository deferredDeepLinkRepository,
+                                        CommunicationsContextFacade communicationsContextFacade) {
         this.invitationRepository = invitationRepository;
         this.familyMemberRepository = familyMemberRepository;
         this.familyRepository = familyRepository;
+        this.deferredDeepLinkRepository = deferredDeepLinkRepository;
+        this.communicationsContextFacade = communicationsContextFacade;
     }
 
     /**
@@ -78,30 +98,45 @@ public class InvitationCommandServiceImpl implements InvitationCommandService {
     }
 
     /**
-     * Rejects a pending invitation and marks it as REJECTED.
+     * Rejects a pending invitation by token and sends a push notification to the inviter.
      *
-     * @param command the reject invitation command
-     * @return the updated Invitation with REJECTED status
-     * @throws ResourceNotFoundException if the invitation does not exist
-     * @throws UnauthorizedException     if the user is not the invited user
-     * @throws IllegalStateException     if the invitation has already been responded to or has expired
+     * @param command the reject invitation command containing the token and optional rejector ID
+     * @throws ResourceNotFoundException      if the invitation does not exist
+     * @throws InvitationAlreadyPendingException if the invitation is not in PENDING status
      */
     @Override
     @Transactional
-    public Invitation handle(RejectInvitationCommand command) {
-        var invitation = invitationRepository.findById(command.invitationId())
-                .orElseThrow(() -> new ResourceNotFoundException("Invitation not found with id: " + command.invitationId()));
+    public void handle(RejectInvitationCommand command) {
+        var invitation = invitationRepository.findByToken(command.token())
+                .orElseThrow(() -> new ResourceNotFoundException("Invitation not found for token: " + command.token()));
 
-        if (!invitation.getUserInvitedId().equals(command.userId())) {
-            throw new UnauthorizedException("User is not the invited user for this invitation");
+        if (invitation.getStatus() != InvitationStatus.PENDING) {
+            throw new InvitationAlreadyPendingException("Invitation is not pending for token: " + command.token());
         }
 
         invitation.rejects();
         invitationRepository.save(invitation);
 
-        log.info("Invitation {} rejected by user {}", invitation.getId(), command.userId().getValue());
+        var inviterUserId = invitation.getInvitedBy().getValue();
+        var rejectorName = command.rejectorName();
 
-        return invitation;
+        var familyName = familyRepository.findById(invitation.getInvitedForFamily())
+                .map(Family::getName)
+                .orElse("el grupo");
+
+        var messageBody = rejectorName + " rechazó tu invitación al grupo " + familyName;
+
+        communicationsContextFacade.sendPushNotificationToUser(
+                inviterUserId,
+                "INVITATION_REJECTED",
+                "FAMILY_GROUP",
+                invitation.getInvitedForFamily(),
+                "Invitación rechazada",
+                messageBody
+        );
+
+        log.info("Invitation {} rejected by user {} and push notification sent to inviter {}",
+                invitation.getId(), command.rejectorId(), inviterUserId);
     }
 
     @Override
@@ -149,5 +184,54 @@ public class InvitationCommandServiceImpl implements InvitationCommandService {
                 command.familyId(), command.invitedBy().getValue());
 
         return savedInvitation;
+    }
+
+    @Override
+    @Transactional
+    public InvitationLinkResult sendInvitationLink(SendInvitationLinkCommand command) {
+        var family = familyRepository.findById(command.familyId())
+                .orElseThrow(() -> new ResourceNotFoundException("Family not found with id: " + command.familyId()));
+
+        if (!family.canInviteMembers()) {
+            throw new IllegalStateException("Family cannot accept new members");
+        }
+
+        var inviterMember = familyMemberRepository.findByFamilyIdAndUserId(command.familyId(), command.inviterId())
+                .orElseThrow(() -> new UnauthorizedException("User is not a member of this family"));
+
+        if (inviterMember.getRole() != FamilyRole.ADMIN) {
+            throw new UnauthorizedException("Only ADMIN can send invitations");
+        }
+
+        var expiresAt = LocalDateTime.now().plusDays(7);
+        var token = java.util.UUID.randomUUID().toString();
+        var inviteUrl = invitationBaseUrl + "?token=" + token
+                + "&group=" + family.getName()
+                + "&inviter=" + inviterMember.getUserId().getValue();
+
+        var invitation = new Invitation(expiresAt, command.inviterId(), command.familyId(), inviteUrl);
+        var savedInvitation = invitationRepository.save(invitation);
+
+        if (command.inviteeEmail() != null && !command.inviteeEmail().isBlank()) {
+            // Email sending would be injected here via a Spring Mail sender
+            log.info("Invitation link email would be sent to {} for family {}", command.inviteeEmail(), command.familyId());
+        }
+
+        log.info("Invitation link sent to family {} by user {}, token: {}",
+                command.familyId(), command.inviterId().getValue(), savedInvitation.getToken());
+
+        return new InvitationLinkResult(savedInvitation.getToken(), inviteUrl, expiresAt);
+    }
+
+    @Override
+    @Transactional
+    public void claimDeferredInvite(ClaimDeferredInviteCommand command) {
+        var deferredLink = deferredDeepLinkRepository.findByInstallIdAndClaimedFalse(command.installId())
+                .orElseThrow(() -> new ResourceNotFoundException("No deferred deep link found for installId: " + command.installId()));
+
+        deferredLink.markClaimed();
+        deferredDeepLinkRepository.save(deferredLink);
+
+        log.info("Deferred invite claimed for installId: {}, token: {}", command.installId(), command.token());
     }
 }

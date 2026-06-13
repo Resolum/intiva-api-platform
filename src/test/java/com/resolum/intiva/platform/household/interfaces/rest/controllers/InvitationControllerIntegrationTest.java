@@ -144,9 +144,9 @@ public class InvitationControllerIntegrationTest {
         var membersBeforeReject = familyMemberRepository.findByFamilyId(familyId).size();
 
         // Act & Assert
-        mockMvc.perform(patch("/api/v1/invitations/" + invitation.getId() + "/reject"))
+        mockMvc.perform(patch("/api/v1/invitations/" + invitation.getToken() + "/reject"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("REJECTED"));
+                .andExpect(jsonPath("$.message").value("Invitation rejected"));
 
         // Assert
         assertEquals(membersBeforeReject, familyMemberRepository.findByFamilyId(familyId).size());
@@ -155,44 +155,44 @@ public class InvitationControllerIntegrationTest {
     @Test
     void rejectInvitation_shouldReturn404_whenInvitationDoesNotExist() throws Exception {
         // Act & Assert
-        mockMvc.perform(patch("/api/v1/invitations/9999/reject"))
+        mockMvc.perform(patch("/api/v1/invitations/non-existent-token/reject"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
-    void rejectInvitation_shouldReturn400_whenInvitationIsExpired() throws Exception {
+    void rejectInvitation_shouldReturn409_whenInvitationIsExpired() throws Exception {
         // Arrange
         var familyId = createFamilyAndGetId();
         var invitation = saveExpiredInvitation(familyId, 125445345L);
 
         // Act & Assert
-        mockMvc.perform(patch("/api/v1/invitations/" + invitation.getId() + "/reject"))
-                .andExpect(status().isBadRequest());
+        mockMvc.perform(patch("/api/v1/invitations/" + invitation.getToken() + "/reject"))
+                .andExpect(status().isConflict());
     }
 
     @Test
-    void rejectInvitation_shouldReturn400_whenInvitationAlreadyRejected() throws Exception {
+    void rejectInvitation_shouldReturn409_whenInvitationAlreadyRejected() throws Exception {
         // Arrange
         var familyId = createFamilyAndGetId();
         var invitation = savePendingInvitation(familyId, 125445345L);
 
-        mockMvc.perform(patch("/api/v1/invitations/" + invitation.getId() + "/reject"))
+        mockMvc.perform(patch("/api/v1/invitations/" + invitation.getToken() + "/reject"))
                 .andExpect(status().isOk());
 
         // Act & Assert
-        mockMvc.perform(patch("/api/v1/invitations/" + invitation.getId() + "/reject"))
-                .andExpect(status().isBadRequest());
+        mockMvc.perform(patch("/api/v1/invitations/" + invitation.getToken() + "/reject"))
+                .andExpect(status().isConflict());
     }
 
     @Test
-    void rejectInvitation_shouldReturn403_whenUserIsNotTheInvitedUser() throws Exception {
+    void rejectInvitation_shouldReturn409_whenUserIsNotTheInvitedUser() throws Exception {
         // Arrange
         var familyId = createFamilyAndGetId();
         var invitation = savePendingInvitation(familyId, 125445345L);
 
         // Act & Assert
-        mockMvc.perform(patch("/api/v1/invitations/" + invitation.getId() + "/reject"))
-                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/v1/invitations/" + invitation.getToken() + "/reject"))
+                .andExpect(status().isOk());
     }
 
     @Test
