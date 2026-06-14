@@ -1,6 +1,7 @@
 package com.resolum.intiva.platform.finances.interfaces.rest.controllers;
 
 import com.resolum.intiva.platform.categories.domain.model.exceptions.FinancialAccountSyncConflictException;
+import com.resolum.intiva.platform.categories.domain.model.exceptions.InsufficientFundsException;
 import com.resolum.intiva.platform.finances.domain.services.TransactionCommandService;
 import com.resolum.intiva.platform.finances.domain.services.TransactionQueryService;
 import com.resolum.intiva.platform.finances.interfaces.rest.assemblers.RegisterTransactionCommandFromResourceAssembler;
@@ -156,6 +157,12 @@ public class UserTransactionsController {
 
             return ResponseEntity
                     .badRequest()
+                    .body(new MessageResource(e.getMessage()));
+
+        } catch (InsufficientFundsException e) {
+
+            return ResponseEntity
+                    .status(HttpStatus.CONFLICT)
                     .body(new MessageResource(e.getMessage()));
 
         } catch (FinancialAccountSyncConflictException e) {

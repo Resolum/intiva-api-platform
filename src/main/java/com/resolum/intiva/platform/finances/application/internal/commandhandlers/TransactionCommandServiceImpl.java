@@ -1,9 +1,11 @@
 package com.resolum.intiva.platform.finances.application.internal.commandhandlers;
 
+import com.resolum.intiva.platform.categories.domain.model.exceptions.InsufficientFundsException;
 import com.resolum.intiva.platform.finances.application.internal.outboundservices.acl.FinancesExternalFinancialAccountService;
 import com.resolum.intiva.platform.finances.domain.model.commands.RegisterExpenseAgainstSpendingLimitsCommand;
 import com.resolum.intiva.platform.finances.domain.model.events.FamilyTransactionCreatedEvent;
 import com.resolum.intiva.platform.finances.domain.model.events.RegisteredTransactionDetectedEvent;
+import com.resolum.intiva.platform.finances.domain.model.events.TransactionRegistrationRejectedEvent;
 import com.resolum.intiva.platform.finances.application.internal.outboundservices.acl.FinancesExternalCategoriesService;
 import com.resolum.intiva.platform.finances.domain.model.aggregates.Transaction;
 import com.resolum.intiva.platform.finances.domain.model.commands.RegisterTransactionCommand;
@@ -127,9 +129,35 @@ public class TransactionCommandServiceImpl implements TransactionCommandService 
 
             return Optional.of(savedTransaction);
         } catch (RuntimeException e) {
+            if (e instanceof InsufficientFundsException) {
+                publishTransactionRejectedEvent(command, e.getMessage());
+            }
             throw e;
         } catch (Exception e) {
             throw new IllegalArgumentException("Error while registering transaction: " + e.getMessage());
+        }
+    }
+
+    private void publishTransactionRejectedEvent(RegisterTransactionCommand command, String reason) {
+        try {
+            eventPublisher.publishEvent(new TransactionRegistrationRejectedEvent(
+                    this,
+                    command.performedByUserId().getValue(),
+                    command.financialAccountId().getValue(),
+                    command.amount().getAmount(),
+                    command.amount().getCurrencyCode(),
+                    command.transactionType().name(),
+                    reason,
+                    command.clientOperationId()
+            ));
+        } catch (Exception exception) {
+            LOGGER.warn(
+                    "Transaction rejection event could not be fully handled. userId={}, financialAccountId={}, clientOperationId={}",
+                    command.performedByUserId().getValue(),
+                    command.financialAccountId().getValue(),
+                    command.clientOperationId(),
+                    exception
+            );
         }
     }
 

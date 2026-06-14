@@ -1,7 +1,6 @@
 package com.resolum.intiva.platform.finances.application.internal.outboundservices.acl;
 
 import com.resolum.intiva.platform.communications.interfaces.acl.CommunicationsContextFacade;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
