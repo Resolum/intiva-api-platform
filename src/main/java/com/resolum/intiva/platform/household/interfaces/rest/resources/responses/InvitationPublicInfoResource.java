@@ -18,6 +18,15 @@ public record InvitationPublicInfoResource(
         String status,
 
         @Schema(description = "Date and time when the invitation expires.", example = "2026-06-19T10:30:00")
-        String expiresAt
+        String expiresAt,
+
+        @Schema(description = "Family group identifier.", example = "1")
+        Long familyId,
+
+        @Schema(description = "Identifier of the person who sent the invitation.", example = "1")
+        Long inviterId,
+
+        @Schema(description = "Invitation identifier for acceptance.", example = "1")
+        Long invitationId
 ) {
 }
