@@ -6,6 +6,7 @@ import com.resolum.intiva.platform.analytics.domain.model.aggregates.SavingGoalA
 import com.resolum.intiva.platform.analytics.domain.model.aggregates.SpendingLimitAnalytics;
 import com.resolum.intiva.platform.analytics.domain.model.queries.*;
 import com.resolum.intiva.platform.analytics.domain.model.valueobjects.*;
+import com.resolum.intiva.platform.analytics.domain.services.AnalyticsCachePort;
 import com.resolum.intiva.platform.analytics.domain.services.AnalyticsQueryService;
 import com.resolum.intiva.platform.finances.domain.model.aggregates.SpendingLimit;
 import com.resolum.intiva.platform.finances.domain.model.aggregates.Transaction;
@@ -27,11 +28,16 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Implementation of the {@link AnalyticsQueryService} interface that computes analytics on the fly
+ * Implementation of the {@link AnalyticsQueryService} interface that computes analytics
  * by reading data from the finances and savings bounded contexts through the ACL layer.
  *
- * <p>All analytics are ephemeral — they are computed from source data every time a query is handled
- * and are not persisted in any dedicated analytics store.</p>
+ * <p>This service applies a cache-aside pattern: on each query it first attempts to retrieve
+ * the analytics from the {@link AnalyticsCachePort Redis cache}. On a cache hit the cached
+ * value is returned immediately. On a cache miss the analytics are computed from source data,
+ * stored in the cache, and then returned.</p>
+ *
+ * <p>Methods that return derived data ({@code categories/ranking}, {@code trend}) are not
+ * cached — they are always computed on the fly from the underlying source data.</p>
  */
 @Slf4j
 @Service
@@ -43,16 +49,28 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
     private final AnalyticsExternalTransactionService externalService;
 
     /**
-     * Creates the analytics query service with its required ACL dependency.
+     * Cache port for caching computed analytics.
+     */
+    private final AnalyticsCachePort cachePort;
+
+    /**
+     * Creates the analytics query service with its required ACL and cache dependencies.
      *
      * @param externalService ACL service for accessing external bounded contexts
+     * @param cachePort       cache port for storing/retrieving computed analytics
      */
-    public AnalyticsQueryServiceImpl(AnalyticsExternalTransactionService externalService) {
+    public AnalyticsQueryServiceImpl(AnalyticsExternalTransactionService externalService, AnalyticsCachePort cachePort) {
         this.externalService = externalService;
+        this.cachePort = cachePort;
     }
 
     /**
-     * Computes a financial summary for the given owner and period.
+     * Computes a financial summary for the given owner and period using a cache-aside pattern.
+     *
+     * <p>On a cache hit the cached summary is returned immediately. On a cache miss the
+     * summary is computed from source transactions via the ACL layer, persisted in Redis,
+     * and then returned.</p>
+     *
      * <p>Income and expense transactions are aggregated separately. Expenses are further grouped by
      * category, and each category's percentage of the total is calculated.</p>
      *
@@ -61,7 +79,14 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
      */
     @Override
     public AnalyticsSummary handle(GetAnalyticsSummaryByOwnerQuery query) {
-        log.info("Computing analytics summary for ownerId={}, periodType={}, periodStart={}, periodEnd={}",
+        var cached = cachePort.findAnalyticsSummary(
+                query.ownerId(), query.ownerType(), query.periodType(),
+                query.periodStart(), query.periodEnd());
+        if (cached != null) {
+            log.info("Cache hit for analytics summary: ownerId={}", query.ownerId());
+            return cached;
+        }
+        log.info("Cache miss for analytics summary: ownerId={}, periodType={}, periodStart={}, periodEnd={}",
                 query.ownerId(), query.periodType(), query.periodStart(), query.periodEnd());
         var ownerId = Long.parseLong(query.ownerId());
         var transactions = externalService.getTransactionsByOwnerAndPeriod(
@@ -118,23 +143,37 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
                 .toList();
 
         var id = UUID.randomUUID().toString();
-        log.info("Analytics summary computed for ownerId={}: income={}, expenses={}, categories={}",
-                query.ownerId(), totalIncome.getAmount(), totalExpenses.getAmount(), categorySummaries.size());
-        return new AnalyticsSummary(id, query.ownerType(), query.ownerId(), query.periodType(),
+        var result = new AnalyticsSummary(id, query.ownerType(), query.ownerId(), query.periodType(),
                 query.periodStart(), query.periodEnd(), totalIncome, totalExpenses, netBalance,
                 categorySummaries, Instant.now());
+        cachePort.saveAnalyticsSummary(result);
+        log.info("Analytics summary computed and cached for ownerId={}: income={}, expenses={}, categories={}",
+                query.ownerId(), totalIncome.getAmount(), totalExpenses.getAmount(), categorySummaries.size());
+        return result;
     }
 
     /**
-     * Computes spending limit analytics for the given owner, classifying limits into SAFE, WARNING, or
-     * EXCEEDED based on their current usage percentage.
+     * Computes spending limit analytics for the given owner using a cache-aside pattern.
+     *
+     * <p>On a cache hit the cached analytics are returned immediately. On a cache miss the
+     * analytics are computed from spending limits via the ACL layer, persisted in Redis,
+     * and then returned.</p>
+     *
+     * <p>Limits are classified into SAFE, WARNING, or EXCEEDED based on their current
+     * usage percentage.</p>
      *
      * @param query parameters identifying the owner and scope
      * @return a fully populated {@link SpendingLimitAnalytics}
      */
     @Override
     public SpendingLimitAnalytics handle(GetSpendingLimitAnalyticsByOwnerQuery query) {
-        log.info("Computing spending limit analytics for ownerId={}", query.ownerId());
+        var cached = cachePort.findSpendingLimitAnalytics(
+                query.ownerId(), query.ownerType(), query.periodType());
+        if (cached != null) {
+            log.info("Cache hit for spending limit analytics: ownerId={}", query.ownerId());
+            return cached;
+        }
+        log.info("Cache miss for spending limit analytics: ownerId={}", query.ownerId());
         var ownerId = Long.parseLong(query.ownerId());
         var limits = externalService.getSpendingLimitsByOwner(ownerId, query.ownerType());
 
@@ -166,21 +205,34 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
         }
 
         var id = UUID.randomUUID().toString();
-        log.info("Spending limit analytics computed for ownerId={}: total={}, exceeded={}, warning={}, safe={}",
-                query.ownerId(), totalLimitsSet, limitsExceeded, limitsAtWarning, limitsSafe);
-        return new SpendingLimitAnalytics(id, query.ownerType(), query.ownerId(), query.periodType(),
+        var spendingResult = new SpendingLimitAnalytics(id, query.ownerType(), query.ownerId(), query.periodType(),
                 totalLimitsSet, limitsExceeded, limitsAtWarning, limitsSafe, details, Instant.now());
+        cachePort.saveSpendingLimitAnalytics(spendingResult);
+        log.info("Spending limit analytics computed and cached for ownerId={}: total={}, exceeded={}, warning={}, safe={}",
+                query.ownerId(), totalLimitsSet, limitsExceeded, limitsAtWarning, limitsSafe);
+        return spendingResult;
     }
 
     /**
-     * Computes saving goal analytics for the given owner, including completion rates and overall progress.
+     * Computes saving goal analytics for the given owner using a cache-aside pattern.
+     *
+     * <p>On a cache hit the cached analytics are returned immediately. On a cache miss the
+     * analytics are computed from saving goals via the ACL layer, persisted in Redis,
+     * and then returned.</p>
+     *
+     * <p>The analytics include completion rates, overall progress, and a per-goal breakdown.</p>
      *
      * @param query parameters identifying the owner and scope
      * @return a fully populated {@link SavingGoalAnalytics}
      */
     @Override
     public SavingGoalAnalytics handle(GetSavingGoalAnalyticsByOwnerQuery query) {
-        log.info("Computing saving goal analytics for ownerId={}", query.ownerId());
+        var cached = cachePort.findSavingGoalAnalytics(query.ownerId(), query.ownerType());
+        if (cached != null) {
+            log.info("Cache hit for saving goal analytics: ownerId={}", query.ownerId());
+            return cached;
+        }
+        log.info("Cache miss for saving goal analytics: ownerId={}", query.ownerId());
         var goals = externalService.getSavingGoalsByOwner(query.ownerId(), query.ownerType());
 
         var totalGoals = goals.size();
@@ -241,11 +293,13 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
                 : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
 
         var id = UUID.randomUUID().toString();
-        log.info("Saving goal analytics computed for ownerId={}: total={}, completed={}, progress={}%",
-                query.ownerId(), totalGoals, goalsCompleted, overallProgress);
-        return new SavingGoalAnalytics(id, query.ownerType(), query.ownerId(),
+        var savingResult = new SavingGoalAnalytics(id, query.ownerType(), query.ownerId(),
                 totalGoals, goalsCompleted, goalsInProgress, goalsUncompleted,
                 totalTargetAmount, totalCurrentAmount, overallProgress, details, Instant.now());
+        cachePort.saveSavingGoalAnalytics(savingResult);
+        log.info("Saving goal analytics computed and cached for ownerId={}: total={}, completed={}, progress={}%",
+                query.ownerId(), totalGoals, goalsCompleted, overallProgress);
+        return savingResult;
     }
 
     /**

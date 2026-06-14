@@ -11,6 +11,9 @@ import org.springframework.data.redis.core.convert.RedisCustomConversions;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 
+import com.resolum.intiva.platform.analytics.infrastructure.persistence.redis.converters.BytesToMoneyConverter;
+import com.resolum.intiva.platform.analytics.infrastructure.persistence.redis.converters.MoneyToBytesConverter;
+
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -82,10 +85,14 @@ public class RedisConfiguration {
      * @return a RedisCustomConversions instance with registered custom converters for Redis serialization and deserialization
      */
     @Bean
-    public RedisCustomConversions redisCustomConversions() {
+    public RedisCustomConversions redisCustomConversions(
+            MoneyToBytesConverter moneyToBytesConverter,
+            BytesToMoneyConverter bytesToMoneyConverter) {
 
         // Create a list of custom converters for Redis serialization and deserialization, including converters for handling value objects
         List<Converter<?, ?>> converters = new ArrayList<>();
+        converters.add(moneyToBytesConverter);
+        converters.add(bytesToMoneyConverter);
 
         // Create and return a RedisCustomConversions instance with the registered custom converters, which will be used by the RedisTemplate for handling serialization and deserialization of objects stored in Redis
         return new RedisCustomConversions(converters);
