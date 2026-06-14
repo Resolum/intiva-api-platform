@@ -1,6 +1,7 @@
 package com.resolum.intiva.platform.analytics.domain.model.aggregates;
 
 import com.resolum.intiva.platform.analytics.domain.model.valueobjects.SavingGoalDetail;
+import com.resolum.intiva.platform.shared.domain.aggregates.AuditableAbstractAggregate;
 import com.resolum.intiva.platform.shared.domain.valueobjects.Money;
 import com.resolum.intiva.platform.shared.domain.valueobjects.OwnerTypes;
 
@@ -16,12 +17,7 @@ import java.util.List;
  * calculates overall progress and completion rate. It is computed on the fly from the saving
  * goals stored in the savings bounded context.</p>
  */
-public class SavingGoalAnalytics {
-
-    /**
-     * Unique identifier for this analytics instance.
-     */
-    private final String id;
+public class SavingGoalAnalytics extends AuditableAbstractAggregate<SavingGoalAnalytics> {
 
     /**
      * Scope that owns the saving goals (INDIVIDUAL or FAMILY).
@@ -74,14 +70,12 @@ public class SavingGoalAnalytics {
     private final List<SavingGoalDetail> details;
 
     /**
-     * Timestamp when this analytics was generated.
-     */
-    private final Instant generatedAt;
-
-    /**
-     * Creates saving goal analytics with all computed values.
+     * Creates saving goal analytics accepting a legacy string identifier and generation timestamp.
+     * <p>The {@code id} and {@code generatedAt} parameters are accepted for backward compatibility
+     * with deserialization paths; they are ignored in favour of the inherited identity and creation
+     * timestamp.</p>
      *
-     * @param id                 unique instance identifier
+     * @param id                 legacy instance identifier (ignored)
      * @param ownerType          owner scope
      * @param ownerId            owner identifier
      * @param totalGoals         total number of goals
@@ -92,14 +86,34 @@ public class SavingGoalAnalytics {
      * @param totalCurrentAmount aggregated current amount
      * @param overallProgress    overall progress percentage
      * @param details            per-goal details
-     * @param generatedAt        generation timestamp
+     * @param generatedAt        legacy generation timestamp (ignored)
      */
     public SavingGoalAnalytics(String id, OwnerTypes ownerType, String ownerId,
                                Integer totalGoals, Integer goalsCompleted, Integer goalsInProgress,
                                Integer goalsUncompleted, Money totalTargetAmount, Money totalCurrentAmount,
-                               BigDecimal overallProgress, List<SavingGoalDetail> details,
-                               Instant generatedAt) {
-        this.id = id;
+                               BigDecimal overallProgress, List<SavingGoalDetail> details, Instant generatedAt) {
+        this(ownerType, ownerId, totalGoals, goalsCompleted, goalsInProgress, goalsUncompleted,
+                totalTargetAmount, totalCurrentAmount, overallProgress, details);
+    }
+
+    /**
+     * Creates saving goal analytics with all computed values.
+     *
+     * @param ownerType          owner scope
+     * @param ownerId            owner identifier
+     * @param totalGoals         total number of goals
+     * @param goalsCompleted     number of completed goals
+     * @param goalsInProgress    number of in-progress goals
+     * @param goalsUncompleted   number of uncompleted goals
+     * @param totalTargetAmount  aggregated target amount
+     * @param totalCurrentAmount aggregated current amount
+     * @param overallProgress    overall progress percentage
+     * @param details            per-goal details
+     */
+    public SavingGoalAnalytics(OwnerTypes ownerType, String ownerId,
+                               Integer totalGoals, Integer goalsCompleted, Integer goalsInProgress,
+                               Integer goalsUncompleted, Money totalTargetAmount, Money totalCurrentAmount,
+                               BigDecimal overallProgress, List<SavingGoalDetail> details) {
         this.ownerType = ownerType;
         this.ownerId = ownerId;
         this.totalGoals = totalGoals;
@@ -110,15 +124,7 @@ public class SavingGoalAnalytics {
         this.totalCurrentAmount = totalCurrentAmount;
         this.overallProgress = overallProgress;
         this.details = details;
-        this.generatedAt = generatedAt;
     }
-
-    /**
-     * Returns the unique identifier.
-     *
-     * @return analytics id
-     */
-    public String getId() { return id; }
 
     /**
      * Returns the owner scope.
@@ -191,11 +197,15 @@ public class SavingGoalAnalytics {
     public List<SavingGoalDetail> getDetails() { return details; }
 
     /**
-     * Returns the generation timestamp.
+     * Returns the generation timestamp, falling back to the current instant if the
+     * aggregate was not persisted.
      *
      * @return generation timestamp
      */
-    public Instant getGeneratedAt() { return generatedAt; }
+    public Instant getGeneratedAt() {
+        var createdAt = getCreatedAt();
+        return createdAt != null ? createdAt : Instant.now();
+    }
 
     /**
      * Calculates the completion rate as {@code (goalsCompleted / totalGoals) * 100}.

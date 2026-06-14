@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
@@ -142,10 +141,9 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
                         .reversed())
                 .toList();
 
-        var id = UUID.randomUUID().toString();
-        var result = new AnalyticsSummary(id, query.ownerType(), query.ownerId(), query.periodType(),
+        var result = new AnalyticsSummary(query.ownerType(), query.ownerId(), query.periodType(),
                 query.periodStart(), query.periodEnd(), totalIncome, totalExpenses, netBalance,
-                categorySummaries, Instant.now());
+                categorySummaries);
         cachePort.saveAnalyticsSummary(result);
         log.info("Analytics summary computed and cached for ownerId={}: income={}, expenses={}, categories={}",
                 query.ownerId(), totalIncome.getAmount(), totalExpenses.getAmount(), categorySummaries.size());
@@ -204,9 +202,8 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
             }
         }
 
-        var id = UUID.randomUUID().toString();
-        var spendingResult = new SpendingLimitAnalytics(id, query.ownerType(), query.ownerId(), query.periodType(),
-                totalLimitsSet, limitsExceeded, limitsAtWarning, limitsSafe, details, Instant.now());
+        var spendingResult = new SpendingLimitAnalytics(query.ownerType(), query.ownerId(), query.periodType(),
+                totalLimitsSet, limitsExceeded, limitsAtWarning, limitsSafe, details);
         cachePort.saveSpendingLimitAnalytics(spendingResult);
         log.info("Spending limit analytics computed and cached for ownerId={}: total={}, exceeded={}, warning={}, safe={}",
                 query.ownerId(), totalLimitsSet, limitsExceeded, limitsAtWarning, limitsSafe);
@@ -292,10 +289,9 @@ public class AnalyticsQueryServiceImpl implements AnalyticsQueryService {
                         .setScale(2, RoundingMode.HALF_UP)
                 : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
 
-        var id = UUID.randomUUID().toString();
-        var savingResult = new SavingGoalAnalytics(id, query.ownerType(), query.ownerId(),
+        var savingResult = new SavingGoalAnalytics(query.ownerType(), query.ownerId(),
                 totalGoals, goalsCompleted, goalsInProgress, goalsUncompleted,
-                totalTargetAmount, totalCurrentAmount, overallProgress, details, Instant.now());
+                totalTargetAmount, totalCurrentAmount, overallProgress, details);
         cachePort.saveSavingGoalAnalytics(savingResult);
         log.info("Saving goal analytics computed and cached for ownerId={}: total={}, completed={}, progress={}%",
                 query.ownerId(), totalGoals, goalsCompleted, overallProgress);

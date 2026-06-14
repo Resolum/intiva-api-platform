@@ -1,6 +1,7 @@
 package com.resolum.intiva.platform.analytics.domain.model.aggregates;
 
 import com.resolum.intiva.platform.analytics.domain.model.valueobjects.CategoryExpenseSummary;
+import com.resolum.intiva.platform.shared.domain.aggregates.AuditableAbstractAggregate;
 import com.resolum.intiva.platform.shared.domain.valueobjects.Money;
 import com.resolum.intiva.platform.shared.domain.valueobjects.OwnerTypes;
 import com.resolum.intiva.platform.shared.domain.valueobjects.PeriodTypes;
@@ -19,12 +20,7 @@ import java.util.List;
  * persisted in a dedicated analytics store. It provides a snapshot of income, expenses, net balance,
  * and an expense breakdown by category for the configured time window.</p>
  */
-public class AnalyticsSummary {
-
-    /**
-     * Unique identifier for this analytics summary instance.
-     */
-    private final String id;
+public class AnalyticsSummary extends AuditableAbstractAggregate<AnalyticsSummary> {
 
     /**
      * Scope that owns this summary (INDIVIDUAL or FAMILY).
@@ -72,14 +68,13 @@ public class AnalyticsSummary {
     private final List<CategoryExpenseSummary> expensesByCategory;
 
     /**
-     * Timestamp when this summary was generated.
-     */
-    private final Instant generatedAt;
-
-    /**
-     * Creates an analytics summary with all computed values.
+     * Creates an analytics summary accepting a legacy string identifier and generation timestamp.
+     * <p>The {@code id} and {@code generatedAt} parameters are accepted for backward compatibility
+     * with deserialization paths; they are ignored in favour of the inherited
+     * {@link com.resolum.intiva.platform.shared.domain.aggregates.AuditableAbstractAggregate}
+     * identity and creation timestamp.</p>
      *
-     * @param id                 unique instance identifier
+     * @param id                 legacy instance identifier (ignored)
      * @param ownerType          owner scope
      * @param ownerId            owner identifier
      * @param periodType         period granularity
@@ -89,13 +84,33 @@ public class AnalyticsSummary {
      * @param totalExpenses      aggregated expenses
      * @param netBalance         income minus expenses
      * @param expensesByCategory expense breakdown by category
-     * @param generatedAt        generation timestamp
+     * @param generatedAt        legacy generation timestamp (ignored)
      */
     public AnalyticsSummary(String id, OwnerTypes ownerType, String ownerId, PeriodTypes periodType,
                             LocalDate periodStart, LocalDate periodEnd, Money totalIncome,
                             Money totalExpenses, Money netBalance,
                             List<CategoryExpenseSummary> expensesByCategory, Instant generatedAt) {
-        this.id = id;
+        this(ownerType, ownerId, periodType, periodStart, periodEnd, totalIncome, totalExpenses,
+                netBalance, expensesByCategory);
+    }
+
+    /**
+     * Creates an analytics summary with all computed values.
+     *
+     * @param ownerType          owner scope
+     * @param ownerId            owner identifier
+     * @param periodType         period granularity
+     * @param periodStart        period start date
+     * @param periodEnd          period end date
+     * @param totalIncome        aggregated income
+     * @param totalExpenses      aggregated expenses
+     * @param netBalance         income minus expenses
+     * @param expensesByCategory expense breakdown by category
+     */
+    public AnalyticsSummary(OwnerTypes ownerType, String ownerId, PeriodTypes periodType,
+                            LocalDate periodStart, LocalDate periodEnd, Money totalIncome,
+                            Money totalExpenses, Money netBalance,
+                            List<CategoryExpenseSummary> expensesByCategory) {
         this.ownerType = ownerType;
         this.ownerId = ownerId;
         this.periodType = periodType;
@@ -105,15 +120,7 @@ public class AnalyticsSummary {
         this.totalExpenses = totalExpenses;
         this.netBalance = netBalance;
         this.expensesByCategory = expensesByCategory;
-        this.generatedAt = generatedAt;
     }
-
-    /**
-     * Returns the unique identifier of this summary.
-     *
-     * @return summary id
-     */
-    public String getId() { return id; }
 
     /**
      * Returns the owner scope.
@@ -179,11 +186,15 @@ public class AnalyticsSummary {
     public List<CategoryExpenseSummary> getExpensesByCategory() { return expensesByCategory; }
 
     /**
-     * Returns the generation timestamp.
+     * Returns the generation timestamp, falling back to the current instant if the
+     * aggregate was not persisted.
      *
      * @return generation timestamp
      */
-    public Instant getGeneratedAt() { return generatedAt; }
+    public Instant getGeneratedAt() {
+        var createdAt = getCreatedAt();
+        return createdAt != null ? createdAt : Instant.now();
+    }
 
     /**
      * Convenience alias for {@link #getNetBalance()}.

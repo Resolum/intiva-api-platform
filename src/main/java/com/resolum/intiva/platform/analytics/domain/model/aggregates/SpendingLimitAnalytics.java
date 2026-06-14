@@ -1,6 +1,7 @@
 package com.resolum.intiva.platform.analytics.domain.model.aggregates;
 
 import com.resolum.intiva.platform.analytics.domain.model.valueobjects.SpendingLimitDetail;
+import com.resolum.intiva.platform.shared.domain.aggregates.AuditableAbstractAggregate;
 import com.resolum.intiva.platform.shared.domain.valueobjects.OwnerTypes;
 import com.resolum.intiva.platform.shared.domain.valueobjects.PeriodTypes;
 
@@ -16,12 +17,7 @@ import java.util.List;
  * provides aggregate metrics such as exceeded rate and warning rate. It is computed on the fly
  * from the spending limits stored in the finances bounded context.</p>
  */
-public class SpendingLimitAnalytics {
-
-    /**
-     * Unique identifier for this analytics instance.
-     */
-    private final String id;
+public class SpendingLimitAnalytics extends AuditableAbstractAggregate<SpendingLimitAnalytics> {
 
     /**
      * Scope that owns the spending limits (INDIVIDUAL or FAMILY).
@@ -64,14 +60,12 @@ public class SpendingLimitAnalytics {
     private final List<SpendingLimitDetail> details;
 
     /**
-     * Timestamp when this analytics was generated.
-     */
-    private final Instant generatedAt;
-
-    /**
-     * Creates spending limit analytics with all computed values.
+     * Creates spending limit analytics accepting a legacy string identifier and generation timestamp.
+     * <p>The {@code id} and {@code generatedAt} parameters are accepted for backward compatibility
+     * with deserialization paths; they are ignored in favour of the inherited identity and creation
+     * timestamp.</p>
      *
-     * @param id              unique instance identifier
+     * @param id              legacy instance identifier (ignored)
      * @param ownerType       owner scope
      * @param ownerId         owner identifier
      * @param periodType      period granularity
@@ -80,13 +74,29 @@ public class SpendingLimitAnalytics {
      * @param limitsAtWarning number of limits in warning state
      * @param limitsSafe      number of safe limits
      * @param details         per-limit details
-     * @param generatedAt     generation timestamp
+     * @param generatedAt     legacy generation timestamp (ignored)
      */
     public SpendingLimitAnalytics(String id, OwnerTypes ownerType, String ownerId, PeriodTypes periodType,
                                   Integer totalLimitsSet, Integer limitsExceeded, Integer limitsAtWarning,
-                                  Integer limitsSafe, List<SpendingLimitDetail> details,
-                                  Instant generatedAt) {
-        this.id = id;
+                                  Integer limitsSafe, List<SpendingLimitDetail> details, Instant generatedAt) {
+        this(ownerType, ownerId, periodType, totalLimitsSet, limitsExceeded, limitsAtWarning, limitsSafe, details);
+    }
+
+    /**
+     * Creates spending limit analytics with all computed values.
+     *
+     * @param ownerType       owner scope
+     * @param ownerId         owner identifier
+     * @param periodType      period granularity
+     * @param totalLimitsSet  total number of limits
+     * @param limitsExceeded  number of exceeded limits
+     * @param limitsAtWarning number of limits in warning state
+     * @param limitsSafe      number of safe limits
+     * @param details         per-limit details
+     */
+    public SpendingLimitAnalytics(OwnerTypes ownerType, String ownerId, PeriodTypes periodType,
+                                  Integer totalLimitsSet, Integer limitsExceeded, Integer limitsAtWarning,
+                                  Integer limitsSafe, List<SpendingLimitDetail> details) {
         this.ownerType = ownerType;
         this.ownerId = ownerId;
         this.periodType = periodType;
@@ -95,15 +105,7 @@ public class SpendingLimitAnalytics {
         this.limitsAtWarning = limitsAtWarning;
         this.limitsSafe = limitsSafe;
         this.details = details;
-        this.generatedAt = generatedAt;
     }
-
-    /**
-     * Returns the unique identifier.
-     *
-     * @return analytics id
-     */
-    public String getId() { return id; }
 
     /**
      * Returns the owner scope.
@@ -162,11 +164,15 @@ public class SpendingLimitAnalytics {
     public List<SpendingLimitDetail> getDetails() { return details; }
 
     /**
-     * Returns the generation timestamp.
+     * Returns the generation timestamp, falling back to the current instant if the
+     * aggregate was not persisted.
      *
      * @return generation timestamp
      */
-    public Instant getGeneratedAt() { return generatedAt; }
+    public Instant getGeneratedAt() {
+        var createdAt = getCreatedAt();
+        return createdAt != null ? createdAt : Instant.now();
+    }
 
     /**
      * Calculates the percentage of limits that are exceeded.
