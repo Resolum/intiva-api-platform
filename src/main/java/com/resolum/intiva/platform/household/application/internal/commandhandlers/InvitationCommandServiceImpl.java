@@ -17,11 +17,14 @@ import com.resolum.intiva.platform.household.domain.model.commands.SendInvitatio
 import com.resolum.intiva.platform.household.domain.model.valueobjects.FamilyMemberStatus;
 import com.resolum.intiva.platform.household.domain.model.valueobjects.FamilyRole;
 import com.resolum.intiva.platform.household.domain.model.valueobjects.InvitationStatus;
+import com.resolum.intiva.platform.shared.domain.valueobjects.UserId;
 import com.resolum.intiva.platform.household.domain.services.InvitationCommandService;
 import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.DeferredDeepLinkRepository;
 import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.FamilyMemberRepository;
 import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.FamilyRepository;
 import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.InvitationRepository;
+import com.resolum.intiva.platform.household.infrastructure.persistence.redis.entities.InvitationLinkCacheEntity;
+import com.resolum.intiva.platform.household.infrastructure.persistence.redis.repositories.InvitationLinkCacheRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -41,6 +44,7 @@ public class InvitationCommandServiceImpl implements InvitationCommandService {
     private final FamilyRepository familyRepository;
     private final DeferredDeepLinkRepository deferredDeepLinkRepository;
     private final CommunicationsContextFacade communicationsContextFacade;
+    private final InvitationLinkCacheRepository invitationLinkCacheRepository;
 
     @Value("${app.invitation.base-url}")
     private String invitationBaseUrl;
@@ -48,22 +52,25 @@ public class InvitationCommandServiceImpl implements InvitationCommandService {
     /**
      * Creates the command service with the required repository dependencies.
      *
-     * @param invitationRepository         the invitation repository
-     * @param familyMemberRepository       the family member repository
-     * @param familyRepository             the family repository
-     * @param deferredDeepLinkRepository   the deferred deep link repository
-     * @param communicationsContextFacade  the communications context facade for push notifications
+     * @param invitationRepository            the invitation repository
+     * @param familyMemberRepository          the family member repository
+     * @param familyRepository                the family repository
+     * @param deferredDeepLinkRepository      the deferred deep link repository
+     * @param communicationsContextFacade     the communications context facade for push notifications
+     * @param invitationLinkCacheRepository   the Redis cache repository for invitation links
      */
     public InvitationCommandServiceImpl(InvitationRepository invitationRepository,
                                         FamilyMemberRepository familyMemberRepository,
                                         FamilyRepository familyRepository,
                                         DeferredDeepLinkRepository deferredDeepLinkRepository,
-                                        CommunicationsContextFacade communicationsContextFacade) {
+                                        CommunicationsContextFacade communicationsContextFacade,
+                                        InvitationLinkCacheRepository invitationLinkCacheRepository) {
         this.invitationRepository = invitationRepository;
         this.familyMemberRepository = familyMemberRepository;
         this.familyRepository = familyRepository;
         this.deferredDeepLinkRepository = deferredDeepLinkRepository;
         this.communicationsContextFacade = communicationsContextFacade;
+        this.invitationLinkCacheRepository = invitationLinkCacheRepository;
     }
 
     /**
@@ -107,8 +114,15 @@ public class InvitationCommandServiceImpl implements InvitationCommandService {
     @Override
     @Transactional
     public void handle(RejectInvitationCommand command) {
-        var invitation = invitationRepository.findByToken(command.token())
-                .orElseThrow(() -> new ResourceNotFoundException("Invitation not found for token: " + command.token()));
+        invitationLinkCacheRepository.deleteById(command.token());
+
+        var invitationOpt = invitationRepository.findByToken(command.token());
+        if (invitationOpt.isEmpty()) {
+            log.info("Invitation token {} rejected (removed from cache)", command.token());
+            return;
+        }
+
+        var invitation = invitationOpt.get();
 
         if (invitation.getStatus() != InvitationStatus.PENDING) {
             throw new InvitationAlreadyPendingException("Invitation is not pending for token: " + command.token());
@@ -203,7 +217,7 @@ public class InvitationCommandServiceImpl implements InvitationCommandService {
             throw new UnauthorizedException("Only ADMIN can send invitations");
         }
 
-        var expiresAt = LocalDateTime.now().plusDays(7);
+        var expiresAt = LocalDateTime.now().plusMinutes(15);
         var token = java.util.UUID.randomUUID().toString();
         var inviteUrl = invitationBaseUrl + "?token=" + token
                 + "&group=" + family.getName()
@@ -212,15 +226,26 @@ public class InvitationCommandServiceImpl implements InvitationCommandService {
         var invitation = new Invitation(expiresAt, command.inviterId(), command.familyId(), inviteUrl);
         var savedInvitation = invitationRepository.save(invitation);
 
+        var cacheEntity = new InvitationLinkCacheEntity(
+                token,
+                command.familyId(),
+                command.inviterId().getValue(),
+                String.valueOf(inviterMember.getUserId().getValue()),
+                family.getName(),
+                command.inviteeEmail(),
+                null,
+                inviteUrl
+        );
+        invitationLinkCacheRepository.save(cacheEntity);
+
         if (command.inviteeEmail() != null && !command.inviteeEmail().isBlank()) {
-            // Email sending would be injected here via a Spring Mail sender
             log.info("Invitation link email would be sent to {} for family {}", command.inviteeEmail(), command.familyId());
         }
 
-        log.info("Invitation link sent to family {} by user {}, token: {}",
-                command.familyId(), command.inviterId().getValue(), savedInvitation.getToken());
+        log.info("Invitation link sent to family {} by user {}, token: {} (expires in 15 min)",
+                command.familyId(), command.inviterId().getValue(), token);
 
-        return new InvitationLinkResult(savedInvitation.getToken(), inviteUrl, expiresAt);
+        return new InvitationLinkResult(token, inviteUrl, expiresAt);
     }
 
     @Override

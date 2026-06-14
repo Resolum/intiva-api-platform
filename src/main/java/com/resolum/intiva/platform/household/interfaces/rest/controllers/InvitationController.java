@@ -11,7 +11,7 @@ import com.resolum.intiva.platform.household.domain.model.queries.GetInvitations
 import com.resolum.intiva.platform.household.domain.model.queries.GetPendingInvitationsByUserIdQuery;
 import com.resolum.intiva.platform.household.domain.services.InvitationCommandService;
 import com.resolum.intiva.platform.household.domain.services.InvitationQueryService;
-import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.DeferredDeepLinkEntity;
+import com.resolum.intiva.platform.household.infrastructure.persistence.redis.entities.DeferredDeepLinkEntity;
 import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.DeferredDeepLinkRepository;
 import com.resolum.intiva.platform.household.interfaces.rest.assemblers.AcceptInvitationCommandFromResourceAssembler;
 import com.resolum.intiva.platform.household.interfaces.rest.assemblers.InvitationLinkResourceFromEntityAssembler;
@@ -161,12 +161,6 @@ public class InvitationController {
         }
     }
 
-    /**
-     * Retrieves all pending and non-expired invitations for the specified user.
-     *
-     * @param userId the numeric ID of the user
-     * @return 200 with the list of pending invitations
-     */
     @GetMapping("/api/v1/users/{userId}/invitations/pending")
     @Operation(
             summary = "Get pending invitations for a user",
