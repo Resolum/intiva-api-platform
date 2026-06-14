@@ -37,7 +37,10 @@ public class RegisterTransactionCommandFromResourceAssembler {
                 performedByUserId,
                 transactionType,
                 categoryId,
-                ownerType
+                ownerType,
+                resource.clientOperationId(),
+                resource.baseAccountVersion(),
+                resource.occurredAt()
         );
     }
 }

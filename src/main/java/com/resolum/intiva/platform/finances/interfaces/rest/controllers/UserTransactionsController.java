@@ -1,5 +1,7 @@
 package com.resolum.intiva.platform.finances.interfaces.rest.controllers;
 
+import com.resolum.intiva.platform.categories.domain.model.exceptions.FinancialAccountSyncConflictException;
+import com.resolum.intiva.platform.categories.domain.model.exceptions.InsufficientFundsException;
 import com.resolum.intiva.platform.finances.domain.services.TransactionCommandService;
 import com.resolum.intiva.platform.finances.domain.services.TransactionQueryService;
 import com.resolum.intiva.platform.finances.interfaces.rest.assemblers.RegisterTransactionCommandFromResourceAssembler;
@@ -91,6 +93,11 @@ public class UserTransactionsController {
             ),
 
             @ApiResponse(
+                    responseCode = "409",
+                    description = "Offline transaction conflicts with the current financial account state"
+            ),
+
+            @ApiResponse(
                     responseCode = "500",
                     description = "Unexpected server error"
             )
@@ -150,6 +157,18 @@ public class UserTransactionsController {
 
             return ResponseEntity
                     .badRequest()
+                    .body(new MessageResource(e.getMessage()));
+
+        } catch (InsufficientFundsException e) {
+
+            return ResponseEntity
+                    .status(HttpStatus.CONFLICT)
+                    .body(new MessageResource(e.getMessage()));
+
+        } catch (FinancialAccountSyncConflictException e) {
+
+            return ResponseEntity
+                    .status(HttpStatus.CONFLICT)
                     .body(new MessageResource(e.getMessage()));
 
         } catch (Exception e) {

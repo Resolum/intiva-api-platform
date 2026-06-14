@@ -87,7 +87,10 @@ public class RecurringTransactionExecutionRequestedEventHandler {
                 recurringTransaction.getPerformedByUserId(),
                 recurringTransaction.getTransactionType(),
                 recurringTransaction.getCategoryId(),
-                recurringTransaction.getOwnerType()
+                recurringTransaction.getOwnerType(),
+                null,
+                null,
+                null
         );
 
         transactionCommandService.handle(command)

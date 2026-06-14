@@ -1,15 +1,19 @@
 package com.resolum.intiva.platform.communications.interfaces.rest.controllers;
 
 import com.resolum.intiva.platform.communications.domain.model.queries.GetActiveNotificationDevicesByUserIdQuery;
+import com.resolum.intiva.platform.communications.domain.services.NotificationDeviceCommandService;
 import com.resolum.intiva.platform.communications.domain.model.queries.GetNotificationDevicesByUserIdQuery;
 import com.resolum.intiva.platform.communications.domain.services.NotificationDeviceQueryService;
 import com.resolum.intiva.platform.communications.interfaces.rest.assemblers.NotificationDeviceResourceFromEntityAssembler;
+import com.resolum.intiva.platform.communications.interfaces.rest.assemblers.RegisterNotificationDeviceCommandFromResourceAssembler;
+import com.resolum.intiva.platform.communications.interfaces.rest.resources.requests.RegisterNotificationDeviceResource;
 import com.resolum.intiva.platform.communications.interfaces.rest.resources.responses.NotificationDeviceResource;
 import com.resolum.intiva.platform.shared.interfaces.rest.resource.MessageWrapperResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,12 +34,50 @@ public class NotificationDevicesController {
     private final NotificationDeviceQueryService notificationDeviceQueryService;
 
     /**
+     * Command service used to register and reactivate device tokens.
+     */
+    private final NotificationDeviceCommandService notificationDeviceCommandService;
+
+    /**
      * Creates the controller with its query dependency.
      *
      * @param notificationDeviceQueryService device-token query service
      */
-    public NotificationDevicesController(NotificationDeviceQueryService notificationDeviceQueryService) {
+    public NotificationDevicesController(
+            NotificationDeviceQueryService notificationDeviceQueryService,
+            NotificationDeviceCommandService notificationDeviceCommandService
+    ) {
         this.notificationDeviceQueryService = notificationDeviceQueryService;
+        this.notificationDeviceCommandService = notificationDeviceCommandService;
+    }
+
+    /**
+     * Registers or reactivates one mobile device token for push notifications.
+     */
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(
+            summary = "Register notification device",
+            description = "Registers or reactivates one mobile device token for push notifications."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Device token registered successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid device token data")
+    })
+    public ResponseEntity<?> registerNotificationDevice(
+            @RequestBody RegisterNotificationDeviceResource resource
+    ) {
+        try {
+            var command = RegisterNotificationDeviceCommandFromResourceAssembler.toCommandFromResource(resource);
+            var notificationDevice = notificationDeviceCommandService.handle(command)
+                    .orElseThrow(() -> new IllegalStateException("Notification device could not be registered."));
+            var response = NotificationDeviceResourceFromEntityAssembler.toResourceFromEntity(notificationDevice);
+
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     /**

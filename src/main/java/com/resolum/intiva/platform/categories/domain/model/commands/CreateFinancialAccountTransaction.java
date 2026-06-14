@@ -1,5 +1,7 @@
 package com.resolum.intiva.platform.categories.domain.model.commands;
 
+import com.resolum.intiva.platform.shared.domain.valueobjects.OwnerTypes;
+
 import java.math.BigDecimal;
 
 /**
@@ -14,6 +16,8 @@ public record CreateFinancialAccountTransaction(
         Long financialAccountId,
         BigDecimal amount,
         String currencyCode,
-        String transactionType
+        String transactionType,
+        OwnerTypes ownerType,
+        Long baseAccountVersion
 ) {
 }

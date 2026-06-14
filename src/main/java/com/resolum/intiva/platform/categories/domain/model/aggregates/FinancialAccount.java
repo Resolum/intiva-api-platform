@@ -32,6 +32,9 @@ public abstract class FinancialAccount extends AuditableAbstractAggregate<Financ
 
     private Long ownerId;
 
+    @Version
+    private Long version;
+
     // Default protected constructor for JPA.
     protected FinancialAccount() {
     }

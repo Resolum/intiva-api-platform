@@ -3,6 +3,7 @@ package com.resolum.intiva.platform.finances.interfaces.rest.resources.requests;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 
 /**
  * RegisterTransactionResource is a record that represents the data structure of a financial transaction as it is received through the REST API when registering a new transaction. It contains fields that correspond to the properties of a Transaction entity, including the amount, currency code, description, owner ID, financial account ID, actor user ID, transaction type, and category ID.
@@ -38,6 +39,15 @@ public record RegisterTransactionResource(
         Long categoryId,
 
         @Schema(description = "Owner scope. INDIVIDUAL is personal finance and FAMILY is group/family finance.", example = "INDIVIDUAL", allowableValues = {"INDIVIDUAL", "FAMILY"})
-        String ownerType
+        String ownerType,
+
+        @Schema(description = "Client operation identifier. This is used to track the transaction in the client's system.", example = "123456")
+        String clientOperationId,
+
+        @Schema(description = "Base account version. This is used to track the version of the base account used in the transaction.", example = "1")
+        Long baseAccountVersion,
+
+        @Schema(description = "Transaction occurrence timestamp. This is used to track when the transaction occurred.", example = "2024-06-01T12:00:00Z")
+        Instant occurredAt
 ) {
 }
