@@ -1,5 +1,8 @@
 package com.resolum.intiva.platform.shared.interfaces.rest;
 
+import com.resolum.intiva.platform.analytics.domain.model.exceptions.InvalidReportFormatException;
+import com.resolum.intiva.platform.analytics.domain.model.exceptions.InvalidReportPeriodException;
+import com.resolum.intiva.platform.analytics.domain.model.exceptions.ReportGenerationException;
 import com.resolum.intiva.platform.household.domain.exceptions.InvitationAlreadyPendingException;
 import com.resolum.intiva.platform.household.domain.exceptions.ResourceNotFoundException;
 import com.resolum.intiva.platform.household.domain.exceptions.UnauthorizedException;
@@ -174,5 +177,43 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ProblemDetail handleInvitationAlreadyPending(InvitationAlreadyPendingException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    /**
+     * Handles {@link ReportGenerationException} thrown when report file generation fails.
+     *
+     * @param ex the exception
+     * @return a ProblemDetail with INTERNAL_SERVER_ERROR status and a generic error message
+     */
+    @ExceptionHandler(ReportGenerationException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ProblemDetail handleReportGeneration(ReportGenerationException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, "Error generating report");
+    }
+
+    /**
+     * Handles {@link InvalidReportPeriodException} thrown when the report period is invalid
+     * (period start after period end).
+     *
+     * @param ex the exception containing the specific validation message
+     * @return a ProblemDetail with BAD_REQUEST status
+     */
+    @ExceptionHandler(InvalidReportPeriodException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ProblemDetail handleInvalidReportPeriod(InvalidReportPeriodException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    /**
+     * Handles {@link InvalidReportFormatException} thrown when an unsupported report format
+     * is requested (not CSV or PDF).
+     *
+     * @param ex the exception
+     * @return a ProblemDetail with BAD_REQUEST status and a generic format error message
+     */
+    @ExceptionHandler(InvalidReportFormatException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ProblemDetail handleInvalidReportFormat(InvalidReportFormatException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Format must be CSV or PDF");
     }
 }

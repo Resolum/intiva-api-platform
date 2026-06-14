@@ -7,6 +7,9 @@ public record InvitationPublicInfo(
         String inviterName,
         int memberCount,
         String status,
-        LocalDateTime expiresAt
+        LocalDateTime expiresAt,
+        Long familyId,
+        Long inviterId,
+        Long invitationId
 ) {
 }

@@ -1,4 +1,4 @@
-package com.resolum.intiva.platform.household.infrastructure.persistence.jpa;
+package com.resolum.intiva.platform.household.infrastructure.persistence.redis.entities;
 
 import jakarta.persistence.*;
 import lombok.Getter;

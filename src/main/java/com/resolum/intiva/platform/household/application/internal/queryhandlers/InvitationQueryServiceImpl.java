@@ -18,6 +18,7 @@ import com.resolum.intiva.platform.household.domain.services.InvitationQueryServ
 import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.FamilyMemberRepository;
 import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.FamilyRepository;
 import com.resolum.intiva.platform.household.infrastructure.persistence.jpa.repositories.InvitationRepository;
+import com.resolum.intiva.platform.household.infrastructure.persistence.redis.repositories.InvitationLinkCacheRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,20 +37,24 @@ public class InvitationQueryServiceImpl implements InvitationQueryService {
     private final InvitationRepository invitationRepository;
     private final FamilyRepository familyRepository;
     private final FamilyMemberRepository familyMemberRepository;
+    private final InvitationLinkCacheRepository invitationLinkCacheRepository;
 
     /**
      * Creates the query service with the required repository dependencies.
      *
-     * @param invitationRepository   the invitation repository
-     * @param familyRepository       the family repository
-     * @param familyMemberRepository the family member repository
+     * @param invitationRepository          the invitation repository
+     * @param familyRepository              the family repository
+     * @param familyMemberRepository        the family member repository
+     * @param invitationLinkCacheRepository the Redis cache repository for invitation links
      */
     public InvitationQueryServiceImpl(InvitationRepository invitationRepository,
                                       FamilyRepository familyRepository,
-                                      FamilyMemberRepository familyMemberRepository) {
+                                      FamilyMemberRepository familyMemberRepository,
+                                      InvitationLinkCacheRepository invitationLinkCacheRepository) {
         this.invitationRepository = invitationRepository;
         this.familyRepository = familyRepository;
         this.familyMemberRepository = familyMemberRepository;
+        this.invitationLinkCacheRepository = invitationLinkCacheRepository;
     }
 
     @Override
@@ -86,6 +91,33 @@ public class InvitationQueryServiceImpl implements InvitationQueryService {
     public InvitationPublicInfo getInvitationByToken(GetInvitationByTokenQuery query) {
         log.debug("Querying invitation by token: {}", query.token());
 
+        // Check Redis cache first for link-based invitations (15-min TTL)
+        var cacheOpt = invitationLinkCacheRepository.findById(query.token());
+        if (cacheOpt.isPresent()) {
+            var cache = cacheOpt.get();
+            var family = familyRepository.findById(cache.getFamilyId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Family not found for id: " + cache.getFamilyId()));
+
+            var activeMembers = familyMemberRepository.findByFamilyIdAndStatus(
+                    cache.getFamilyId(), FamilyMemberStatus.ACTIVE);
+            var inviterName = String.valueOf(cache.getInviterId());
+
+            var jpaInvitation = invitationRepository.findByToken(query.token());
+            var invitationId = jpaInvitation.map(Invitation::getId).orElse(null);
+
+            return new InvitationPublicInfo(
+                    cache.getFamilyName(),
+                    inviterName,
+                    activeMembers.size(),
+                    InvitationStatus.PENDING.name(),
+                    LocalDateTime.now().plusMinutes(15),
+                    cache.getFamilyId(),
+                    cache.getInviterId(),
+                    invitationId
+            );
+        }
+
+        // Fallback to JPA for DIRECT invitations (7-day expiry)
         var invitation = invitationRepository.findByToken(query.token())
                 .orElseThrow(() -> new ResourceNotFoundException("Invitation not found for token: " + query.token()));
 
@@ -111,7 +143,10 @@ public class InvitationQueryServiceImpl implements InvitationQueryService {
                 inviterMember.map(FamilyMember::getUserId).map(id -> String.valueOf(id.getValue())).orElse("Unknown"),
                 activeMembers.size(),
                 invitation.getStatus().name(),
-                invitation.getExpiresAt()
+                invitation.getExpiresAt(),
+                invitation.getInvitedForFamily(),
+                invitation.getInvitedBy().getValue(),
+                invitation.getId()
         );
     }
 }

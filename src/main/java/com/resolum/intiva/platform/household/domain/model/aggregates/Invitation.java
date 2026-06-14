@@ -32,6 +32,14 @@ public class Invitation extends AuditableAbstractAggregate<Invitation> {
     private String token;
 
     /**
+     * Sets the token for this invitation.
+     * Used by LINK invitations to ensure the JPA token matches the URL token.
+     */
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    /**
      * Current status of the invitation.
      */
     @Enumerated(EnumType.STRING)
@@ -75,6 +83,14 @@ public class Invitation extends AuditableAbstractAggregate<Invitation> {
     @Embedded
     @AttributeOverride(name = "userId", column = @Column(name = "user_invited_id", nullable = true))
     private UserId userInvitedId;
+
+    /**
+     * Sets the invited user for this invitation.
+     * Used by LINK invitations when a user claims the invitation link.
+     */
+    public void setUserInvitedId(UserId userInvitedId) {
+        this.userInvitedId = userInvitedId;
+    }
 
     /**
      * Public URL of the invitation link. Only set when source is LINK or QR.

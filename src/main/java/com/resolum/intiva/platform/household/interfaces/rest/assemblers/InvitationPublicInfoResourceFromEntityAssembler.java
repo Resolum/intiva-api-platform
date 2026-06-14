@@ -11,7 +11,10 @@ public class InvitationPublicInfoResourceFromEntityAssembler {
                 info.inviterName(),
                 info.memberCount(),
                 info.status(),
-                info.expiresAt() != null ? info.expiresAt().toString() : null
+                info.expiresAt() != null ? info.expiresAt().toString() : null,
+                info.familyId(),
+                info.inviterId(),
+                info.invitationId()
         );
     }
 }
