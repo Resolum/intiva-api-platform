@@ -1,6 +1,7 @@
 package com.resolum.intiva.platform.finances.application.internal.outboundservices.acl;
 
 import com.resolum.intiva.platform.categories.interfaces.acl.FinancialAccountContextFacade;
+import com.resolum.intiva.platform.shared.domain.valueobjects.OwnerTypes;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -41,8 +42,8 @@ public class FinancesExternalFinancialAccountService {
      * @param amount the amount of the transaction
      * @param currencyCode the currency code of the transaction
      */
-    public void createFinancialAccountTransaction(Long financialAccountId, String transactionType, BigDecimal amount, String currencyCode) {
-        financialAccountContextFacade.createFinancialAccountTransaction(financialAccountId, transactionType, amount, currencyCode);
+    public void createFinancialAccountTransaction(Long financialAccountId, String transactionType, BigDecimal amount, String currencyCode, OwnerTypes ownerType, Long baseAccountVersion) {
+        financialAccountContextFacade.createFinancialAccountTransaction(financialAccountId, transactionType, amount, currencyCode, ownerType, baseAccountVersion);
     }
 
     /**

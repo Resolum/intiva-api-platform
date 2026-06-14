@@ -3,10 +3,12 @@ package com.resolum.intiva.platform.categories.application.internal.commandhandl
 import com.resolum.intiva.platform.categories.domain.model.commands.CreateFinancialAccountTransaction;
 import com.resolum.intiva.platform.categories.domain.model.entities.CashAccount;
 import com.resolum.intiva.platform.categories.domain.model.commands.CreateDefaultFinancialAccountCommand;
+import com.resolum.intiva.platform.categories.domain.model.exceptions.FinancialAccountSyncConflictException;
 import com.resolum.intiva.platform.categories.domain.services.FinancialAccountCommandService;
 import com.resolum.intiva.platform.categories.infraestructure.persistence.jpa.repositories.FinancialAccountRepository;
 import com.resolum.intiva.platform.shared.domain.valueobjects.CurrencyCodes;
 import com.resolum.intiva.platform.shared.domain.valueobjects.Money;
+import com.resolum.intiva.platform.shared.domain.valueobjects.OwnerTypes;
 import com.resolum.intiva.platform.shared.domain.valueobjects.TransactionTypes;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -59,14 +61,28 @@ public class FinancialAccountCommandServiceImpl implements FinancialAccountComma
                 command.currencyCode(),
                 command.transactionType()
         );
-        var financialAccount = financialAccountRepository.findById(command.financialAccountId()).orElseThrow();
-        financialAccount.applyTransaction(
-                new Money(
-                        command.amount(),
-                        CurrencyCodes.fromString(command.currencyCode())
-                ),
-                TransactionTypes.fromString(command.transactionType())
+        var financialAccount = financialAccountRepository.findByIdForUpdate(command.financialAccountId()).orElseThrow();
+        var transactionType = TransactionTypes.fromString(command.transactionType());
+        var amount = new Money(
+                command.amount(),
+                CurrencyCodes.fromString(command.currencyCode())
         );
+
+        if (command.ownerType() == OwnerTypes.FAMILY
+                && command.baseAccountVersion() != null
+                && !command.baseAccountVersion().equals(financialAccount.getVersion())
+                && transactionType == TransactionTypes.EXPENSE
+                && financialAccount.getCurrentAmount().amount().compareTo(command.amount()) < 0) {
+            throw new FinancialAccountSyncConflictException(
+                    command.financialAccountId(),
+                    command.baseAccountVersion(),
+                    financialAccount.getVersion(),
+                    financialAccount.getCurrentAmount().amount(),
+                    command.amount()
+            );
+        }
+
+        financialAccount.applyTransaction(amount, transactionType);
         financialAccountRepository.save(financialAccount);
     }
 }

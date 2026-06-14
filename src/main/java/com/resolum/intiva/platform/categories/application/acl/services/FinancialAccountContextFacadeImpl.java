@@ -10,6 +10,7 @@ import com.resolum.intiva.platform.categories.domain.model.queries.GetFinancialA
 import com.resolum.intiva.platform.categories.domain.model.valueobjects.AccountName;
 import com.resolum.intiva.platform.categories.interfaces.acl.FinancialAccountContextFacade;
 import com.resolum.intiva.platform.shared.domain.valueobjects.Money;
+import com.resolum.intiva.platform.shared.domain.valueobjects.OwnerTypes;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -82,14 +83,16 @@ public class FinancialAccountContextFacadeImpl implements FinancialAccountContex
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void createFinancialAccountTransaction(Long financialAccountId, String transactionType, BigDecimal amount, String currencyCode) {
-        log.info("ACL - Creating financial account transaction for financial account id: {}, transaction type: {}, amount: {}, currency code: {}",
-                financialAccountId, transactionType, amount, currencyCode);
+    public void createFinancialAccountTransaction(Long financialAccountId, String transactionType, BigDecimal amount, String currencyCode, OwnerTypes ownerType, Long baseAccountVersion) {
+        log.info("ACL - Creating financial account transaction for financial account id: {}, transaction type: {}, amount: {}, currency code: {}, owner type: {}, base account version: {}",
+                financialAccountId, transactionType, amount, currencyCode, ownerType, baseAccountVersion);
         var createFinancialAccountTransactionCommand = new CreateFinancialAccountTransaction(
                 financialAccountId,
                 amount,
                 currencyCode,
-                transactionType
+                transactionType,
+                ownerType,
+                baseAccountVersion
         );
         financialAccountCommandService.handle(createFinancialAccountTransactionCommand);
     }

@@ -3,6 +3,8 @@ package com.resolum.intiva.platform.finances.domain.model.commands;
 import com.resolum.intiva.platform.shared.domain.valueobjects.*;
 import jakarta.validation.Valid;
 
+import java.time.Instant;
+
 /**
  * RegisterTransactionCommand is a command object used to encapsulate the data required to register a new financial transaction in the system. It contains all the necessary information such as the amount, description, owner ID, financial account ID, actor user ID, transaction type, and category ID.
  * @param amount The monetary amount of the transaction, represented as a Money value object. This field is mandatory and must be a valid Money instance with a positive value.
@@ -21,5 +23,9 @@ public record RegisterTransactionCommand(
         @Valid UserId performedByUserId,
         TransactionTypes transactionType,
         @Valid CategoryId categoryId,
-        OwnerTypes ownerTypes) {
+        OwnerTypes ownerTypes,
+        String clientOperationId,
+        Long baseAccountVersion,
+        Instant occurredAt
+        ) {
 }

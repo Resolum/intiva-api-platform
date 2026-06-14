@@ -32,7 +32,8 @@ public class FinancialAccountResourceFromEntityAssembler {
                         ? wallet.getInstitution().getInstitutionName() : null,
                 entity instanceof CreditCardAccount credit
                         ? credit.getCreditLimit() : null,
-                entity.getIsActive()
+                entity.getIsActive(),
+                entity.getVersion()
         );
     }
 }

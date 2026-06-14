@@ -53,6 +53,11 @@ public class RegisteredTransactionDetectedEvent extends ApplicationEvent {
     private final String transactionType;
 
     /**
+     * Account version observed by the client when the operation was created offline.
+     */
+    private final Long baseAccountVersion;
+
+    /**
      * Creates a new transaction-detected event.
      *
      * @param source event source
@@ -64,7 +69,7 @@ public class RegisteredTransactionDetectedEvent extends ApplicationEvent {
      * @param amount transaction amount
      * @param currencyCode transaction currency code
      */
-    public RegisteredTransactionDetectedEvent(Object source, Long financialAccountId, Long ownerId, OwnerTypes ownerType, CategoryId categoryId, String transactionType, BigDecimal amount, String currencyCode) {
+    public RegisteredTransactionDetectedEvent(Object source, Long financialAccountId, Long ownerId, OwnerTypes ownerType, CategoryId categoryId, String transactionType, BigDecimal amount, String currencyCode, Long baseAccountVersion) {
         super(source);
         this.financialAccountId = financialAccountId;
         this.ownerId = ownerId;
@@ -73,5 +78,6 @@ public class RegisteredTransactionDetectedEvent extends ApplicationEvent {
         this.transactionType = transactionType;
         this.amount = amount;
         this.currencyCode = currencyCode;
+        this.baseAccountVersion = baseAccountVersion;
     }
 }
