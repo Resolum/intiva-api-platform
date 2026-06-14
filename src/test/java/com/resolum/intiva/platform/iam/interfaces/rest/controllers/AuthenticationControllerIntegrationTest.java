@@ -7,13 +7,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -41,19 +41,24 @@ public class AuthenticationControllerIntegrationTest {
     void signUpEndpoint_shouldCreateUser() throws Exception {
 
         // Arrange
-        var requestBody = """
-            {
-                "email": "test@email.com",
-                "password": "P@ssw0rd!"
-            }
-        """;
+        var avatarFile = new MockMultipartFile(
+                "avatarFile",
+                "avatar.png",
+                "image/png",
+                "fake-image-content".getBytes()
+        );
 
         // Act
-        mockMvc.perform(post("/api/v1/auth/sign-up")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
+        mockMvc.perform(multipart("/api/v1/authentication/sign-up")
+                        .file(avatarFile)
+                        .param("email", "test@email.com")
+                        .param("password", "P@ssw0rd!")
+                        .param("name", "John Doe")
+                        .param("age", "25")
+                        .param("phoneNumber", "+51987654321")
+                        .param("bio", "Software Engineer"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.username").value("test@email.com"))
+                .andExpect(jsonPath("$.email").value("test@email.com"))
                 .andExpect(jsonPath("$.id").isNotEmpty());
 
         // Assert

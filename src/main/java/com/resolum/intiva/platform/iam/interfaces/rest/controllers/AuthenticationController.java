@@ -20,10 +20,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 
 /**
  * AuthenticationController is a REST controller that handles authentication-related endpoints, such as user registration (sign-up). It defines the API endpoints for authentication operations and uses the UserCommandService to perform the necessary business logic for user registration.
@@ -52,13 +55,13 @@ public class AuthenticationController {
 
     /**
      * Endpoint to register a new user in the system. It accepts user registration details and creates a new user account if the provided information is valid.
-     * @param resource The SignUpResource object containing the user registration details (e.g., email and password) sent in the request body.
+     * @param resource The SignUpResource object containing the user registration details (e.g., email and password) sent as multipart/form-data.
      * @return A ResponseEntity containing the created UserResource if the registration is successful, or an appropriate error response if the registration fails (e.g., due to invalid input data or existing user).
      */
-    @PostMapping(value = "/sign-up", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/sign-up", consumes = MULTIPART_FORM_DATA_VALUE)
     @Operation(
             summary = "Register a new user",
-            description = "Endpoint to register a new user in the system. It accepts user registration details and creates a new user account if the provided information is valid."
+            description = "Endpoint to register a new user in the system. It accepts user registration details (multipart/form-data with optional avatar file) and creates a new user account if the provided information is valid."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -66,18 +69,7 @@ public class AuthenticationController {
                     description = "User created successfully.",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = UserResource.class),
-                            examples = @ExampleObject(
-                                    name = "Successful user sign up",
-                                    summary = "An example of a successful user registration",
-                                    value = """
-                                            {
-                                                "id": "23145535s12345",
-                                                "email": "test@gmail.com"
-                                            }
-                                            """,
-                                    description = "Response contains the user id and the username of the registered user."
-                            )
+                            schema = @Schema(implementation = UserResource.class)
                     )
             ),
             @ApiResponse(
@@ -90,39 +82,7 @@ public class AuthenticationController {
             )
     })
     public ResponseEntity<?> signUp(
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "Data required to register a new user.",
-                    required = true,
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = SignUpResource.class),
-                            examples = {
-                                    @ExampleObject(
-                                            name = "Good user registration",
-                                            summary = "A valid user registration example",
-                                            value = """
-                                                    {
-                                                        "email": "test@gmail.com",
-                                                        "password": "P@ssw0rd!"
-                                                    }
-                                                    """,
-                                            description = "A valid user registration example."
-                                    ),
-                                    @ExampleObject(
-                                            name = "Bad user registration",
-                                            summary = "An invalid user registration example",
-                                            value = """
-                                                    {
-                                                        "email": "hello_world",
-                                                        "password": "123456"
-                                                    }
-                                                    """,
-                                            description = "Username (email) has an invalid format and password does not meet security requirements."
-                                    )
-                            }
-                    )
-            )
-            @RequestBody SignUpResource resource
+            @ModelAttribute SignUpResource resource
     ) {
         try {
             var signUpCommand = SignUpCommandFromResourceAssembler.toCommandFromResource(resource);

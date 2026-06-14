@@ -9,11 +9,15 @@ import com.resolum.intiva.platform.iam.domain.model.commands.SignUpCommand;
 import com.resolum.intiva.platform.iam.domain.model.valueobjects.PasswordHash;
 import com.resolum.intiva.platform.iam.domain.services.UserCommandService;
 import com.resolum.intiva.platform.iam.infrastructure.persistence.jpa.repositories.UserRepository;
+import com.resolum.intiva.platform.profiles.infrastructure.persistence.jpa.repositories.ProfileRepository;
+import com.resolum.intiva.platform.shared.application.internal.outboundservices.filestorage.ImageService;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -35,11 +39,24 @@ public class UserCommandServiceImpl implements UserCommandService {
     // TokenService is used to generate authentication tokens for users after successful sign-up or login
     private final TokenService tokenService;
 
+    // ImageService for uploading avatar images
+    private final ImageService imageService;
+
+    // ProfileRepository for updating profile data with sign-up information
+    private final ProfileRepository profileRepository;
+
     // Constructor injection for dependencies
-    public UserCommandServiceImpl(UserRepository userRepository, HashingService hashingService, TokenService tokenService) {
+    public UserCommandServiceImpl(
+            UserRepository userRepository,
+            HashingService hashingService,
+            TokenService tokenService,
+            ImageService imageService,
+            ProfileRepository profileRepository) {
         this.userRepository = userRepository;
         this.hashingService = hashingService;
         this.tokenService = tokenService;
+        this.imageService = imageService;
+        this.profileRepository = profileRepository;
     }
 
     /**
@@ -64,11 +81,52 @@ public class UserCommandServiceImpl implements UserCommandService {
             var user = new User(command.email(), new PasswordHash(hashedPassword));
             userRepository.save(user);
 
-            LOGGER.info("User with email {} has been registered", email.getValue());
+            var savedUser = userRepository.findUserByEmail_Email(email.getValue());
+            if (savedUser.isEmpty()) {
+                LOGGER.error("User not found after save for email {}", email.getValue());
+                return Optional.empty();
+            }
 
+            var userId = savedUser.get().getId();
+
+            // Upload avatar if provided
+            String avatarUrl = null;
+            String avatarPublicId = null;
+            if (command.avatarFile() != null && !command.avatarFile().isEmpty()) {
+                try {
+                    Map<String, String> uploadResult = imageService.upload(
+                            command.avatarFile().getBytes(),
+                            command.avatarFile().getOriginalFilename());
+                    avatarUrl = uploadResult.get("url");
+                    avatarPublicId = uploadResult.get("publicId");
+                } catch (IOException e) {
+                    LOGGER.error("Failed to read avatar file for user {}: {}", email.getValue(), e.getMessage());
+                }
+            }
+
+            // Update profile with sign-up data
+            var profileOpt = profileRepository.findByUserId_UserId(userId);
+            if (profileOpt.isPresent()) {
+                var profile = profileOpt.get();
+                profile.updatePersonalInfo(
+                        command.name(),
+                        command.bio(),
+                        command.phoneNumber(),
+                        command.age()
+                );
+                if (avatarUrl != null) {
+                    profile.updateAvatar(avatarUrl, avatarPublicId);
+                }
+                profileRepository.save(profile);
+                LOGGER.info("Profile updated for userId={} with sign-up data", userId);
+            } else {
+                LOGGER.warn("Profile not found for userId={} after sign-up", userId);
+            }
+
+            LOGGER.info("User with email {} has been registered", email.getValue());
             LOGGER.info("User with email {} has signed-up", email.getValue());
 
-            return userRepository.findUserByEmail_Email(email.getValue());
+            return savedUser;
         } catch (Exception e) {
             LOGGER.error("Error occurred while signing up user with email {}: {}", command.email(), e.getMessage());
             return Optional.empty();

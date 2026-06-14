@@ -15,11 +15,16 @@ public class SignUpCommandFromResourceAssembler {
      * @return the converted SignUpCommand
      */
     public static SignUpCommand toCommandFromResource(SignUpResource resource) {
-        var username = new Email(resource.email());
+        var username = new Email(resource.getEmail());
 
         return new SignUpCommand(
                 username,
-                resource.password()
+                resource.getPassword(),
+                resource.getName(),
+                resource.getAge(),
+                resource.getPhoneNumber(),
+                resource.getBio(),
+                resource.getAvatarFile()
         );
     }
 }
