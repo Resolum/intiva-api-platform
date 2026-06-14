@@ -89,7 +89,9 @@ public class InvitationCommandServiceImpl implements InvitationCommandService {
         var invitation = invitationRepository.findById(command.invitationId())
                 .orElseThrow(() -> new ResourceNotFoundException("Invitation not found with id: " + command.invitationId()));
 
-        if (!invitation.getUserInvitedId().equals(command.userId())) {
+        if (invitation.getUserInvitedId() == null) {
+            invitation.setUserInvitedId(command.userId());
+        } else if (!invitation.getUserInvitedId().equals(command.userId())) {
             throw new UnauthorizedException("User is not the invited user for this invitation");
         }
 
@@ -224,6 +226,7 @@ public class InvitationCommandServiceImpl implements InvitationCommandService {
                 + "&inviter=" + inviterMember.getUserId().getValue();
 
         var invitation = new Invitation(expiresAt, command.inviterId(), command.familyId(), inviteUrl);
+        invitation.setToken(token);
         var savedInvitation = invitationRepository.save(invitation);
 
         var cacheEntity = new InvitationLinkCacheEntity(
