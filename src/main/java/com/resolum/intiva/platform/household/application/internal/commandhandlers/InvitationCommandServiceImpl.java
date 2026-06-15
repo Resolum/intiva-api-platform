@@ -1,6 +1,5 @@
 package com.resolum.intiva.platform.household.application.internal.commandhandlers;
 
-import com.resolum.intiva.platform.communications.interfaces.acl.CommunicationsContextFacade;
 import com.resolum.intiva.platform.household.application.internal.InvitationLinkResult;
 import com.resolum.intiva.platform.household.domain.exceptions.InvitationAlreadyPendingException;
 import com.resolum.intiva.platform.household.domain.exceptions.ResourceNotFoundException;
@@ -43,7 +42,6 @@ public class InvitationCommandServiceImpl implements InvitationCommandService {
     private final FamilyMemberRepository familyMemberRepository;
     private final FamilyRepository familyRepository;
     private final DeferredDeepLinkRepository deferredDeepLinkRepository;
-    private final CommunicationsContextFacade communicationsContextFacade;
     private final InvitationLinkCacheRepository invitationLinkCacheRepository;
 
     @Value("${app.invitation.base-url}")
@@ -56,20 +54,17 @@ public class InvitationCommandServiceImpl implements InvitationCommandService {
      * @param familyMemberRepository          the family member repository
      * @param familyRepository                the family repository
      * @param deferredDeepLinkRepository      the deferred deep link repository
-     * @param communicationsContextFacade     the communications context facade for push notifications
      * @param invitationLinkCacheRepository   the Redis cache repository for invitation links
      */
     public InvitationCommandServiceImpl(InvitationRepository invitationRepository,
                                         FamilyMemberRepository familyMemberRepository,
                                         FamilyRepository familyRepository,
                                         DeferredDeepLinkRepository deferredDeepLinkRepository,
-                                        CommunicationsContextFacade communicationsContextFacade,
                                         InvitationLinkCacheRepository invitationLinkCacheRepository) {
         this.invitationRepository = invitationRepository;
         this.familyMemberRepository = familyMemberRepository;
         this.familyRepository = familyRepository;
         this.deferredDeepLinkRepository = deferredDeepLinkRepository;
-        this.communicationsContextFacade = communicationsContextFacade;
         this.invitationLinkCacheRepository = invitationLinkCacheRepository;
     }
 
@@ -107,7 +102,7 @@ public class InvitationCommandServiceImpl implements InvitationCommandService {
     }
 
     /**
-     * Rejects a pending invitation by token and sends a push notification to the inviter.
+     * Rejects a pending invitation by token. Notification side effects are handled by domain event listeners.
      *
      * @param command the reject invitation command containing the token and optional rejector ID
      * @throws ResourceNotFoundException      if the invitation does not exist
@@ -130,29 +125,10 @@ public class InvitationCommandServiceImpl implements InvitationCommandService {
             throw new InvitationAlreadyPendingException("Invitation is not pending for token: " + command.token());
         }
 
-        invitation.rejects();
+        invitation.rejects(command.rejectorId(), command.rejectorName());
         invitationRepository.save(invitation);
 
-        var inviterUserId = invitation.getInvitedBy().getValue();
-        var rejectorName = command.rejectorName();
-
-        var familyName = familyRepository.findById(invitation.getInvitedForFamily())
-                .map(Family::getName)
-                .orElse("el grupo");
-
-        var messageBody = rejectorName + " rechazó tu invitación al grupo " + familyName;
-
-        communicationsContextFacade.sendPushNotificationToUser(
-                inviterUserId,
-                "INVITATION_REJECTED",
-                "FAMILY_GROUP",
-                invitation.getInvitedForFamily(),
-                "Invitación rechazada",
-                messageBody
-        );
-
-        log.info("Invitation {} rejected by user {} and push notification sent to inviter {}",
-                invitation.getId(), command.rejectorId(), inviterUserId);
+        log.info("Invitation {} rejected by user {}", invitation.getId(), command.rejectorId());
     }
 
     @Override

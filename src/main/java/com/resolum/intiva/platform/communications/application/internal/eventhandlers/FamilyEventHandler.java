@@ -8,6 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 @Service
 public class FamilyEventHandler {
@@ -47,7 +49,7 @@ public class FamilyEventHandler {
                 });
     }
 
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void on(FamilyInvitationSentEvent event) {
         LOGGER.info("Handling FamilyInvitationSentEvent: familyId={}, invitedUserId={}, invitedByUserId={}",
                 event.getFamilyId(), event.getInvitedUserId(), event.getInvitedByUserId());
@@ -66,6 +68,15 @@ public class FamilyEventHandler {
                 "Has sido invitado a un grupo familiar."
         );
 
-        LOGGER.info("Invitation notification sent to userId={}", event.getInvitedUserId());
+        communicationsContextFacade.sendPushNotificationToUser(
+                event.getInvitedUserId(),
+                "FAMILY_GROUP_INVITATION",
+                "FAMILY_GROUP",
+                event.getFamilyId(),
+                "Tienes una invitación a un grupo familiar",
+                "Has sido invitado a un grupo familiar."
+        );
+
+        LOGGER.info("Invitation in-app and push notifications sent to userId={}", event.getInvitedUserId());
     }
 }
