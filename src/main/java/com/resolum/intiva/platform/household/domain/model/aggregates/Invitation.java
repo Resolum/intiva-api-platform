@@ -2,6 +2,7 @@ package com.resolum.intiva.platform.household.domain.model.aggregates;
 
 import com.resolum.intiva.platform.household.domain.model.events.FamilyInvitationSentEvent;
 import com.resolum.intiva.platform.household.domain.model.events.InvitationAcceptedEvent;
+import com.resolum.intiva.platform.household.domain.model.events.InvitationRejectedEvent;
 import com.resolum.intiva.platform.household.domain.model.valueobjects.InvitationSource;
 import com.resolum.intiva.platform.household.domain.model.valueobjects.InvitationStatus;
 import com.resolum.intiva.platform.shared.domain.aggregates.AuditableAbstractAggregate;
@@ -9,6 +10,7 @@ import com.resolum.intiva.platform.shared.domain.valueobjects.UserId;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -27,17 +29,14 @@ public class Invitation extends AuditableAbstractAggregate<Invitation> {
 
     /**
      * Unique token that identifies this invitation (used for link/QR sharing).
+     * -- SETTER --
+     *  Sets the token for this invitation.
+     *  Used by LINK invitations to ensure the JPA token matches the URL token.
+
      */
+    @Setter
     @Column(nullable = false, unique = true)
     private String token;
-
-    /**
-     * Sets the token for this invitation.
-     * Used by LINK invitations to ensure the JPA token matches the URL token.
-     */
-    public void setToken(String token) {
-        this.token = token;
-    }
 
     /**
      * Current status of the invitation.
@@ -79,18 +78,15 @@ public class Invitation extends AuditableAbstractAggregate<Invitation> {
 
     /**
      * The user who is being invited.
+     * -- SETTER --
+     *  Sets the invited user for this invitation.
+     *  Used by LINK invitations when a user claims the invitation link.
+
      */
+    @Setter
     @Embedded
     @AttributeOverride(name = "userId", column = @Column(name = "user_invited_id", nullable = true))
     private UserId userInvitedId;
-
-    /**
-     * Sets the invited user for this invitation.
-     * Used by LINK invitations when a user claims the invitation link.
-     */
-    public void setUserInvitedId(UserId userInvitedId) {
-        this.userInvitedId = userInvitedId;
-    }
 
     /**
      * Public URL of the invitation link. Only set when source is LINK or QR.
@@ -173,6 +169,17 @@ public class Invitation extends AuditableAbstractAggregate<Invitation> {
      * @throws IllegalStateException if the invitation has already been responded to or has expired
      */
     public void rejects() {
+        rejects(null, null);
+    }
+
+    /**
+     * Rejects the invitation and registers an {@link InvitationRejectedEvent}.
+     *
+     * @param rejectorId   the user who rejected the invitation, if known
+     * @param rejectorName display name of the rejector, if known
+     * @throws IllegalStateException if the invitation has already been responded to or has expired
+     */
+    public void rejects(Long rejectorId, String rejectorName) {
         if (!isPending()) {
             throw new IllegalStateException("Invitation has already been responded");
         }
@@ -181,6 +188,14 @@ public class Invitation extends AuditableAbstractAggregate<Invitation> {
         }
         this.status = InvitationStatus.REJECTED;
         this.respondedAt = LocalDateTime.now();
+        registerEvent(new InvitationRejectedEvent(
+                this,
+                this.getId(),
+                this.invitedForFamily,
+                this.invitedBy.getValue(),
+                rejectorId,
+                rejectorName
+        ));
     }
 
     /**
