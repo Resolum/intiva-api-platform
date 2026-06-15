@@ -1,4 +1,4 @@
-package com.resolum.intiva.platform.iam.application.internal.outboundservices;
+package com.resolum.intiva.platform.iam.application.internal.outboundservices.token;
 
 /**
  * Service interface for handling token generation, extraction, and validation.

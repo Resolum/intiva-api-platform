@@ -1,7 +1,7 @@
-package com.resolum.intiva.platform.iam.interfaces.rest.assemblers;
+package com.resolum.intiva.platform.profiles.interfaces.rest.assemblers;
 
-import com.resolum.intiva.platform.iam.domain.model.commands.AdvanceTutorialStepCommand;
-import com.resolum.intiva.platform.iam.interfaces.rest.resources.requests.AdvanceOnboardingProcessResource;
+import com.resolum.intiva.platform.profiles.domain.model.commands.AdvanceTutorialStepCommand;
+import com.resolum.intiva.platform.profiles.interfaces.rest.resources.requests.AdvanceOnboardingProcessResource;
 
 /**
  * Assembler class to convert AdvanceOnboardingProcessResource to AdvanceTutorialStepCommand.

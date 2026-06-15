@@ -1,9 +1,9 @@
-package com.resolum.intiva.platform.iam.application.internal.queryhandlers;
+package com.resolum.intiva.platform.profiles.application.internal.queryservices;
 
-import com.resolum.intiva.platform.iam.domain.model.aggregates.Onboarding;
-import com.resolum.intiva.platform.iam.domain.model.queries.GetOnboardingStatusQuery;
-import com.resolum.intiva.platform.iam.domain.services.OnboardingQueryService;
-import com.resolum.intiva.platform.iam.infrastructure.persistence.jpa.repositories.OnboardingRepository;
+import com.resolum.intiva.platform.profiles.domain.model.aggregates.Onboarding;
+import com.resolum.intiva.platform.profiles.domain.model.queries.GetOnboardingStatusQuery;
+import com.resolum.intiva.platform.profiles.domain.model.services.OnboardingQueryService;
+import com.resolum.intiva.platform.profiles.infrastructure.persistence.jpa.repositories.OnboardingRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -32,6 +32,6 @@ public class OnboardingQueryServiceImpl implements OnboardingQueryService {
      */
     @Override
     public Optional<Onboarding> handle(GetOnboardingStatusQuery query) {
-        return onboardingRepository.findById(query.userId());
+        return onboardingRepository.findByUserId(query.userId());
     }
 }

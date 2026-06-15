@@ -1,6 +1,6 @@
-package com.resolum.intiva.platform.iam.infrastructure.persistence.jpa.repositories;
+package com.resolum.intiva.platform.profiles.infrastructure.persistence.jpa.repositories;
 
-import com.resolum.intiva.platform.iam.domain.model.aggregates.Onboarding;
+import com.resolum.intiva.platform.profiles.domain.model.aggregates.Onboarding;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

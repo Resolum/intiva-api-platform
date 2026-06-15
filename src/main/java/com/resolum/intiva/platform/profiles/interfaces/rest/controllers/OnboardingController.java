@@ -1,14 +1,16 @@
-package com.resolum.intiva.platform.iam.interfaces.rest.controllers;
+package com.resolum.intiva.platform.profiles.interfaces.rest.controllers;
 
-import com.resolum.intiva.platform.iam.domain.model.queries.GetOnboardingStatusQuery;
-import com.resolum.intiva.platform.iam.domain.services.OnboardingCommandService;
-import com.resolum.intiva.platform.iam.domain.services.OnboardingQueryService;
-import com.resolum.intiva.platform.iam.interfaces.rest.assemblers.AdvanceTutorialStepCommandFromResourceAssembler;
-import com.resolum.intiva.platform.iam.interfaces.rest.assemblers.OnboardingStatusResourceFromEntityAssembler;
-import com.resolum.intiva.platform.iam.interfaces.rest.assemblers.RollbackOnboardingResourceFromEntityAssembler;
-import com.resolum.intiva.platform.iam.interfaces.rest.resources.requests.AdvanceOnboardingProcessResource;
-import com.resolum.intiva.platform.iam.interfaces.rest.resources.requests.RollbackOnboardingResource;
-import com.resolum.intiva.platform.iam.interfaces.rest.resources.responses.OnboardingStatusResource;
+import com.resolum.intiva.platform.profiles.domain.model.queries.GetOnboardingStatusQuery;
+import com.resolum.intiva.platform.profiles.domain.model.commands.SkipOnboardingCommand;
+import com.resolum.intiva.platform.profiles.domain.model.services.OnboardingCommandService;
+import com.resolum.intiva.platform.profiles.domain.model.services.OnboardingQueryService;
+import com.resolum.intiva.platform.profiles.interfaces.rest.assemblers.AdvanceTutorialStepCommandFromResourceAssembler;
+import com.resolum.intiva.platform.profiles.interfaces.rest.assemblers.OnboardingStatusResourceFromEntityAssembler;
+import com.resolum.intiva.platform.profiles.interfaces.rest.assemblers.RollbackOnboardingResourceFromEntityAssembler;
+import com.resolum.intiva.platform.profiles.interfaces.rest.resources.requests.AdvanceOnboardingProcessResource;
+import com.resolum.intiva.platform.profiles.interfaces.rest.resources.requests.RollbackOnboardingResource;
+import com.resolum.intiva.platform.profiles.interfaces.rest.resources.requests.SkipOnboardingResource;
+import com.resolum.intiva.platform.profiles.interfaces.rest.resources.responses.OnboardingStatusResource;
 import com.resolum.intiva.platform.shared.interfaces.rest.resource.MessageResource;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -124,6 +126,32 @@ public class OnboardingController {
         return ResponseEntity.status(HttpStatus.OK).body(
                 new MessageResource(
                         "Onboarding process rolled back successfully"
+                )
+        );
+    }
+
+    /**
+     * Endpoint to skip the onboarding process for a user.
+     *
+     * @param resource the resource containing the user ID for which to skip onboarding
+     * @return a response entity with a success message if the onboarding process was skipped successfully
+     */
+    @PatchMapping("/skips")
+    @Operation(
+            summary = "Skip onboarding process",
+            description = "Endpoint to skip the onboarding process for a user. This will mark onboarding as completed."
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Onboarding process skipped successfully"
+    )
+    public ResponseEntity<?> skipOnboarding(
+            @RequestBody SkipOnboardingResource resource
+    ) {
+        onboardingCommandService.handle(new SkipOnboardingCommand(resource.userId()));
+        return ResponseEntity.status(HttpStatus.OK).body(
+                new MessageResource(
+                        "Onboarding process skipped successfully"
                 )
         );
     }

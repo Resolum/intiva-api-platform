@@ -1,4 +1,4 @@
-package com.resolum.intiva.platform.iam.domain.model.commands;
+package com.resolum.intiva.platform.profiles.domain.model.commands;
 
 /**
  * Command to advance the user to the next step of the tutorial.

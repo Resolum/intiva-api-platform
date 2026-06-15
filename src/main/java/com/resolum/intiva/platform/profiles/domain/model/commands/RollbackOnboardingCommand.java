@@ -1,4 +1,4 @@
-package com.resolum.intiva.platform.iam.domain.model.commands;
+package com.resolum.intiva.platform.profiles.domain.model.commands;
 
 /**
  * Command to roll back the onboarding process for a user.
