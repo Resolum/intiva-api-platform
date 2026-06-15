@@ -1,4 +1,4 @@
-package com.resolum.intiva.platform.iam.application.internal.outboundservices;
+package com.resolum.intiva.platform.iam.application.internal.outboundservices.hashing;
 
 /**
  * HashingService is an interface that defines methods for encoding passwords and matching raw passwords with encoded passwords.

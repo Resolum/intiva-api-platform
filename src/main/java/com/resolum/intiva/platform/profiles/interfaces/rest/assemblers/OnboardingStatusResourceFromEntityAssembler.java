@@ -1,7 +1,7 @@
-package com.resolum.intiva.platform.iam.interfaces.rest.assemblers;
+package com.resolum.intiva.platform.profiles.interfaces.rest.assemblers;
 
-import com.resolum.intiva.platform.iam.domain.model.aggregates.Onboarding;
-import com.resolum.intiva.platform.iam.interfaces.rest.resources.responses.OnboardingStatusResource;
+import com.resolum.intiva.platform.profiles.domain.model.aggregates.Onboarding;
+import com.resolum.intiva.platform.profiles.interfaces.rest.resources.responses.OnboardingStatusResource;
 
 import java.time.ZoneId;
 

@@ -1,6 +1,6 @@
 package com.resolum.intiva.platform.iam.infrastructure.hashing.bcrypt;
 
-import com.resolum.intiva.platform.iam.application.internal.outboundservices.HashingService;
+import com.resolum.intiva.platform.iam.application.internal.outboundservices.hashing.HashingService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**

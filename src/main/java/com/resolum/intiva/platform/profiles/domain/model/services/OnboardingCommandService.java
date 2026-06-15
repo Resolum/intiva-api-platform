@@ -1,8 +1,9 @@
-package com.resolum.intiva.platform.iam.domain.services;
+package com.resolum.intiva.platform.profiles.domain.model.services;
 
-import com.resolum.intiva.platform.iam.domain.model.commands.AdvanceTutorialStepCommand;
-import com.resolum.intiva.platform.iam.domain.model.commands.CreateUserOnboardingCommand;
-import com.resolum.intiva.platform.iam.domain.model.commands.RollbackOnboardingCommand;
+import com.resolum.intiva.platform.profiles.domain.model.commands.AdvanceTutorialStepCommand;
+import com.resolum.intiva.platform.profiles.domain.model.commands.CreateUserOnboardingCommand;
+import com.resolum.intiva.platform.profiles.domain.model.commands.RollbackOnboardingCommand;
+import com.resolum.intiva.platform.profiles.domain.model.commands.SkipOnboardingCommand;
 
 /**
  * Service interface for handling onboarding-related commands.
@@ -29,4 +30,11 @@ public interface OnboardingCommandService {
      * @param command the command containing the necessary information to rollback the onboarding process
      */
     void handle(RollbackOnboardingCommand command);
+
+    /**
+     * Handles the command to skip the onboarding process.
+     *
+     * @param command the command containing the user ID whose onboarding should be completed
+     */
+    void handle(SkipOnboardingCommand command);
 }

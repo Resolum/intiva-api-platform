@@ -1,7 +1,7 @@
 package com.resolum.intiva.platform.iam.application.internal.commandhandlers;
 
-import com.resolum.intiva.platform.iam.application.internal.outboundservices.HashingService;
-import com.resolum.intiva.platform.iam.application.internal.outboundservices.TokenService;
+import com.resolum.intiva.platform.iam.application.internal.outboundservices.hashing.HashingService;
+import com.resolum.intiva.platform.iam.application.internal.outboundservices.token.TokenService;
 import com.resolum.intiva.platform.iam.domain.model.exceptions.UserWithEmailAlreadyExits;
 import com.resolum.intiva.platform.iam.domain.model.aggregates.User;
 import com.resolum.intiva.platform.iam.domain.model.commands.SignInCommand;
