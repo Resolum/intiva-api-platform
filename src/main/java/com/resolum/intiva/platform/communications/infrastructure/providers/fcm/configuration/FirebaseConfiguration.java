@@ -7,10 +7,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Base64;
 
 @Configuration
 public class FirebaseConfiguration {
@@ -20,6 +23,9 @@ public class FirebaseConfiguration {
 
     @Value("${firebase.credentials.path:}")
     private String credentialsPath;
+
+    @Value("${firebase.credentials.base64:}")
+    private String credentialsBase64;
 
     @Value("${integrations.fcm.enabled:false}")
     private boolean enabled;
@@ -35,10 +41,8 @@ public class FirebaseConfiguration {
             throw new IllegalStateException("FirebaseApp should not be created when FCM integration is disabled.");
         }
 
-        validateCredentialsPath(settings.credentialsPath());
-
         if (FirebaseApp.getApps().isEmpty()) {
-            try (var serviceAccount = new FileInputStream(settings.credentialsPath())) {
+            try (InputStream serviceAccount = resolveCredentials()) {
                 var options = FirebaseOptions.builder()
                         .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                         .setProjectId(settings.projectId())
@@ -51,14 +55,30 @@ public class FirebaseConfiguration {
     }
 
     /**
-     * Validates that the configured Firebase credentials path points to one concrete existing file.
-     *
-     * @param credentialsPath configured credentials path
+     * Resuelve las credenciales desde Base64 (Azure) o desde archivo (local).
+     * Prioridad: Base64 > archivo físico.
      */
-    private void validateCredentialsPath(String credentialsPath) {
-        if (credentialsPath == null || credentialsPath.isBlank()) {
-            throw new IllegalStateException("firebase.credentials.path is required when integrations.fcm.enabled=true.");
+    private InputStream resolveCredentials() throws IOException {
+        if (credentialsBase64 != null && !credentialsBase64.isBlank()) {
+            try {
+                byte[] decoded = Base64.getDecoder().decode(credentialsBase64);
+                return new ByteArrayInputStream(decoded);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalStateException("firebase.credentials.base64 is not valid Base64.", e);
+            }
         }
+        if (credentialsPath != null && !credentialsPath.isBlank()) {
+            validateCredentialsPath(credentialsPath);
+            return new FileInputStream(credentialsPath);
+        }
+
+        throw new IllegalStateException(
+                "Firebase credentials not configured. " +
+                        "Set firebase.credentials.base64 (Azure) or firebase.credentials.path (local)."
+        );
+    }
+
+    private void validateCredentialsPath(String credentialsPath) {
         if (credentialsPath.contains("*") || credentialsPath.contains("?")) {
             throw new IllegalStateException(
                     "firebase.credentials.path must point to one concrete JSON file. Wildcards are not supported: " + credentialsPath
