@@ -1,6 +1,6 @@
-package com.resolum.intiva.platform.iam.domain.model.aggregates;
+package com.resolum.intiva.platform.profiles.domain.model.aggregates;
 
-import com.resolum.intiva.platform.iam.domain.model.valueobjects.FirstTransactionTutorialStep;
+import com.resolum.intiva.platform.profiles.domain.model.valueobjects.FirstTransactionTutorialStep;
 import com.resolum.intiva.platform.shared.domain.aggregates.AuditableAbstractAggregate;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -40,7 +40,7 @@ public class Onboarding extends AuditableAbstractAggregate<Onboarding> {
      */
     public Onboarding(Long ownerId) {
         this.userId = ownerId;
-        this.currentStep = FirstTransactionTutorialStep.OPEN_CREATE_TRANSACTION;
+        this.currentStep = FirstTransactionTutorialStep.PRESENTATION;
         this.onboardingCompleted = false;
     }
 
@@ -57,6 +57,10 @@ public class Onboarding extends AuditableAbstractAggregate<Onboarding> {
 
         switch (this.currentStep) {
 
+            case PRESENTATION ->
+                    this.currentStep =
+                            FirstTransactionTutorialStep.OPEN_CREATE_TRANSACTION;
+
             case OPEN_CREATE_TRANSACTION ->
                     this.currentStep =
                             FirstTransactionTutorialStep.SELECT_CATEGORY;
@@ -70,7 +74,19 @@ public class Onboarding extends AuditableAbstractAggregate<Onboarding> {
                 this.onboardingCompleted = true;
                 this.completedAt = Instant.now();
             }
+
+            case COMPLETED ->
+                    throw new IllegalStateException("Onboarding already completed");
         }
+    }
+
+    /**
+     * Completes the onboarding tutorial without walking through every step.
+     */
+    public void skipTutorial() {
+        this.currentStep = FirstTransactionTutorialStep.COMPLETED;
+        this.onboardingCompleted = true;
+        this.completedAt = Instant.now();
     }
 
     /**
@@ -96,7 +112,14 @@ public class Onboarding extends AuditableAbstractAggregate<Onboarding> {
                             FirstTransactionTutorialStep.OPEN_CREATE_TRANSACTION;
 
             case OPEN_CREATE_TRANSACTION ->
-                    throw new IllegalStateException("Cannot rollback from the first step");
+                    this.currentStep =
+                            FirstTransactionTutorialStep.PRESENTATION;
+
+            case PRESENTATION ->
+                    throw new IllegalStateException("Cannot rollback from the presentation step");
+
+            case COMPLETED ->
+                    throw new IllegalStateException("Cannot rollback a completed onboarding");
         }
     }
 }

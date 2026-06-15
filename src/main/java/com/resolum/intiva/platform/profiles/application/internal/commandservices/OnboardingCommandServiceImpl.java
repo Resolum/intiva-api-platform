@@ -1,11 +1,12 @@
-package com.resolum.intiva.platform.iam.application.internal.commandhandlers;
+package com.resolum.intiva.platform.profiles.application.internal.commandservices;
 
-import com.resolum.intiva.platform.iam.domain.model.aggregates.Onboarding;
-import com.resolum.intiva.platform.iam.domain.model.commands.AdvanceTutorialStepCommand;
-import com.resolum.intiva.platform.iam.domain.model.commands.CreateUserOnboardingCommand;
-import com.resolum.intiva.platform.iam.domain.model.commands.RollbackOnboardingCommand;
-import com.resolum.intiva.platform.iam.domain.services.OnboardingCommandService;
-import com.resolum.intiva.platform.iam.infrastructure.persistence.jpa.repositories.OnboardingRepository;
+import com.resolum.intiva.platform.profiles.domain.model.aggregates.Onboarding;
+import com.resolum.intiva.platform.profiles.domain.model.commands.AdvanceTutorialStepCommand;
+import com.resolum.intiva.platform.profiles.domain.model.commands.CreateUserOnboardingCommand;
+import com.resolum.intiva.platform.profiles.domain.model.commands.RollbackOnboardingCommand;
+import com.resolum.intiva.platform.profiles.domain.model.commands.SkipOnboardingCommand;
+import com.resolum.intiva.platform.profiles.domain.model.services.OnboardingCommandService;
+import com.resolum.intiva.platform.profiles.infrastructure.persistence.jpa.repositories.OnboardingRepository;
 import org.springframework.stereotype.Service;
 
 /**
@@ -57,6 +58,18 @@ public class OnboardingCommandServiceImpl implements OnboardingCommandService {
     public void handle(RollbackOnboardingCommand command) {
         var onboarding = onboardingRepository.findByUserId(command.userId()).orElseThrow();
         onboarding.rollbackTutorialStep();
+        onboardingRepository.save(onboarding);
+    }
+
+    /**
+     * Handles the SkipOnboardingCommand by marking onboarding as completed.
+     *
+     * @param command the command containing the user ID whose onboarding should be skipped
+     */
+    @Override
+    public void handle(SkipOnboardingCommand command) {
+        var onboarding = onboardingRepository.findByUserId(command.userId()).orElseThrow();
+        onboarding.skipTutorial();
         onboardingRepository.save(onboarding);
     }
 }

@@ -1,6 +1,8 @@
 package com.resolum.intiva.platform.profiles.application.acl.services;
 
+import com.resolum.intiva.platform.profiles.domain.model.commands.CreateUserOnboardingCommand;
 import com.resolum.intiva.platform.profiles.domain.model.queries.GetProfileByUserIdQuery;
+import com.resolum.intiva.platform.profiles.domain.model.services.OnboardingCommandService;
 import com.resolum.intiva.platform.profiles.domain.model.services.ProfileQueryService;
 import com.resolum.intiva.platform.profiles.interfaces.acl.ProfilesContextFacade;
 import lombok.extern.slf4j.Slf4j;
@@ -18,9 +20,14 @@ import org.springframework.stereotype.Service;
 public class ProfilesContextFacadeImpl implements ProfilesContextFacade {
 
     private final ProfileQueryService profileQueryService;
+    private final OnboardingCommandService onboardingCommandService;
 
-    public ProfilesContextFacadeImpl(ProfileQueryService profileQueryService) {
+    public ProfilesContextFacadeImpl(
+            ProfileQueryService profileQueryService,
+            OnboardingCommandService onboardingCommandService
+    ) {
         this.profileQueryService = profileQueryService;
+        this.onboardingCommandService = onboardingCommandService;
     }
 
     /**
@@ -38,5 +45,14 @@ public class ProfilesContextFacadeImpl implements ProfilesContextFacade {
             log.warn("Profile name not found for userId={}", userId);
         }
         return name;
+    }
+
+    /**
+     * Creates the onboarding tutorial state for a newly registered user.
+     */
+    @Override
+    public void createUserOnboarding(Long userId) {
+        log.info("Creating onboarding for userId={} through Profiles ACL", userId);
+        onboardingCommandService.handle(new CreateUserOnboardingCommand(userId));
     }
 }

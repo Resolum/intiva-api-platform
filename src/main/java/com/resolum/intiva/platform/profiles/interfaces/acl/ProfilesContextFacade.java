@@ -15,4 +15,11 @@ public interface ProfilesContextFacade {
      * @return the profile display name, or an empty string if no profile was found
      */
     String getProfileName(Long userId);
+
+    /**
+     * Creates the onboarding tutorial state for a newly registered user.
+     *
+     * @param userId the identifier of the user whose onboarding should be initialized
+     */
+    void createUserOnboarding(Long userId);
 }

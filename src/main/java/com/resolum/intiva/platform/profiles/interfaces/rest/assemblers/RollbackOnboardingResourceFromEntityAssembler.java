@@ -1,7 +1,7 @@
-package com.resolum.intiva.platform.iam.interfaces.rest.assemblers;
+package com.resolum.intiva.platform.profiles.interfaces.rest.assemblers;
 
-import com.resolum.intiva.platform.iam.domain.model.commands.RollbackOnboardingCommand;
-import com.resolum.intiva.platform.iam.interfaces.rest.resources.requests.RollbackOnboardingResource;
+import com.resolum.intiva.platform.profiles.domain.model.commands.RollbackOnboardingCommand;
+import com.resolum.intiva.platform.profiles.interfaces.rest.resources.requests.RollbackOnboardingResource;
 
 /**
  * Assembler class to convert RollbackOnboardingResource to RollbackOnboardingCommand.

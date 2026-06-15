@@ -1,4 +1,4 @@
-package com.resolum.intiva.platform.iam.domain.model.commands;
+package com.resolum.intiva.platform.profiles.domain.model.commands;
 
 /**
  * Command to create a user onboarding for a user.

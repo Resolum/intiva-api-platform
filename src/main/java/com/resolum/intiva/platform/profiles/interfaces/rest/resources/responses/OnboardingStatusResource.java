@@ -1,4 +1,4 @@
-package com.resolum.intiva.platform.iam.interfaces.rest.resources.responses;
+package com.resolum.intiva.platform.profiles.interfaces.rest.resources.responses;
 
 /**
  * Resource representing the onboarding status of a user.

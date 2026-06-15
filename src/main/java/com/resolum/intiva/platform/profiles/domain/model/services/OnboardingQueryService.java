@@ -1,7 +1,7 @@
-package com.resolum.intiva.platform.iam.domain.services;
+package com.resolum.intiva.platform.profiles.domain.model.services;
 
-import com.resolum.intiva.platform.iam.domain.model.aggregates.Onboarding;
-import com.resolum.intiva.platform.iam.domain.model.queries.GetOnboardingStatusQuery;
+import com.resolum.intiva.platform.profiles.domain.model.aggregates.Onboarding;
+import com.resolum.intiva.platform.profiles.domain.model.queries.GetOnboardingStatusQuery;
 
 import java.util.Optional;
 

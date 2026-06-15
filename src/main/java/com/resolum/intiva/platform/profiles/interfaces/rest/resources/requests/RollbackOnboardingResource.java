@@ -1,4 +1,4 @@
-package com.resolum.intiva.platform.iam.interfaces.rest.resources.requests;
+package com.resolum.intiva.platform.profiles.interfaces.rest.resources.requests;
 
 /**
  * RollbackOnboardingResource is a record that represents the request body for rolling back a user's onboarding process.

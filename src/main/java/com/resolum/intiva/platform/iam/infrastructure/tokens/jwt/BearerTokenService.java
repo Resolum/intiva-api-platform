@@ -1,6 +1,6 @@
 package com.resolum.intiva.platform.iam.infrastructure.tokens.jwt;
 
-import com.resolum.intiva.platform.iam.application.internal.outboundservices.TokenService;
+import com.resolum.intiva.platform.iam.application.internal.outboundservices.token.TokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.Authentication;
 
