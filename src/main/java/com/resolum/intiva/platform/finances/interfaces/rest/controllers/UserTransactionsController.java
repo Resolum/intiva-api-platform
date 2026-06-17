@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping(value = "/api/v1/users", produces = MediaType.APPLICATION_JSON_VALUE)
 @Tag(name = "Users", description = "Endpoints related to user transactions management")
+@Slf4j
 public class UserTransactionsController {
 
     /**
@@ -70,12 +72,16 @@ public class UserTransactionsController {
                 - Currency code validity
                 - Available balance for expenses
                 - Owner type validity
+                - Required Idempotency-Key header or clientOperationId body value for safe retries
 
                 When transactionType is EXPENSE, the finances context also consumes active spending limits that match:
                 - Same ownerId and ownerType
                 - Same categoryId for CATEGORY limits
                 - Same financialAccountId for FINANCIAL_ACCOUNT limits
                 - Same currency and active period
+
+                Repeating the same request with the same Idempotency-Key returns the previously registered transaction
+                without applying balance or spending-limit effects again.
                 
                 If the request is valid, the transaction is stored successfully.
                 """
@@ -145,10 +151,36 @@ public class UserTransactionsController {
                     )
             )
             @RequestBody RegisterTransactionResource resource,
-            @PathVariable Long userId
+            @PathVariable Long userId,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey
     ) {
         try {
-            var registerTransactionCommand = RegisterTransactionCommandFromResourceAssembler.toCommandFromResource(resource, userId);
+            if ((idempotencyKey == null || idempotencyKey.isBlank())
+                    && (resource.clientOperationId() == null || resource.clientOperationId().isBlank())) {
+                log.warn(
+                        "Transaction registration rejected because idempotency key is missing. userId={}, financialAccountId={}",
+                        userId,
+                        resource.financialAccountId()
+                );
+                return ResponseEntity
+                        .badRequest()
+                        .body(new MessageResource("Idempotency-Key header or clientOperationId body value is required."));
+            }
+
+            var idempotencySource = idempotencyKey == null || idempotencyKey.isBlank()
+                    ? "clientOperationId"
+                    : "Idempotency-Key";
+
+            log.info(
+                    "Transaction registration request received. userId={}, financialAccountId={}, idempotencySource={}, idempotencyKey={}",
+                    userId,
+                    resource.financialAccountId(),
+                    idempotencySource,
+                    idempotencyKey == null || idempotencyKey.isBlank() ? resource.clientOperationId() : idempotencyKey
+            );
+
+            var registerTransactionCommand = RegisterTransactionCommandFromResourceAssembler
+                    .toCommandFromResource(resource, userId, idempotencyKey);
             var transaction = transactionCommandService.handle(registerTransactionCommand);
             var transactionResource = TransactionResourceFromEntityAssembler.toResourceFromEntity(transaction.get());
             return new ResponseEntity<>(transactionResource, HttpStatus.CREATED);
