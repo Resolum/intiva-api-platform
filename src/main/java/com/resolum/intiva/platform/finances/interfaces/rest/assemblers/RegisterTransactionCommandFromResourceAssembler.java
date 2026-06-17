@@ -21,6 +21,17 @@ public class RegisterTransactionCommandFromResourceAssembler {
     }
 
     /**
+     * Converts a RegisterTransactionResource into a RegisterTransactionCommand using the owner user id from the body.
+     *
+     * @param resource The RegisterTransactionResource containing the data for the transaction to be registered.
+     * @param idempotencyKey Optional idempotency key received from the request header.
+     * @return A RegisterTransactionCommand ready to be handled by the application layer.
+     */
+    public static RegisterTransactionCommand toCommandFromResource(RegisterTransactionResource resource, String idempotencyKey) {
+        return toCommandFromResource(resource, resource.userId(), idempotencyKey);
+    }
+
+    /**
      * Converts a RegisterTransactionResource into a RegisterTransactionCommand using an optional idempotency key
      * provided through the HTTP Idempotency-Key header.
      *
