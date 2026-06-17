@@ -29,6 +29,9 @@ public record RegisterTransactionResource(
         @Schema(description = "Financial account/payment method used by the transaction.", example = "3")
         Long financialAccountId,
 
+        @Schema(description = "Owner user identifier for individual transactions.", example = "1")
+        Long userId,
+
         @Schema(description = "User who performed the transaction. In family transactions this can differ from ownerId.", example = "1")
         Long performedByUserId,
 

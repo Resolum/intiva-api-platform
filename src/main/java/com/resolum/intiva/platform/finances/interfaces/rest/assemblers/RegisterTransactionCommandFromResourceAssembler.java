@@ -17,6 +17,30 @@ public class RegisterTransactionCommandFromResourceAssembler {
      * @return A RegisterTransactionCommand constructed from the provided resource, ready to be used in the application layer for processing the transaction registration. The command will contain all necessary information extracted and transformed from the resource to facilitate the registration of a new transaction in the system.
      */
     public static RegisterTransactionCommand toCommandFromResource(RegisterTransactionResource resource, Long ownerId) {
+        return toCommandFromResource(resource, ownerId, null);
+    }
+
+    /**
+     * Converts a RegisterTransactionResource into a RegisterTransactionCommand using the owner user id from the body.
+     *
+     * @param resource The RegisterTransactionResource containing the data for the transaction to be registered.
+     * @param idempotencyKey Optional idempotency key received from the request header.
+     * @return A RegisterTransactionCommand ready to be handled by the application layer.
+     */
+    public static RegisterTransactionCommand toCommandFromResource(RegisterTransactionResource resource, String idempotencyKey) {
+        return toCommandFromResource(resource, resource.userId(), idempotencyKey);
+    }
+
+    /**
+     * Converts a RegisterTransactionResource into a RegisterTransactionCommand using an optional idempotency key
+     * provided through the HTTP Idempotency-Key header.
+     *
+     * @param resource The RegisterTransactionResource containing the data for the transaction to be registered.
+     * @param ownerId The owner identifier resolved from the request path.
+     * @param idempotencyKey Optional idempotency key received from the request header.
+     * @return A RegisterTransactionCommand ready to be handled by the application layer.
+     */
+    public static RegisterTransactionCommand toCommandFromResource(RegisterTransactionResource resource, Long ownerId, String idempotencyKey) {
         var amount = resource.amount();
         var currencyCode = CurrencyCodes.fromString(resource.currencyCode());
         var money = new Money(amount, currencyCode);
@@ -28,6 +52,9 @@ public class RegisterTransactionCommandFromResourceAssembler {
         var transactionType = TransactionTypes.valueOf(resource.transactionType());
 
         var ownerType = OwnerTypes.valueOf(resource.ownerType());
+        var clientOperationId = idempotencyKey == null || idempotencyKey.isBlank()
+                ? resource.clientOperationId()
+                : idempotencyKey;
 
         return new RegisterTransactionCommand(
                 money,
@@ -38,7 +65,7 @@ public class RegisterTransactionCommandFromResourceAssembler {
                 transactionType,
                 categoryId,
                 ownerType,
-                resource.clientOperationId(),
+                clientOperationId,
                 resource.baseAccountVersion(),
                 resource.occurredAt()
         );
