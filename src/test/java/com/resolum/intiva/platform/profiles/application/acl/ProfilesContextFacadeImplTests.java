@@ -1,7 +1,9 @@
 package com.resolum.intiva.platform.profiles.application.acl;
 
+import com.resolum.intiva.platform.profiles.application.acl.services.ProfilesContextFacadeImpl;
 import com.resolum.intiva.platform.profiles.domain.model.aggregates.Profile;
 import com.resolum.intiva.platform.profiles.domain.model.queries.GetProfileByUserIdQuery;
+import com.resolum.intiva.platform.profiles.domain.model.services.OnboardingCommandService;
 import com.resolum.intiva.platform.profiles.domain.model.services.ProfileQueryService;
 import org.junit.jupiter.api.Test;
 
@@ -33,7 +35,8 @@ class ProfilesContextFacadeImplTests {
     void getProfileName_shouldReturnProfileName_whenProfileExists() {
         // Arrange
         var queryService = mock(ProfileQueryService.class);
-        var facade = new ProfilesContextFacadeImpl(queryService);
+        var onboardingService = mock(OnboardingCommandService.class);
+        var facade = new ProfilesContextFacadeImpl(queryService, onboardingService);
         var profile = buildProfile(1L, "Lucía Mendoza");
 
         when(queryService.handle(new GetProfileByUserIdQuery(1L))).thenReturn(Optional.of(profile));
@@ -52,7 +55,8 @@ class ProfilesContextFacadeImplTests {
     void getProfileName_shouldReturnEmptyString_whenProfileDoesNotExist() {
         // Arrange
         var queryService = mock(ProfileQueryService.class);
-        var facade = new ProfilesContextFacadeImpl(queryService);
+        var onboardingService = mock(OnboardingCommandService.class);
+        var facade = new ProfilesContextFacadeImpl(queryService, onboardingService);
 
         when(queryService.handle(new GetProfileByUserIdQuery(99L))).thenReturn(Optional.empty());
 
@@ -70,7 +74,8 @@ class ProfilesContextFacadeImplTests {
     void getProfileName_shouldDelegateToQueryService() {
         // Arrange
         var queryService = mock(ProfileQueryService.class);
-        var facade = new ProfilesContextFacadeImpl(queryService);
+        var onboardingService = mock(OnboardingCommandService.class);
+        var facade = new ProfilesContextFacadeImpl(queryService, onboardingService);
 
         when(queryService.handle(new GetProfileByUserIdQuery(7L))).thenReturn(Optional.empty());
 

@@ -24,11 +24,11 @@ public class FinancialAccountResourceFromEntityAssembler {
                 entity.getClass().getAnnotation(DiscriminatorValue.class).value(),
                 entity.getCurrentAmount().currencyCode().name(),
                 entity.getCurrentAmount().amount(),
-                entity instanceof DebitCardAccount debit
+                entity instanceof DebitCardAccount debit && debit.getInstitution() != null
                         ? debit.getInstitution().getInstitutionName() :
-                        entity instanceof CreditCardAccount credit
+                        entity instanceof CreditCardAccount credit && credit.getInstitution() != null
                         ? credit.getInstitution().getInstitutionName() :
-                        entity instanceof WalletAccount wallet
+                        entity instanceof WalletAccount wallet && wallet.getInstitution() != null
                         ? wallet.getInstitution().getInstitutionName() : null,
                 entity instanceof CreditCardAccount credit
                         ? credit.getCreditLimit() : null,
