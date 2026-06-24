@@ -16,8 +16,7 @@ import com.resolum.intiva.platform.finances.domain.services.TransactionCommandSe
 import com.resolum.intiva.platform.finances.infrastructure.persistence.jpa.repositories.TransactionRepository;
 import com.resolum.intiva.platform.shared.domain.valueobjects.OwnerTypes;
 import com.resolum.intiva.platform.shared.domain.valueobjects.TransactionTypes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,10 +29,8 @@ import java.util.Optional;
  * The methods return an Optional containing the resulting Transaction if successful, or empty if the operation fails due to validation errors or other issues.
  */
 @Service
+@Slf4j
 public class TransactionCommandServiceImpl implements TransactionCommandService {
-
-    // Logger for logging important events and errors in the transaction command service
-    private final Logger LOGGER = LoggerFactory.getLogger(TransactionCommandServiceImpl.class);
 
     // TransactionRepository is used to interact with the database for transaction-related operations
     private final TransactionRepository transactionRepository;
@@ -73,8 +70,21 @@ public class TransactionCommandServiceImpl implements TransactionCommandService 
         try {
 
             if (command.clientOperationId() != null && !command.clientOperationId().isBlank()) {
+                log.debug(
+                        "Checking transaction idempotency key. ownerId={}, financialAccountId={}, clientOperationId={}",
+                        command.ownerId(),
+                        command.financialAccountId().getValue(),
+                        command.clientOperationId()
+                );
                 var existingTransaction = transactionRepository.findByClientOperationId(command.clientOperationId());
                 if (existingTransaction.isPresent()) {
+                    log.info(
+                            "Idempotent transaction retry detected. transactionId={}, ownerId={}, financialAccountId={}, clientOperationId={}",
+                            existingTransaction.get().getId(),
+                            command.ownerId(),
+                            command.financialAccountId().getValue(),
+                            command.clientOperationId()
+                    );
                     return existingTransaction;
                 }
             }
@@ -88,6 +98,18 @@ public class TransactionCommandServiceImpl implements TransactionCommandService 
                 throw new IllegalArgumentException("Financial account with ID " + command.financialAccountId().getValue() + " does not exist.");
             }
 
+            var transaction = new Transaction(command);
+
+            var savedTransaction = transactionRepository.saveAndFlush(transaction);
+
+            log.info(
+                    "Transaction persisted for idempotent operation. transactionId={}, ownerId={}, financialAccountId={}, clientOperationId={}",
+                    savedTransaction.getId(),
+                    command.ownerId(),
+                    command.financialAccountId().getValue(),
+                    savedTransaction.getClientOperationId()
+            );
+
             eventPublisher.publishEvent(new RegisteredTransactionDetectedEvent(
                     this,
                     command.financialAccountId().getValue(),
@@ -99,10 +121,6 @@ public class TransactionCommandServiceImpl implements TransactionCommandService 
                     command.amount().getCurrencyCode(),
                     command.baseAccountVersion()
             ));
-
-            var transaction = new Transaction(command);
-
-            var savedTransaction = transactionRepository.save(transaction);
 
             if (command.ownerTypes() == OwnerTypes.FAMILY) {
                 eventPublisher.publishEvent(new FamilyTransactionCreatedEvent(
@@ -151,7 +169,7 @@ public class TransactionCommandServiceImpl implements TransactionCommandService 
                     command.clientOperationId()
             ));
         } catch (Exception exception) {
-            LOGGER.warn(
+            log.warn(
                     "Transaction rejection event could not be fully handled. userId={}, financialAccountId={}, clientOperationId={}",
                     command.performedByUserId().getValue(),
                     command.financialAccountId().getValue(),
@@ -176,7 +194,7 @@ public class TransactionCommandServiceImpl implements TransactionCommandService 
             transactionRepository.save(transaction);
             return Optional.of(transaction);
         } catch (Exception e) {
-            LOGGER.error("Error while updating description for transaction {}: {}", command.transactionId(), e.getMessage());
+            log.error("Error while updating description for transaction {}: {}", command.transactionId(), e.getMessage());
             return Optional.empty();
         }
     }
@@ -196,7 +214,7 @@ public class TransactionCommandServiceImpl implements TransactionCommandService 
             transactionRepository.save(transaction);
             return Optional.of(transaction);
         } catch (Exception e) {
-            LOGGER.error("Error while updating amount for transaction {}: {}", command.transactionId(), e.getMessage());
+            log.error("Error while updating amount for transaction {}: {}", command.transactionId(), e.getMessage());
             return Optional.empty();
         }
     }
