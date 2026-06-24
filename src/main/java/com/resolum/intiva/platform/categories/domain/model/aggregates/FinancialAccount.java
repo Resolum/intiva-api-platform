@@ -50,6 +50,10 @@ public abstract class FinancialAccount extends AuditableAbstractAggregate<Financ
         this.isActive = false;
     }
 
+    public void activate() {
+        this.isActive = true;
+    }
+
     public void changeName(AccountName name) {
         this.name = name;
     }
