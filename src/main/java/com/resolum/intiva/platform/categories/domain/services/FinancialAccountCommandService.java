@@ -1,22 +1,18 @@
 package com.resolum.intiva.platform.categories.domain.services;
 
+import com.resolum.intiva.platform.categories.domain.model.aggregates.FinancialAccount;
 import com.resolum.intiva.platform.categories.domain.model.commands.CreateDefaultFinancialAccountCommand;
+import com.resolum.intiva.platform.categories.domain.model.commands.CreateFinancialAccountCommand;
 import com.resolum.intiva.platform.categories.domain.model.commands.CreateFinancialAccountTransaction;
+import com.resolum.intiva.platform.categories.domain.model.commands.UpdateFinancialAccountCommand;
 
-/**
- * Service interface for handling financial account-related commands.
- */
 public interface FinancialAccountCommandService {
 
-    /**
-     * Handles the creation of a new financial account.
-     * @param command the command containing the financial account details
-     */
     void handle(CreateDefaultFinancialAccountCommand command);
 
-    /**
-     * Handles the creation of a new financial account transaction.
-     * @param command the command containing the financial account transaction details
-     */
     void handle(CreateFinancialAccountTransaction command);
+
+    FinancialAccount handle(CreateFinancialAccountCommand command);
+
+    FinancialAccount handle(UpdateFinancialAccountCommand command);
 }

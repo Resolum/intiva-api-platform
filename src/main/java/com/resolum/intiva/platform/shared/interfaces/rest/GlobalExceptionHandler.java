@@ -6,6 +6,7 @@ import com.resolum.intiva.platform.analytics.domain.model.exceptions.ReportGener
 import com.resolum.intiva.platform.household.domain.exceptions.InvitationAlreadyPendingException;
 import com.resolum.intiva.platform.household.domain.exceptions.ResourceNotFoundException;
 import com.resolum.intiva.platform.household.domain.exceptions.UnauthorizedException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import com.resolum.intiva.platform.household.domain.exceptions.UserAlreadyMemberException;
 import com.resolum.intiva.platform.categories.domain.model.exceptions.FinancialAccountSyncConflictException;
 import com.resolum.intiva.platform.categories.domain.model.exceptions.InactiveFinancialAccountException;
@@ -121,6 +122,17 @@ public class GlobalExceptionHandler {
      * @param ex the exception
      * @return a ProblemDetail with BAD_REQUEST status and the exception message
      */
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ProblemDetail handleOptimisticLockingFailure(ObjectOptimisticLockingFailureException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT,
+                "The financial account was updated by another request. Please reload and try again."
+        );
+        problem.setTitle("Optimistic Lock Conflict");
+        return problem;
+    }
+
     @ExceptionHandler(InactiveFinancialAccountException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ProblemDetail handleInactiveAccount(
